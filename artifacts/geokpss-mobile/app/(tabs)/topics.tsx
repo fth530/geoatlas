@@ -89,7 +89,7 @@ export default function TopicsScreen() {
       </ScrollView>
 
       <Modal visible={!!activeTopic} transparent animationType="fade" onRequestClose={() => setActiveTopic(null)}>
-        <View style={styles.backdrop}>
+        <View style={[styles.backdrop, { backgroundColor: colors.overlay }]}>
           <View style={[styles.statusModal, { backgroundColor: colors.card }]}>
             <Text style={[styles.modalTitle, { color: colors.foreground }]}>Konu durumu</Text>
             <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>{selectedTopic?.title}</Text>
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   statusText: { fontSize: 9, fontWeight: '700' },
   mapLink: { minHeight: 27, borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, flexDirection: 'row', gap: 5, alignItems: 'center' },
   mapLinkText: { fontSize: 9, fontWeight: '600' },
-  backdrop: { flex: 1, backgroundColor: '#13211DB0', justifyContent: 'center', paddingHorizontal: 22 },
+  backdrop: { flex: 1, justifyContent: 'center', paddingHorizontal: 22 },
   statusModal: { padding: 17, borderRadius: 22, gap: 9 },
   modalTitle: { fontSize: 17, fontWeight: '700' },
   modalSubtitle: { fontSize: 12, marginTop: -5, marginBottom: 3 },

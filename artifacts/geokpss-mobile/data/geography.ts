@@ -166,7 +166,7 @@ export const LAYERS: Layer[] = [
 
 export const MAP_COLORS: Record<string, string> = {
   volcanic: '#D47B51',
-  fold: '#587D70',
+  fold: '#737D9C',
   horst: '#9B795A',
   glacier: '#5B91A0',
   tectonic: '#7489B8',
@@ -175,14 +175,14 @@ export const MAP_COLORS: Record<string, string> = {
   volcanicLake: '#D47B51',
   set: '#A777A0',
   glacial: '#5B91A0',
-  delta: '#4D9A8D',
+  delta: '#5086C4',
   erosion: '#B99055',
   closed: '#8E7BB4',
   blacksea: '#528CA0',
   mediterranean: '#428B9A',
-  aegean: '#6D9A79',
+  aegean: '#8D7AC7',
   longitudinal: '#568B9C',
-  transverse: '#72A386',
+  transverse: '#6199C4',
   ria: '#8296B1',
   dalmatic: '#9478AA',
   lagoon: '#A777A0',
@@ -191,15 +191,15 @@ export const MAP_COLORS: Record<string, string> = {
   chernozem: '#8A6D47',
   'terra-rossa': '#C16E51',
   steppe: '#A9985D',
-  forest: '#50836C',
+  forest: '#7B8FA1',
   metal: '#6D8290',
   industrial: '#A27A55',
   coal: '#5F6268',
   oil: '#4D5255',
-  renewable: '#79A66D',
-  regional: '#458A78',
+  renewable: '#7887D8',
+  regional: '#536DC4',
   ramsar: '#598DA0',
-  park: '#6C9A73',
+  park: '#7591C9',
 };
 
 export const MAP_ITEMS: MapItem[] = [
@@ -277,11 +277,11 @@ export const TOPIC_DETAILS = [
 ];
 
 export const STATUS_OPTIONS: { id: TopicStatus; label: string; color: string }[] = [
-  { id: 'new', label: 'Başlamadım', color: '#8A9892' },
-  { id: 'studying', label: 'Çalışıyorum', color: '#4D8F82' },
+  { id: 'new', label: 'Başlamadım', color: '#8A90A1' },
+  { id: 'studying', label: 'Çalışıyorum', color: '#5D74D5' },
   { id: 'review', label: 'Tekrar', color: '#B78948' },
   { id: 'weak', label: 'Zayıf', color: '#C36D5C' },
-  { id: 'done', label: 'Tamamlandı', color: '#62856E' },
+  { id: 'done', label: 'Tamamlandı', color: '#617FC7' },
 ];
 
 export const STATUS_LABEL: Record<TopicStatus, string> = {

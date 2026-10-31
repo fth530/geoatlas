@@ -3,7 +3,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Image,
   Modal,
   Platform,
   Pressable,
@@ -118,7 +117,9 @@ export default function MapScreen() {
       >
         <View style={styles.header}>
           <View style={styles.brand}>
-            <Image source={require('../../assets/images/icon.png')} style={styles.logo} />
+            <View style={[styles.logo, { backgroundColor: colors.accent }]}>
+              <Feather name="map" size={19} color={colors.primary} />
+            </View>
             <View>
               <Text style={[styles.brandName, { color: colors.primary }]}>GeoKPSS</Text>
               <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>COĞRAFYA · HARİTA ATLASI</Text>
@@ -186,7 +187,7 @@ export default function MapScreen() {
           </ScrollView>
         )}
 
-        <View style={[styles.mapCard, { backgroundColor: colors.card }]}>
+        <View style={[styles.mapCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
           <View style={styles.mapCardHeader}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.mapTitle, { color: colors.foreground }]}>{activeLayer.label} haritası</Text>
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 18, paddingTop: 10, gap: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logo: { width: 42, height: 42, borderRadius: 13 },
+  logo: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   brandName: { fontSize: 16, fontWeight: '700', letterSpacing: 0.1 },
   eyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 1.1, marginTop: 2 },
   headerActions: { flexDirection: 'row', gap: 8 },
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
   filterRow: { gap: 7, marginTop: -9, paddingVertical: 2, paddingRight: 15 },
   filterChip: { borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, paddingVertical: 7 },
   filterLabel: { fontSize: 11, fontWeight: '600' },
-  mapCard: { borderRadius: 26, padding: 14, gap: 9, shadowColor: '#253A31', shadowOpacity: 0.045, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  mapCard: { borderRadius: 26, padding: 14, gap: 9, shadowOpacity: 0.045, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
   mapCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   mapTitle: { fontSize: 16, fontWeight: '700' },
   mapSubTitle: { fontSize: 11, marginTop: 3 },

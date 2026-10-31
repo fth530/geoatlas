@@ -15,32 +15,32 @@
 const colors = {
   light: {
     // Legacy aliases (kept for backward compatibility)
-    text: '#20312E',
-    tint: '#36796D',
+    text: '#202539',
+    tint: '#5368D9',
 
     // Core surfaces
-    background: '#F4F6F1',
-    foreground: '#20312E',
+    background: '#F8F9FC',
+    foreground: '#202539',
 
     // Cards / elevated surfaces
     card: '#FFFFFF',
-    cardForeground: '#20312E',
+    cardForeground: '#202539',
 
     // Primary action color (buttons, links, active states)
-    primary: '#36796D',
+    primary: '#4F63D7',
     primaryForeground: '#ffffff',
 
     // Secondary / less-emphasis interactive surfaces
-    secondary: '#E9F0EA',
-    secondaryForeground: '#2B4842',
+    secondary: '#EEF1F8',
+    secondaryForeground: '#35405A',
 
     // Muted / subdued elements (dividers, timestamps, placeholders)
-    muted: '#EDF1EB',
-    mutedForeground: '#687A73',
+    muted: '#F0F2F7',
+    mutedForeground: '#7A8397',
 
     // Accent highlights (badges, selected items, focus rings)
-    accent: '#DDEBE2',
-    accentForeground: '#2B5F53',
+    accent: '#EDF0FF',
+    accentForeground: '#4455B8',
 
     // Destructive actions (delete, error states)
     destructive: '#C85D52',
@@ -54,33 +54,34 @@ const colors = {
     errorMuted: '#A45A52',
     premium: '#9A7848',
     premiumBackground: '#F3EADB',
-    mapProvince: '#E7EEE6',
-    mapRegion: '#EDF1EA',
-    mapSelected: '#6EA594',
+    mapProvince: '#ECEFF4',
+    mapRegion: '#F7F8FA',
+    mapSelected: '#657CE4',
     mapCorrect: '#6DA78A',
     mapWrong: '#D66A61',
     mapStroke: '#FFFFFF',
 
     // Borders and input outlines
-    border: '#DDE6DE',
-    input: '#DDE6DE',
+    border: '#E6EAF1',
+    input: '#E6EAF1',
+    overlay: '#202539B8',
   },
 
   dark: {
-    text: '#ECF2ED',
-    tint: '#86B8A6',
-    background: '#17211E',
-    foreground: '#ECF2ED',
-    card: '#202C28',
-    cardForeground: '#ECF2ED',
-    primary: '#86B8A6',
-    primaryForeground: '#13201B',
-    secondary: '#2B3934',
-    secondaryForeground: '#E7F0E9',
-    muted: '#2A3631',
-    mutedForeground: '#A5B3AA',
-    accent: '#31443C',
-    accentForeground: '#D4E9D9',
+    text: '#F1F2F7',
+    tint: '#A7B3FF',
+    background: '#171A27',
+    foreground: '#F1F2F7',
+    card: '#222738',
+    cardForeground: '#F1F2F7',
+    primary: '#9DAAFF',
+    primaryForeground: '#171C34',
+    secondary: '#2C3244',
+    secondaryForeground: '#E7EBF4',
+    muted: '#292F40',
+    mutedForeground: '#A2A9BB',
+    accent: '#2D3456',
+    accentForeground: '#D5DCFF',
     destructive: '#D8786E',
     destructiveForeground: '#FFFFFF',
     success: '#86B99A',
@@ -92,14 +93,15 @@ const colors = {
     errorMuted: '#D79A93',
     premium: '#D9B985',
     premiumBackground: '#40372A',
-    mapProvince: '#293733',
-    mapRegion: '#222D29',
-    mapSelected: '#5C8E7D',
+    mapProvince: '#2D3345',
+    mapRegion: '#252B3D',
+    mapSelected: '#7084EA',
     mapCorrect: '#4D8063',
     mapWrong: '#A94F49',
-    mapStroke: '#3D4A43',
-    border: '#3A4942',
-    input: '#3A4942',
+    mapStroke: '#40475B',
+    border: '#353B4F',
+    input: '#353B4F',
+    overlay: '#080B12CC',
   },
 
   // Border radius (in px). Sync from the sibling web artifact's --radius
