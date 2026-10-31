@@ -1,0 +1,1 @@
+- [Expo preview and SDK release constraints](expo-preview-sdk-constraints.md) — Keep web SSR renderable, gate native gesture wrappers by platform, and respect package release-age safeguards.
