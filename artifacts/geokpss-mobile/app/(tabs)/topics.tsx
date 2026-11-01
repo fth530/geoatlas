@@ -11,10 +11,17 @@ import { useColors } from '@/hooks/useColors';
 export default function TopicsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { topicStatuses, setTopicStatus } = useStudy();
+  const { hydrated, reviewItems, topicStatuses, setTopicStatus } = useStudy();
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const completed = TOPIC_DETAILS.filter((topic) => topicStatuses[topic.id] === 'done').length;
   const selectedTopic = TOPIC_DETAILS.find((topic) => topic.id === activeTopic);
+  const dueReviews = hydrated ? reviewItems.filter((item) => item.dueAt <= Date.now()) : [];
+  const dueReviewGroups = TOPIC_DETAILS
+    .map((topic) => ({
+      topic,
+      items: dueReviews.filter((item) => item.layer === topic.id),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
@@ -43,6 +50,47 @@ export default function TopicsScreen() {
             <View style={[styles.fill, { backgroundColor: colors.primary, width: `${(completed / TOPIC_DETAILS.length) * 100}%` }]} />
           </View>
         </View>
+
+        {hydrated && dueReviewGroups.length > 0 && (
+          <View style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.reviewHeader}>
+              <View style={[styles.reviewIcon, { backgroundColor: colors.accent }]}>
+                <Feather name="clock" size={16} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.progressTitle, { color: colors.foreground }]}>Bugün tekrar</Text>
+                <Text style={[styles.progressSub, { color: colors.mutedForeground }]}>Quiz cevapların tekrar zamanını belirler.</Text>
+              </View>
+              <Text style={[styles.reviewCount, { color: colors.primary }]}>{dueReviews.length}</Text>
+            </View>
+            <View style={styles.reviewGroups}>
+              {dueReviewGroups.map(({ topic, items }) => (
+                <Pressable
+                  key={topic.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${topic.title}, ${items.length} tekrar sorusu`}
+                  onPress={() => router.push({
+                    pathname: '/quiz',
+                    params: { mode: topic.id, reviewIds: items.map((item) => item.id).join(',') },
+                  })}
+                  style={[styles.reviewRow, { backgroundColor: colors.background, borderColor: colors.border }]}
+                  testID={`start-review-${topic.id}`}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.reviewTopic, { color: colors.foreground }]}>{topic.title}</Text>
+                    <Text style={[styles.reviewNames, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {items.map((item) => item.targetName).join(' · ')}
+                    </Text>
+                  </View>
+                  <View style={[styles.reviewAction, { backgroundColor: colors.accent }]}>
+                    <Text style={[styles.reviewActionText, { color: colors.primary }]}>{items.length} soru</Text>
+                    <Feather name="arrow-right" size={13} color={colors.primary} />
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Tüm konular</Text>
@@ -137,6 +185,16 @@ const styles = StyleSheet.create({
   progressSub: { fontSize: 10, marginTop: 3 },
   track: { height: 6, borderRadius: 4, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 4 },
+  reviewCard: { borderWidth: 1, borderRadius: 20, padding: 12, gap: 11 },
+  reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  reviewIcon: { width: 32, height: 32, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  reviewCount: { fontSize: 18, fontWeight: '700' },
+  reviewGroups: { gap: 7 },
+  reviewRow: { minHeight: 49, borderWidth: 1, borderRadius: 13, paddingHorizontal: 10, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  reviewTopic: { fontSize: 11, fontWeight: '700' },
+  reviewNames: { fontSize: 9, marginTop: 3 },
+  reviewAction: { borderRadius: 9, paddingHorizontal: 8, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  reviewActionText: { fontSize: 9, fontWeight: '700' },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
   sectionTitle: { fontSize: 15, fontWeight: '700' },
   statusLegend: { flexDirection: 'row', alignItems: 'center', gap: 5 },

@@ -33,7 +33,7 @@ export default function MapScreen() {
   const colors = useColors();
   const { isDark, toggleTheme } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { layer: layerParam } = useLocalSearchParams<{ layer?: string }>();
+  const { layer: layerParam, itemId: itemIdParam } = useLocalSearchParams<{ layer?: string; itemId?: string }>();
   const [layerId, setLayerId] = useState<LayerId>('provinces');
   const [filterId, setFilterId] = useState('all');
   const [selectedProvince, setSelectedProvince] = useState<string | null>('Ankara');
@@ -47,6 +47,16 @@ export default function MapScreen() {
       setFilterId('all');
     }
   }, [layerParam]);
+
+  useEffect(() => {
+    if (!itemIdParam) return;
+    const item = MAP_ITEMS.find((mapItem) => mapItem.id === itemIdParam);
+    if (!item) return;
+    setLayerId(item.layer);
+    setFilterId('all');
+    setSelectedProvince(item.provinces[0] ?? null);
+    setSelectedItem(item);
+  }, [itemIdParam]);
 
   const activeLayer = LAYERS.find((layer) => layer.id === layerId) ?? LAYERS[0];
   const visibleItems = useMemo(
@@ -266,6 +276,16 @@ export default function MapScreen() {
                 <Text style={[styles.examTipText, { color: colors.accentForeground }]}>{selectedItem.examTip}</Text>
               </View>
             )}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/notes', params: { create: '1', itemId: selectedItem.id } })}
+              style={[styles.noteFromMap, { backgroundColor: colors.accent }]}
+              testID="create-note-from-map"
+            >
+              <Feather name="book-open" size={15} color={colors.primary} />
+              <Text style={[styles.noteFromMapText, { color: colors.primary }]}>Bu özellik için kodlama notu ekle</Text>
+              <Feather name="arrow-right" size={14} color={colors.primary} />
+            </Pressable>
           </View>
         ) : selectedProvince ? (
           <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -437,6 +457,8 @@ const styles = StyleSheet.create({
   factText: { fontSize: 12, fontWeight: '700' },
   examTip: { flexDirection: 'row', gap: 8, borderRadius: 14, padding: 11, alignItems: 'flex-start' },
   examTipText: { flex: 1, fontSize: 12, lineHeight: 17, fontWeight: '500' },
+  noteFromMap: { minHeight: 39, borderRadius: 12, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  noteFromMapText: { flex: 1, fontSize: 10, fontWeight: '700' },
   relatedList: { gap: 8 },
   relatedHeading: { fontSize: 9, letterSpacing: 0.8, fontWeight: '700' },
   relatedChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },

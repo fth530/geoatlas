@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Keyboard,
@@ -12,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
-import { TOPIC_DETAILS } from '@/data/geography';
+import { MAP_ITEMS, TOPIC_DETAILS } from '@/data/geography';
 import { AppText as Text } from '@/components/AppText';
 import { FONT_FAMILY } from '@/constants/typography';
 import { StudyNote, useStudy } from '@/context/StudyContext';
@@ -24,18 +25,37 @@ export default function NotesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { notes, saveNote, deleteNote } = useStudy();
+  const { create: createParam, itemId: itemIdParam } = useLocalSearchParams<{ create?: string; itemId?: string }>();
   const [editing, setEditing] = useState<StudyNote | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [category, setCategory] = useState('Genel');
+  const [relatedItemId, setRelatedItemId] = useState<string | null>(null);
+  const [relatedItemName, setRelatedItemName] = useState<string | null>(null);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (createParam !== '1' || !itemIdParam) return;
+    const item = MAP_ITEMS.find((mapItem) => mapItem.id === itemIdParam);
+    if (!item) return;
+    setEditing(null);
+    setTitle(item.name);
+    setBody('');
+    setCategory(TOPIC_DETAILS.find((topic) => topic.id === item.layer)?.title ?? 'Genel');
+    setRelatedItemId(item.id);
+    setRelatedItemName(item.name);
+    setError('');
+    setIsCreating(true);
+  }, [createParam, itemIdParam]);
 
   const startNew = () => {
     setEditing(null);
     setTitle('');
     setBody('');
     setCategory('Genel');
+    setRelatedItemId(null);
+    setRelatedItemName(null);
     setError('');
     setIsCreating(true);
   };
@@ -44,6 +64,8 @@ export default function NotesScreen() {
     setTitle(note.title);
     setBody(note.body);
     setCategory(note.category);
+    setRelatedItemId(note.relatedItemId ?? null);
+    setRelatedItemName(note.relatedItemName ?? null);
     setError('');
     setIsCreating(true);
   };
@@ -64,6 +86,7 @@ export default function NotesScreen() {
       body: body.trim(),
       category,
       updatedAt: Date.now(),
+      ...(relatedItemId ? { relatedItemId, relatedItemName: relatedItemName ?? MAP_ITEMS.find((item) => item.id === relatedItemId)?.name } : {}),
     };
     saveNote(note);
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -124,12 +147,31 @@ export default function NotesScreen() {
             {NOTE_CATEGORIES.map((item) => {
               const active = category === item;
               return (
-                <Pressable key={item} onPress={() => setCategory(item)} style={[styles.categoryChip, { backgroundColor: active ? colors.accent : colors.background, borderColor: active ? colors.accent : colors.border }]}>
+                <Pressable
+                  key={item}
+                  onPress={() => {
+                    setCategory(item);
+                    const linkedItem = MAP_ITEMS.find((mapItem) => mapItem.id === relatedItemId);
+                    if (item === 'Genel' || (linkedItem && TOPIC_DETAILS.find((topic) => topic.id === linkedItem.layer)?.title !== item)) {
+                      setRelatedItemId(null);
+                      setRelatedItemName(null);
+                    }
+                  }}
+                  style={[styles.categoryChip, { backgroundColor: active ? colors.accent : colors.background, borderColor: active ? colors.accent : colors.border }]}
+                >
                   <Text style={[styles.categoryText, { color: active ? colors.primary : colors.mutedForeground }]}>{item}</Text>
                 </Pressable>
               );
             })}
           </View>
+          {relatedItemId && (
+            <View style={[styles.relatedFeature, { backgroundColor: colors.accent }]}>
+              <Feather name="map-pin" size={13} color={colors.primary} />
+              <Text style={[styles.relatedFeatureText, { color: colors.accentForeground }]} numberOfLines={1}>
+                Haritaya bağlı: {relatedItemName ?? MAP_ITEMS.find((item) => item.id === relatedItemId)?.name ?? 'Coğrafi özellik'}
+              </Text>
+            </View>
+          )}
           <Text style={[styles.inputLabel, { color: colors.foreground }]}>Kendi kodlaman / notun</Text>
           <TextInput
             value={body}
@@ -175,6 +217,24 @@ export default function NotesScreen() {
               </View>
               <Text style={[styles.noteTitle, { color: colors.foreground }]}>{note.title}</Text>
               <Text style={[styles.noteBody, { color: colors.mutedForeground }]}>{note.body}</Text>
+              {note.relatedItemId && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${note.relatedItemName ?? note.title} haritada aç`}
+                  onPress={() => {
+                    const item = MAP_ITEMS.find((mapItem) => mapItem.id === note.relatedItemId);
+                    if (item) router.push({ pathname: '/', params: { layer: item.layer, itemId: item.id } });
+                  }}
+                  style={[styles.noteMapLink, { backgroundColor: colors.accent }]}
+                  testID={`open-note-map-${note.id}`}
+                >
+                  <Feather name="map-pin" size={13} color={colors.primary} />
+                  <Text style={[styles.noteMapLinkText, { color: colors.primary }]} numberOfLines={1}>
+                    {note.relatedItemName ?? note.title} · Haritada aç
+                  </Text>
+                  <Feather name="arrow-up-right" size={13} color={colors.primary} />
+                </Pressable>
+              )}
               <View style={[styles.noteActions, { borderTopColor: colors.border }]}>
                 <Pressable accessibilityLabel={`${note.title} notunu düzenle`} onPress={() => startEdit(note)} style={styles.noteAction}>
                   <Feather name="edit-2" size={13} color={colors.primary} /><Text style={[styles.noteActionText, { color: colors.primary }]}>Düzenle</Text>
@@ -216,6 +276,8 @@ const styles = StyleSheet.create({
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   categoryChip: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 7 },
   categoryText: { fontSize: 10, fontWeight: '600' },
+  relatedFeature: { minHeight: 30, borderRadius: 10, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  relatedFeatureText: { flex: 1, fontSize: 10, fontWeight: '600' },
   error: { fontSize: 11, marginTop: -3 },
   saveButton: { minHeight: 44, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 3 },
   saveText: { fontSize: 12, fontWeight: '700' },
@@ -236,6 +298,8 @@ const styles = StyleSheet.create({
   noteDate: { fontSize: 9 },
   noteTitle: { fontSize: 14, fontWeight: '700' },
   noteBody: { fontSize: 11, lineHeight: 17 },
+  noteMapLink: { minHeight: 34, borderRadius: 10, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  noteMapLinkText: { flex: 1, fontSize: 9, fontWeight: '700' },
   noteActions: { borderTopWidth: 1, flexDirection: 'row', gap: 18, paddingTop: 9, marginTop: 1 },
   noteAction: { flexDirection: 'row', gap: 5, alignItems: 'center', paddingBottom: 8 },
   noteActionText: { fontSize: 10, fontWeight: '600' },

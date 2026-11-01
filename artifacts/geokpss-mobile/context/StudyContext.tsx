@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { TopicStatus } from '@/data/geography';
+import { LayerId, TopicStatus } from '@/data/geography';
 
 export type StudyNote = {
   id: string;
@@ -8,11 +8,33 @@ export type StudyNote = {
   body: string;
   category: string;
   updatedAt: number;
+  relatedItemId?: string;
+  relatedItemName?: string;
+};
+
+export type StudyReviewItem = {
+  id: string;
+  layer: LayerId;
+  targetId: string;
+  targetName: string;
+  dueAt: number;
+  intervalDays: number;
+  successStreak: number;
+  attempts: number;
+  lastCorrect: boolean;
+};
+
+export type QuizAnswerRecord = {
+  layer: LayerId;
+  targetId: string;
+  targetName: string;
+  isCorrect: boolean;
 };
 
 type PersistedStudy = {
   notes: StudyNote[];
   topicStatuses: Record<string, TopicStatus>;
+  reviewItems: StudyReviewItem[];
   answered: number;
   correct: number;
   proCandidates: string[];
@@ -23,14 +45,17 @@ type StudyContextValue = PersistedStudy & {
   setTopicStatus: (topicId: string, status: TopicStatus) => void;
   saveNote: (note: StudyNote) => void;
   deleteNote: (noteId: string) => void;
-  recordQuizAnswer: (isCorrect: boolean) => void;
+  recordQuizAnswer: (answer: QuizAnswerRecord) => void;
   toggleProCandidate: (candidateId: string) => void;
 };
 
 const STORAGE_KEY = 'geokpss-study-v1';
+const DAY_MS = 24 * 60 * 60 * 1000;
+const REVIEW_INTERVALS = [1, 3, 7, 14, 30];
 const initialState: PersistedStudy = {
   notes: [],
   topicStatuses: {},
+  reviewItems: [],
   answered: 0,
   correct: 0,
   proCandidates: [],
@@ -83,12 +108,42 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
       },
       deleteNote: (noteId) =>
         commit({ ...state, notes: state.notes.filter((note) => note.id !== noteId) }),
-      recordQuizAnswer: (isCorrect) =>
+      recordQuizAnswer: (answer) => {
+        const id = `${answer.layer}:${answer.targetId}`;
+        const existing = state.reviewItems.find((item) => item.id === id);
+        const successStreak = answer.isCorrect ? (existing?.successStreak ?? 0) + 1 : 0;
+        const intervalDays = answer.isCorrect
+          ? REVIEW_INTERVALS[Math.min(existing?.successStreak ?? 0, REVIEW_INTERVALS.length - 1)]
+          : 1;
+        const reviewItem: StudyReviewItem = {
+          id,
+          layer: answer.layer,
+          targetId: answer.targetId,
+          targetName: answer.targetName,
+          dueAt: Date.now() + intervalDays * DAY_MS,
+          intervalDays,
+          successStreak,
+          attempts: (existing?.attempts ?? 0) + 1,
+          lastCorrect: answer.isCorrect,
+        };
+        const topicStatus = state.topicStatuses[answer.layer] ?? 'new';
+        const topicStatuses = {
+          ...state.topicStatuses,
+          ...(answer.isCorrect
+            ? topicStatus === 'new' ? { [answer.layer]: 'studying' as TopicStatus } : {}
+            : { [answer.layer]: 'weak' as TopicStatus }),
+        };
         commit({
           ...state,
           answered: state.answered + 1,
-          correct: state.correct + (isCorrect ? 1 : 0),
-        }),
+          correct: state.correct + (answer.isCorrect ? 1 : 0),
+          topicStatuses,
+          reviewItems: [
+            reviewItem,
+            ...state.reviewItems.filter((item) => item.id !== id),
+          ],
+        });
+      },
       toggleProCandidate: (candidateId) =>
         commit({
           ...state,
