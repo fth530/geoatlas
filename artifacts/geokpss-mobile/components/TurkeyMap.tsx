@@ -207,6 +207,7 @@ export function TurkeyMap({
           const isCorrect = correctProvinces.includes(shape.name);
           const isWrong = wrongProvince === shape.name;
           const isSelected = selectedProvince === shape.name;
+          const selectProvince = () => focusProvince(shape.name);
           const fill = isWrong
             ? colors.mapWrong
             : isCorrect
@@ -225,7 +226,7 @@ export function TurkeyMap({
               fill={fill}
               stroke={colors.mapStroke}
               strokeWidth={isSelected || isWrong ? 1.25 : 0.62}
-              onPress={() => focusProvince(shape.name)}
+              {...(Platform.OS === 'web' ? { onClick: selectProvince } : { onPress: selectProvince })}
             />
           );
         })}
@@ -266,6 +267,10 @@ export function TurkeyMap({
             const dy = Math.sin(angle) * radius;
             const active = selectedItemId === item.id;
             const color = MAP_COLORS[item.subtype] ?? colors.primary;
+            const selectItem = () => {
+              focusProvince(province);
+              onSelectItem?.(item);
+            };
             return (
               <React.Fragment key={item.id}>
                 <Circle
@@ -274,10 +279,7 @@ export function TurkeyMap({
                   r={active ? 9 : 7}
                   fill={color}
                   opacity="0.2"
-                  onPress={() => {
-                    focusProvince(province);
-                    onSelectItem?.(item);
-                  }}
+                  {...(Platform.OS === 'web' ? { onClick: selectItem } : { onPress: selectItem })}
                 />
                 <Circle
                   cx={shape.center.x + dx}
@@ -286,10 +288,7 @@ export function TurkeyMap({
                   fill={color}
                   stroke={colors.mapStroke}
                   strokeWidth={active ? 1.8 : 1.3}
-                  onPress={() => {
-                    focusProvince(province);
-                    onSelectItem?.(item);
-                  }}
+                  {...(Platform.OS === 'web' ? { onClick: selectItem } : { onPress: selectItem })}
                 />
                 {active && (
                   <>

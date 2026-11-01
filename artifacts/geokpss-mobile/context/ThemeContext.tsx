@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
 
 export type ColorMode = 'light' | 'dark';
 
@@ -45,7 +46,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     [colorMode],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <>
+      <StatusBar style={colorMode === 'dark' ? 'light' : 'dark'} />
+      <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+    </>
+  );
 }
 
 export function useAppTheme() {

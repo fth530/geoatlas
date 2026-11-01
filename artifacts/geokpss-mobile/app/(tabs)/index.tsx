@@ -11,11 +11,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayerId, LAYERS, MAP_ITEMS, MapItem, MAP_COLORS } from '@/data/geography';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
 import { AppText as Text } from '@/components/AppText';
+import { KeyboardAvoidingViewCompat } from '@/components/KeyboardAvoidingViewCompat';
 import { FONT_FAMILY } from '@/constants/typography';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useColors } from '@/hooks/useColors';
@@ -313,7 +313,7 @@ export default function MapScreen() {
       </ScrollView>
 
       <Modal visible={searchOpen} animationType="slide" onRequestClose={() => setSearchOpen(false)}>
-        <KeyboardAvoidingView behavior="padding" style={[styles.modalScreen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
+          <KeyboardAvoidingViewCompat behavior="padding" style={[styles.modalScreen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
           <View style={styles.modalHeader}>
             <View>
               <Text style={[styles.modalTitle, { color: colors.foreground }]}>Haritada ara</Text>
@@ -374,7 +374,7 @@ export default function MapScreen() {
               <Text style={[styles.noResults, { color: colors.mutedForeground }]}>Bu aramayla eşleşen bir il veya coğrafi özellik bulunamadı.</Text>
             )}
           </ScrollView>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingViewCompat>
       </Modal>
     </View>
   );

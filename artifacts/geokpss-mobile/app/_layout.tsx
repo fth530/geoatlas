@@ -15,8 +15,7 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StudyProvider } from '@/context/StudyContext';
-import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
-import { StatusBar } from 'expo-status-bar';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -24,15 +23,11 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { isDark } = useAppTheme();
   return (
-    <>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerBackTitle: 'Back' }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="pro" options={{ presentation: 'modal', headerShown: false }} />
-      </Stack>
-    </>
+    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="pro" options={{ presentation: 'modal', headerShown: false }} />
+    </Stack>
   );
 }
 
@@ -53,11 +48,9 @@ export default function RootLayout() {
   if (Platform.OS !== 'web' && !fontsLoaded && !fontError) return null;
 
   const appContent = (
-    <KeyboardProvider>
-      <StudyProvider>
-        <RootLayoutNav />
-      </StudyProvider>
-    </KeyboardProvider>
+    <StudyProvider>
+      <RootLayoutNav />
+    </StudyProvider>
   );
 
   return (
@@ -68,7 +61,9 @@ export default function RootLayout() {
             {Platform.OS === 'web' ? (
               <View style={{ flex: 1 }}>{appContent}</View>
             ) : (
-              <GestureHandlerRootView style={{ flex: 1 }}>{appContent}</GestureHandlerRootView>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <KeyboardProvider>{appContent}</KeyboardProvider>
+              </GestureHandlerRootView>
             )}
           </QueryClientProvider>
         </ErrorBoundary>
