@@ -1,10 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useMemo, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapItem, MAP_ITEMS } from '@/data/geography';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
+import { AppText as Text } from '@/components/AppText';
 import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
 

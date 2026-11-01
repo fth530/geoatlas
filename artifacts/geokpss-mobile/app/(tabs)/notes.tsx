@@ -7,13 +7,14 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { TOPIC_DETAILS } from '@/data/geography';
+import { AppText as Text } from '@/components/AppText';
+import { FONT_FAMILY } from '@/constants/typography';
 import { StudyNote, useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
 
@@ -113,7 +114,7 @@ export default function NotesScreen() {
             onChangeText={setTitle}
             placeholder="Örn. Volkanik dağlar"
             placeholderTextColor={colors.mutedForeground}
-            style={[styles.input, { backgroundColor: colors.background, color: colors.foreground, borderColor: colors.border }]}
+            style={[styles.input, { backgroundColor: colors.background, color: colors.foreground, borderColor: colors.border, fontFamily: FONT_FAMILY.regular }]}
             returnKeyType="next"
             maxLength={70}
             testID="note-title"
@@ -135,7 +136,7 @@ export default function NotesScreen() {
             onChangeText={setBody}
             placeholder="Kısa bir çağrışım, eşleştirme ya da sınav ipucu yaz…"
             placeholderTextColor={colors.mutedForeground}
-            style={[styles.input, styles.textArea, { backgroundColor: colors.background, color: colors.foreground, borderColor: colors.border }]}
+            style={[styles.input, styles.textArea, { backgroundColor: colors.background, color: colors.foreground, borderColor: colors.border, fontFamily: FONT_FAMILY.regular }]}
             multiline
             textAlignVertical="top"
             maxLength={1200}

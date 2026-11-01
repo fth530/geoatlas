@@ -15,6 +15,8 @@ import {
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StudyProvider } from '@/context/StudyContext';
+import { ThemeProvider, useAppTheme } from '@/context/ThemeContext';
+import { StatusBar } from 'expo-status-bar';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -22,11 +24,15 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const { isDark } = useAppTheme();
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="pro" options={{ presentation: 'modal', headerShown: false }} />
-    </Stack>
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="pro" options={{ presentation: 'modal', headerShown: false }} />
+      </Stack>
+    </>
   );
 }
 
@@ -56,15 +62,17 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          {Platform.OS === 'web' ? (
-            <View style={{ flex: 1 }}>{appContent}</View>
-          ) : (
-            <GestureHandlerRootView style={{ flex: 1 }}>{appContent}</GestureHandlerRootView>
-          )}
-        </QueryClientProvider>
-      </ErrorBoundary>
+      <ThemeProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            {Platform.OS === 'web' ? (
+              <View style={{ flex: 1 }}>{appContent}</View>
+            ) : (
+              <GestureHandlerRootView style={{ flex: 1 }}>{appContent}</GestureHandlerRootView>
+            )}
+          </QueryClientProvider>
+        </ErrorBoundary>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

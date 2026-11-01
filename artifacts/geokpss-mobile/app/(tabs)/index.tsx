@@ -8,7 +8,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -16,6 +15,9 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayerId, LAYERS, MAP_ITEMS, MapItem, MAP_COLORS } from '@/data/geography';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
+import { AppText as Text } from '@/components/AppText';
+import { FONT_FAMILY } from '@/constants/typography';
+import { useAppTheme } from '@/context/ThemeContext';
 import { useColors } from '@/hooks/useColors';
 
 const PROVINCE_NOTES: Record<string, string> = {
@@ -28,6 +30,7 @@ const PROVINCE_NOTES: Record<string, string> = {
 
 export default function MapScreen() {
   const colors = useColors();
+  const { isDark, toggleTheme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { layer: layerParam } = useLocalSearchParams<{ layer?: string }>();
   const [layerId, setLayerId] = useState<LayerId>('provinces');
@@ -117,17 +120,29 @@ export default function MapScreen() {
       >
         <View style={styles.header}>
           <View style={styles.brand}>
-            <View style={[styles.logo, { backgroundColor: colors.accent }]}>
-              <Feather name="map" size={19} color={colors.primary} />
+            <View style={[styles.logo, { backgroundColor: colors.primary, borderColor: colors.border }]}>
+              <Feather name="map" size={21} color={colors.primaryForeground} />
+              <View style={[styles.logoBadge, { backgroundColor: colors.card, borderColor: colors.primary }]}>
+                <Feather name="crosshair" size={9} color={colors.primary} />
+              </View>
             </View>
             <View>
               <Text style={[styles.brandName, { color: colors.primary }]}>GeoKPSS</Text>
-              <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>COĞRAFYA · HARİTA ATLASI</Text>
+              <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>COĞRAFYA ATLASI</Text>
             </View>
           </View>
           <View style={styles.headerActions}>
             <Pressable accessibilityLabel="Haritada ara" onPress={() => setSearchOpen(true)} style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="search" size={19} color={colors.foreground} />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={isDark ? 'Açık temaya geç' : 'Koyu temaya geç'}
+              testID="toggle-theme"
+              onPress={toggleTheme}
+              style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <Feather name={isDark ? 'sun' : 'moon'} size={17} color={colors.foreground} />
             </Pressable>
             <Pressable accessibilityLabel="Pro planı görüntüle" onPress={() => router.push('/pro')} style={[styles.iconButton, { backgroundColor: colors.accent, borderColor: colors.accent }]}>
               <Feather name="star" size={18} color={colors.primary} />
@@ -195,7 +210,7 @@ export default function MapScreen() {
             </View>
             <View style={[styles.liveTag, { backgroundColor: colors.accent }]}>
               <View style={[styles.liveDot, { backgroundColor: colors.primary }]} />
-              <Text style={[styles.liveText, { color: colors.primary }]}>ETKİLEŞİMLİ</Text>
+              <Text style={[styles.liveText, { color: colors.primary }]}>{layerId === 'provinces' ? '81 İL' : `${visibleItems.length} ÖZELLİK`}</Text>
             </View>
           </View>
           <TurkeyMap
@@ -317,6 +332,7 @@ export default function MapScreen() {
               placeholder="Örn. Ardahan, Tendürek, Van Gölü"
               placeholderTextColor={colors.mutedForeground}
               style={[styles.searchInput, { color: colors.foreground }]}
+              selectionColor={colors.primary}
               autoCapitalize="none"
               testID="geography-search"
             />
@@ -369,11 +385,12 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 18, paddingTop: 10, gap: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logo: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  brandName: { fontSize: 16, fontWeight: '700', letterSpacing: 0.1 },
-  eyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 1.1, marginTop: 2 },
-  headerActions: { flexDirection: 'row', gap: 8 },
-  iconButton: { height: 40, width: 40, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  logo: { width: 46, height: 46, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.12, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  logoBadge: { position: 'absolute', right: -4, bottom: -3, width: 17, height: 17, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  brandName: { fontSize: 17, fontWeight: '700', letterSpacing: -0.45 },
+  eyebrow: { fontSize: 8, fontWeight: '700', letterSpacing: 1.25, marginTop: 3 },
+  headerActions: { flexDirection: 'row', gap: 6 },
+  iconButton: { height: 38, width: 38, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   headlineBlock: { gap: 5, paddingTop: 4 },
   headline: { fontSize: 24, lineHeight: 30, fontWeight: '700', letterSpacing: -0.5 },
   subtitle: { fontSize: 13, lineHeight: 19, maxWidth: 325 },
@@ -427,7 +444,7 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 22, fontWeight: '700' },
   modalSubtitle: { fontSize: 12, marginTop: 4 },
   searchInputWrap: { height: 48, borderWidth: 1, borderRadius: 15, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 10 },
-  searchInput: { flex: 1, height: '100%', fontSize: 13 },
+  searchInput: { flex: 1, height: '100%', fontSize: 13, fontFamily: FONT_FAMILY.regular },
   searchResult: { minHeight: 62, borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 9 },
   searchResultIcon: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   searchResultTitle: { fontSize: 13, fontWeight: '600' },
