@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayerId, LAYERS, MAP_ITEMS, MapItem, MAP_COLORS } from '@/data/geography';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
 import { AppText as Text } from '@/components/AppText';
+import { GeographyLayerIcon } from '@/components/GeographyLayerIcon';
 import { KeyboardAvoidingViewCompat } from '@/components/KeyboardAvoidingViewCompat';
 import { FONT_FAMILY } from '@/constants/typography';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -165,6 +166,10 @@ export default function MapScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layerRow}>
           {LAYERS.map((layer) => {
             const active = layer.id === layerId;
+            const illustratedLayer =
+              layer.id === 'mountains' || layer.id === 'lakes' || layer.id === 'rivers'
+                ? layer.id
+                : null;
             return (
               <Pressable
                 key={layer.id}
@@ -174,7 +179,16 @@ export default function MapScreen() {
                 onPress={() => chooseLayer(layer.id)}
                 style={[styles.layerChip, { backgroundColor: active ? colors.primary : colors.card, borderColor: active ? colors.primary : colors.border }]}
               >
-                <Feather name={layer.icon as keyof typeof Feather.glyphMap} size={15} color={active ? colors.primaryForeground : colors.mutedForeground} />
+                {illustratedLayer ? (
+                  <GeographyLayerIcon
+                    type={illustratedLayer}
+                    size={19}
+                    color={active ? colors.primaryForeground : colors.primary}
+                    accentColor={active ? colors.accent : colors.accentForeground}
+                  />
+                ) : (
+                  <Feather name={layer.icon as keyof typeof Feather.glyphMap} size={15} color={active ? colors.primaryForeground : colors.mutedForeground} />
+                )}
                 <Text style={[styles.layerLabel, { color: active ? colors.primaryForeground : colors.foreground }]}>{layer.label}</Text>
               </Pressable>
             );
