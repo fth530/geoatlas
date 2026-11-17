@@ -9,6 +9,7 @@ import { Tabs } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { SymbolView } from 'expo-symbols';
 import { FONT_FAMILY } from '@/constants/typography';
+import { useStudy } from '@/context/StudyContext';
 
 // IMPORTANT: iOS 26 uses NativeTabs for native tabs with liquid glass support.
 // NativeTabs intentionally does NOT use custom design tokens — liquid glass
@@ -35,6 +36,10 @@ function NativeTabLayout() {
         <NativeTabs.Trigger.Icon sf={{ default: 'book.closed', selected: 'book.closed.fill' }} />
         <NativeTabs.Trigger.Label>Defter</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="stats">
+        <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
+        <NativeTabs.Trigger.Label>İstatistik</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -42,6 +47,8 @@ function NativeTabLayout() {
 function ClassicTabLayout() {
   const colors = useColors();
   const { isDark } = useAppTheme();
+  const { reviewItems } = useStudy();
+  const dueCount = reviewItems.filter((item) => item.dueAt <= Date.now()).length;
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
 
@@ -107,6 +114,8 @@ function ClassicTabLayout() {
         name="topics"
         options={{
           title: 'Konular',
+          tabBarBadge: dueCount > 0 ? dueCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.primary, color: colors.primaryForeground, fontSize: 9 },
           tabBarIcon: ({ color, focused }) =>
             isIOS ? <SymbolView name="checklist" tintColor={color} size={24} /> : (
               <Feather name="check-square" size={21} color={focused ? colors.primary : colors.mutedForeground} />
@@ -120,6 +129,16 @@ function ClassicTabLayout() {
           tabBarIcon: ({ color, focused }) =>
             isIOS ? <SymbolView name="book.closed" tintColor={color} size={24} /> : (
               <Feather name="book-open" size={21} color={focused ? colors.primary : colors.mutedForeground} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: 'İstatistik',
+          tabBarIcon: ({ color, focused }) =>
+            isIOS ? <SymbolView name="chart.bar" tintColor={color} size={24} /> : (
+              <Feather name="bar-chart-2" size={21} color={focused ? colors.primary : colors.mutedForeground} />
             ),
         }}
       />

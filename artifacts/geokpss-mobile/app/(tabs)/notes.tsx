@@ -47,6 +47,7 @@ export default function NotesScreen() {
     setRelatedItemName(item.name);
     setError('');
     setIsCreating(true);
+    router.setParams({ create: '0', itemId: '' });
   }, [createParam, itemIdParam]);
 
   const startNew = () => {

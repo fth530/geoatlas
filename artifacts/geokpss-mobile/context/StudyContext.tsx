@@ -1,6 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { LayerId, TopicStatus } from '@/data/geography';
+import {
+  buildReviewItem,
+  PersistedStudyData,
+  STUDY_STORE_VERSION,
+  sanitizePersistedStudy,
+} from '@/utils/study';
 
 export type StudyNote = {
   id: string;
@@ -31,28 +37,18 @@ export type QuizAnswerRecord = {
   isCorrect: boolean;
 };
 
-type PersistedStudy = {
-  notes: StudyNote[];
-  topicStatuses: Record<string, TopicStatus>;
-  reviewItems: StudyReviewItem[];
-  answered: number;
-  correct: number;
-  proCandidates: string[];
-};
-
-type StudyContextValue = PersistedStudy & {
+type StudyContextValue = PersistedStudyData & {
   hydrated: boolean;
   setTopicStatus: (topicId: string, status: TopicStatus) => void;
   saveNote: (note: StudyNote) => void;
   deleteNote: (noteId: string) => void;
   recordQuizAnswer: (answer: QuizAnswerRecord) => void;
   toggleProCandidate: (candidateId: string) => void;
+  importStudyData: (data: unknown) => boolean;
 };
 
 const STORAGE_KEY = 'geokpss-study-v1';
-const DAY_MS = 24 * 60 * 60 * 1000;
-const REVIEW_INTERVALS = [1, 3, 7, 14, 30];
-const initialState: PersistedStudy = {
+const initialState: PersistedStudyData = {
   notes: [],
   topicStatuses: {},
   reviewItems: [],
@@ -64,17 +60,18 @@ const initialState: PersistedStudy = {
 const StudyContext = createContext<StudyContextValue | null>(null);
 
 export function StudyProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<PersistedStudy>(initialState);
+  const [state, setState] = useState<PersistedStudyData>(initialState);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     let active = true;
     AsyncStorage.getItem(STORAGE_KEY)
       .then((saved) => {
-        if (!active) return;
-        if (saved) {
-          const parsed = JSON.parse(saved) as Partial<PersistedStudy>;
-          setState({ ...initialState, ...parsed });
+        if (!active || !saved) return;
+        try {
+          setState({ ...initialState, ...sanitizePersistedStudy(JSON.parse(saved)) });
+        } catch {
+          // Corrupt payloads are ignored; the app starts with a clean slate.
         }
       })
       .catch(() => {
@@ -88,9 +85,12 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const commit = (next: PersistedStudy) => {
+  const commit = (next: PersistedStudyData) => {
     setState(next);
-    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    void AsyncStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...next, version: STUDY_STORE_VERSION }),
+    );
   };
 
   const value = useMemo<StudyContextValue>(
@@ -111,37 +111,24 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
       recordQuizAnswer: (answer) => {
         const id = `${answer.layer}:${answer.targetId}`;
         const existing = state.reviewItems.find((item) => item.id === id);
-        const successStreak = answer.isCorrect ? (existing?.successStreak ?? 0) + 1 : 0;
-        const intervalDays = answer.isCorrect
-          ? REVIEW_INTERVALS[Math.min(existing?.successStreak ?? 0, REVIEW_INTERVALS.length - 1)]
-          : 1;
-        const reviewItem: StudyReviewItem = {
-          id,
-          layer: answer.layer,
-          targetId: answer.targetId,
-          targetName: answer.targetName,
-          dueAt: Date.now() + intervalDays * DAY_MS,
-          intervalDays,
-          successStreak,
-          attempts: (existing?.attempts ?? 0) + 1,
-          lastCorrect: answer.isCorrect,
-        };
+        const reviewItem = buildReviewItem(answer, existing);
         const topicStatus = state.topicStatuses[answer.layer] ?? 'new';
-        const topicStatuses = {
-          ...state.topicStatuses,
-          ...(answer.isCorrect
-            ? topicStatus === 'new' ? { [answer.layer]: 'studying' as TopicStatus } : {}
-            : { [answer.layer]: 'weak' as TopicStatus }),
-        };
+        let topicStatuses = state.topicStatuses;
+        if (topicStatus !== 'done') {
+          if (!answer.isCorrect) {
+            topicStatuses = { ...state.topicStatuses, [answer.layer]: 'weak' as TopicStatus };
+          } else if (topicStatus === 'new') {
+            topicStatuses = { ...state.topicStatuses, [answer.layer]: 'studying' as TopicStatus };
+          } else if (topicStatus === 'weak') {
+            topicStatuses = { ...state.topicStatuses, [answer.layer]: 'review' as TopicStatus };
+          }
+        }
         commit({
           ...state,
           answered: state.answered + 1,
           correct: state.correct + (answer.isCorrect ? 1 : 0),
           topicStatuses,
-          reviewItems: [
-            reviewItem,
-            ...state.reviewItems.filter((item) => item.id !== id),
-          ],
+          reviewItems: [reviewItem, ...state.reviewItems.filter((item) => item.id !== id)],
         });
       },
       toggleProCandidate: (candidateId) =>
@@ -151,11 +138,33 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
             ? state.proCandidates.filter((id) => id !== candidateId)
             : [...state.proCandidates, candidateId],
         }),
+      importStudyData: (data) => {
+        try {
+          const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data;
+          const payload = isRecord(parsed) && isRecord(parsed.study) ? parsed.study : parsed;
+          const clean = sanitizePersistedStudy(payload);
+          const hasContent =
+            clean.notes.length > 0 ||
+            clean.reviewItems.length > 0 ||
+            Object.keys(clean.topicStatuses).length > 0 ||
+            clean.answered > 0 ||
+            clean.proCandidates.length > 0;
+          if (!hasContent) return false;
+          commit({ ...initialState, ...clean });
+          return true;
+        } catch {
+          return false;
+        }
+      },
     }),
     [state, hydrated],
   );
 
   return <StudyContext.Provider value={value}>{children}</StudyContext.Provider>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function useStudy() {

@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useMemo, useState } from 'react';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   Modal,
   Platform,
@@ -12,14 +13,23 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LayerId, LAYERS, MAP_ITEMS, MapItem, MAP_COLORS } from '@/data/geography';
+import { LayerId, LAYERS, LAYER_SOURCES, MAP_ITEMS, MapItem, MAP_COLORS } from '@/data/geography';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
 import { AppText as Text } from '@/components/AppText';
 import { GeographyLayerIcon } from '@/components/GeographyLayerIcon';
+import { PressableScale } from '@/components/PressableScale';
 import { KeyboardAvoidingViewCompat } from '@/components/KeyboardAvoidingViewCompat';
 import { FONT_FAMILY } from '@/constants/typography';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
+
+function itemMatchesFilter(item: MapItem, layer: LayerId, filter: string): boolean {
+  if (item.layer !== layer) return false;
+  if (filter === 'all') return true;
+  if (filter === 'volcanic' && item.subtype === 'volcanicLake') return true;
+  return item.subtype === filter || item.tags?.includes(filter) === true;
+}
 
 const PROVINCE_NOTES: Record<string, string> = {
   Ardahan: 'Çıldır Gölü, yüksek plato ve kışın donan göl yüzeyiyle öne çıkar.',
@@ -40,6 +50,7 @@ export default function MapScreen() {
   const [selectedItem, setSelectedItem] = useState<MapItem | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const { notes } = useStudy();
 
   useEffect(() => {
     if (layerParam && LAYERS.some((layer) => layer.id === layerParam)) {
@@ -60,14 +71,22 @@ export default function MapScreen() {
 
   const activeLayer = LAYERS.find((layer) => layer.id === layerId) ?? LAYERS[0];
   const visibleItems = useMemo(
-    () =>
-      MAP_ITEMS.filter((item) => {
-        if (item.layer !== layerId) return false;
-        if (filterId === 'all') return true;
-        if (filterId === 'volcanic' && item.subtype === 'volcanicLake') return true;
-        return item.subtype === filterId || item.tags?.includes(filterId) === true;
-      }),
+    () => MAP_ITEMS.filter((item) => itemMatchesFilter(item, layerId, filterId)),
     [layerId, filterId],
+  );
+  const layerCounts = useMemo(
+    () =>
+      new Map(
+        LAYERS.map((layer) => [
+          layer.id,
+          layer.id === 'provinces' ? PROVINCES.length : MAP_ITEMS.filter((item) => item.layer === layer.id).length,
+        ]),
+      ),
+    [],
+  );
+  const filterCounts = useMemo(
+    () => new Map(activeLayer.filters.map((filter) => [filter.id, MAP_ITEMS.filter((item) => itemMatchesFilter(item, layerId, filter.id)).length])),
+    [layerId, activeLayer],
   );
   const matchingItems = useMemo(
     () => {
@@ -86,7 +105,7 @@ export default function MapScreen() {
       const query = searchText.trim().toLocaleLowerCase('tr');
       if (!query) return [];
       return PROVINCES.filter((province) =>
-        `${province.name} ${province.plate}`.toLocaleLowerCase('tr').includes(query),
+        `${province.name} ${province.plate} ${province.region}`.toLocaleLowerCase('tr').includes(query),
       ).slice(0, 6);
     },
     [searchText],
@@ -171,7 +190,7 @@ export default function MapScreen() {
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Harita katmanları</Text>
             <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>İstediğin konuyu seç, haritada incele.</Text>
           </View>
-          <Text style={[styles.countBadge, { color: colors.primary, backgroundColor: colors.accent }]}>10 KATMAN</Text>
+          <Text style={[styles.countBadge, { color: colors.primary, backgroundColor: colors.accent }]}>{LAYERS.length} KATMAN</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layerRow}>
           {LAYERS.map((layer) => {
@@ -200,6 +219,9 @@ export default function MapScreen() {
                   <Feather name={layer.icon as keyof typeof Feather.glyphMap} size={15} color={active ? colors.primaryForeground : colors.mutedForeground} />
                 )}
                 <Text style={[styles.layerLabel, { color: active ? colors.primaryForeground : colors.foreground }]}>{layer.label}</Text>
+                <Text style={[styles.layerCount, { color: active ? colors.primaryForeground : colors.mutedForeground, opacity: active ? 0.75 : 0.6 }]}>
+                  {layerCounts.get(layer.id) ?? 0}
+                </Text>
               </Pressable>
             );
           })}
@@ -209,8 +231,9 @@ export default function MapScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
             {activeLayer.filters.map((filter) => {
               const active = filterId === filter.id;
+              const count = filterCounts.get(filter.id) ?? 0;
               return (
-                <Pressable
+                <PressableScale
                   key={filter.id}
                   onPress={() => {
                     setFilterId(filter.id);
@@ -220,7 +243,8 @@ export default function MapScreen() {
                   style={[styles.filterChip, { backgroundColor: active ? colors.accent : 'transparent', borderColor: active ? colors.accent : colors.border }]}
                 >
                   <Text style={[styles.filterLabel, { color: active ? colors.primary : colors.mutedForeground }]}>{filter.label}</Text>
-                </Pressable>
+                  <Text style={[styles.filterCount, { color: active ? colors.primary : colors.mutedForeground, opacity: active ? 0.7 : 0.55 }]}>{count}</Text>
+                </PressableScale>
               );
             })}
           </ScrollView>
@@ -243,14 +267,18 @@ export default function MapScreen() {
             selectedProvince={selectedProvince}
             selectedItemId={selectedItem?.id}
             onSelectProvince={chooseProvince}
-            onSelectItem={setSelectedItem}
+            onSelectItem={(item) => {
+              setSelectedItem(item);
+              void Haptics.selectionAsync();
+            }}
+            highlightProvinces={selectedItem?.provinces}
           />
           <Text style={[styles.mapFootnote, { color: colors.mutedForeground }]}>Haritaya dokun · iki parmağınla yakınlaştır</Text>
           <Text style={[styles.attribution, { color: colors.mutedForeground }]}>Sınır geometrileri: OpenStreetMap katkıcıları · ODbL</Text>
         </View>
 
         {selectedItem ? (
-          <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Animated.View key={selectedItem.id} entering={FadeInDown.duration(200)} style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.detailTop}>
               <View style={[styles.detailIcon, { backgroundColor: `${MAP_COLORS[selectedItem.subtype] ?? colors.primary}22` }]}>
                 <Feather name="map-pin" size={17} color={MAP_COLORS[selectedItem.subtype] ?? colors.primary} />
@@ -263,6 +291,15 @@ export default function MapScreen() {
                 <Feather name="x" size={19} color={colors.mutedForeground} />
               </Pressable>
             </View>
+            {selectedItem.provinces.length > 1 && (
+              <View style={styles.provinceChips}>
+                {selectedItem.provinces.map((province) => (
+                  <View key={province} style={[styles.provinceChip, { backgroundColor: colors.accent, borderColor: colors.border }]}>
+                    <Text style={[styles.provinceChipText, { color: colors.accentForeground }]}>{province}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
             <Text style={[styles.detailBody, { color: colors.foreground }]}>{selectedItem.description}</Text>
             {selectedItem.elevation && (
               <View style={[styles.factPill, { backgroundColor: colors.muted }]}>
@@ -276,19 +313,34 @@ export default function MapScreen() {
                 <Text style={[styles.examTipText, { color: colors.accentForeground }]}>{selectedItem.examTip}</Text>
               </View>
             )}
-            <Pressable
+            <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>
+              Kaynak: {selectedItem.source ?? LAYER_SOURCES[selectedItem.layer]}
+            </Text>
+            <PressableScale
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/quiz', params: { mode: selectedItem.layer } })}
+              style={[styles.detailQuiz, { backgroundColor: colors.primary }]}
+              testID="quiz-from-item"
+            >
+              <Feather name="target" size={15} color={colors.primaryForeground} />
+              <Text style={[styles.detailQuizText, { color: colors.primaryForeground }]}>Bu katmanda quiz çöz</Text>
+              <Feather name="arrow-right" size={14} color={colors.primaryForeground} />
+            </PressableScale>
+            <PressableScale
               accessibilityRole="button"
               onPress={() => router.push({ pathname: '/notes', params: { create: '1', itemId: selectedItem.id } })}
               style={[styles.noteFromMap, { backgroundColor: colors.accent }]}
               testID="create-note-from-map"
             >
               <Feather name="book-open" size={15} color={colors.primary} />
-              <Text style={[styles.noteFromMapText, { color: colors.primary }]}>Bu özellik için kodlama notu ekle</Text>
+              <Text style={[styles.noteFromMapText, { color: colors.primary }]}>
+                Bu özellik için kodlama notu ekle{notes.some((note) => note.relatedItemId === selectedItem.id) ? ` (${notes.filter((note) => note.relatedItemId === selectedItem.id).length})` : ''}
+              </Text>
               <Feather name="arrow-right" size={14} color={colors.primary} />
-            </Pressable>
-          </View>
+            </PressableScale>
+          </Animated.View>
         ) : selectedProvince ? (
-          <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Animated.View key={selectedProvince} entering={FadeInDown.duration(200)} style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.detailTop}>
               <View style={[styles.detailIcon, { backgroundColor: colors.accent }]}>
                 <Feather name="map-pin" size={17} color={colors.primary} />
@@ -304,7 +356,10 @@ export default function MapScreen() {
               </Pressable>
             </View>
             <Text style={[styles.detailBody, { color: colors.foreground }]}>
-              {PROVINCE_NOTES[selectedProvince] ?? 'Haritadaki renkli işaretlere dokunarak bu ildeki coğrafi özellikleri inceleyebilirsin.'}
+              {PROVINCE_NOTES[selectedProvince] ??
+                (provinceData
+                  ? `${selectedProvince}, ${provinceData.region} bölgesinde yer alır (${String(provinceData.plate).padStart(2, '0')} plaka). Haritadaki renkli işaretlere dokunarak bu ildeki coğrafi özellikleri inceleyebilirsin.`
+                  : 'Haritadaki renkli işaretlere dokunarak bu ildeki coğrafi özellikleri inceleyebilirsin.')}
             </Text>
             {provinceItems.length > 0 && (
               <View style={styles.relatedList}>
@@ -318,7 +373,17 @@ export default function MapScreen() {
                 </View>
               </View>
             )}
-          </View>
+            <PressableScale
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/quiz', params: { mode: 'provinces' } })}
+              style={[styles.detailQuiz, { backgroundColor: colors.primary }]}
+              testID="quiz-from-province"
+            >
+              <Feather name="target" size={15} color={colors.primaryForeground} />
+              <Text style={[styles.detailQuizText, { color: colors.primaryForeground }]}>İl quiz'ini başlat</Text>
+              <Feather name="arrow-right" size={14} color={colors.primaryForeground} />
+            </PressableScale>
+          </Animated.View>
         ) : (
           <Pressable onPress={() => chooseProvince('Ankara')} style={[styles.emptySelection, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="crosshair" size={18} color={colors.primary} />
@@ -326,7 +391,7 @@ export default function MapScreen() {
           </Pressable>
         )}
 
-        <Pressable onPress={() => router.push('/quiz')} style={[styles.quizBanner, { backgroundColor: colors.primary }]} testID="start-quiz">
+        <PressableScale onPress={() => router.push('/quiz')} style={[styles.quizBanner, { backgroundColor: colors.primary }]} testID="start-quiz">
           <View style={{ flex: 1 }}>
             <Text style={[styles.quizEyebrow, { color: colors.primaryForeground }]}>HARİTADA KENDİNİ DENE</Text>
             <Text style={[styles.quizTitle, { color: colors.primaryForeground }]}>Dilsiz harita quiz’i</Text>
@@ -335,15 +400,15 @@ export default function MapScreen() {
           <View style={[styles.quizArrow, { backgroundColor: colors.accent }]}>
             <Feather name="arrow-up-right" size={19} color={colors.primaryForeground} />
           </View>
-        </Pressable>
-        <Pressable onPress={() => router.push('/pro')} style={[styles.proBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        </PressableScale>
+        <PressableScale onPress={() => router.push('/pro')} style={[styles.proBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.proIcon, { backgroundColor: colors.premiumBackground }]}><Feather name="star" size={16} color={colors.premium} /></View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.proTitle, { color: colors.foreground }]}>Pro plan taslağı</Text>
             <Text style={[styles.proCopy, { color: colors.mutedForeground }]}>Bu sürümde tüm içerikler açık.</Text>
           </View>
           <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-        </Pressable>
+        </PressableScale>
       </ScrollView>
 
       <Modal visible={searchOpen} animationType="slide" onRequestClose={() => setSearchOpen(false)}>
@@ -436,8 +501,10 @@ const styles = StyleSheet.create({
   layerChip: { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 15, paddingHorizontal: 12, paddingVertical: 9 },
   layerLabel: { fontSize: 12, fontWeight: '600' },
   filterRow: { gap: 7, marginTop: -9, paddingVertical: 2, paddingRight: 15 },
-  filterChip: { borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, paddingVertical: 7 },
+  filterChip: { borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 5 },
   filterLabel: { fontSize: 11, fontWeight: '600' },
+  filterCount: { fontSize: 9, fontWeight: '700' },
+  layerCount: { fontSize: 9, fontWeight: '700', marginLeft: 2 },
   mapCard: { borderRadius: 26, padding: 14, gap: 9, shadowOpacity: 0.045, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
   mapCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   mapTitle: { fontSize: 16, fontWeight: '700' },
@@ -448,6 +515,9 @@ const styles = StyleSheet.create({
   mapFootnote: { fontSize: 10, textAlign: 'center', marginTop: -1 },
   attribution: { fontSize: 9, textAlign: 'center', marginTop: -8 },
   detailCard: { borderRadius: 22, borderWidth: 1, padding: 15, gap: 11 },
+  provinceChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  provinceChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 4 },
+  provinceChipText: { fontSize: 10.5, fontWeight: '700' },
   detailTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   detailIcon: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   detailTitle: { fontSize: 15, fontWeight: '700' },
@@ -457,6 +527,9 @@ const styles = StyleSheet.create({
   factText: { fontSize: 12, fontWeight: '700' },
   examTip: { flexDirection: 'row', gap: 8, borderRadius: 14, padding: 11, alignItems: 'flex-start' },
   examTipText: { flex: 1, fontSize: 12, lineHeight: 17, fontWeight: '500' },
+  sourceText: { fontSize: 10, lineHeight: 14 },
+  detailQuiz: { minHeight: 42, borderRadius: 12, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  detailQuizText: { flex: 1, fontSize: 11, fontWeight: '700' },
   noteFromMap: { minHeight: 39, borderRadius: 12, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
   noteFromMapText: { flex: 1, fontSize: 10, fontWeight: '700' },
   relatedList: { gap: 8 },

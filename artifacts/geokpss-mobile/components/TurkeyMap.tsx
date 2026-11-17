@@ -1,14 +1,15 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import Reanimated, { Easing, runOnJS, useAnimatedProps, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useColors } from '@/hooks/useColors';
 import { LayerId, MapItem, MAP_COLORS } from '@/data/geography';
 import { AppText } from '@/components/AppText';
 import { FONT_FAMILY } from '@/constants/typography';
+import { project, VIEW_HEIGHT, VIEW_WIDTH } from '@/utils/geo';
+import type { Point } from '@/utils/geo';
 
-type Point = { x: number; y: number };
 type ProvinceShape = { name: string; plate: number; region: string; path: string; center: Point };
 type GeoGeometry = { type: 'Polygon' | 'MultiPolygon'; coordinates: unknown[] };
 type GeoFeature = {
@@ -18,9 +19,6 @@ type GeoFeature = {
 type GeoCollection = { features: GeoFeature[] };
 
 const GEO = require('../data/turkiye_iller.json') as GeoCollection;
-const VIEW_WIDTH = 360;
-const VIEW_HEIGHT = 190;
-const BOUNDS = { minLon: 25.75, maxLat: 42.25 };
 export const PROVINCES = GEO.features
   .map((feature) => ({
     name: feature.properties.il_adi,
@@ -28,13 +26,6 @@ export const PROVINCES = GEO.features
     region: feature.properties.bolge,
   }))
   .sort((a, b) => a.plate - b.plate);
-
-function project(lon: number, lat: number): Point {
-  return {
-    x: (lon - BOUNDS.minLon) * 18.8,
-    y: (BOUNDS.maxLat - lat) * 29.1,
-  };
-}
 
 function getRings(geometry: GeoGeometry): number[][][][] {
   if (geometry.type === 'Polygon') return [geometry.coordinates as number[][][]];
@@ -110,25 +101,38 @@ type Props = {
   quiz?: boolean;
   correctProvinces?: string[];
   wrongProvince?: string | null;
+  /** Seçili öğenin kapsadığı illeri vurgular (örn. GAP/DAP gibi çok illi projeler). */
+  highlightProvinces?: string[];
 };
 
-export function TurkeyMap({
+type ProvinceLayerProps = {
+  shapes: ProvinceShape[];
+  layer: LayerId;
+  quiz: boolean;
+  selectedProvince: string | null;
+  correctProvinces: string[];
+  wrongProvince: string | null;
+  showRegionLabels: boolean;
+  showPlateLabels: boolean;
+  highlightProvinces: string[];
+  onSelect: (name: string) => void;
+};
+
+// Memoized: province paths do not depend on zoom/focus, so pinch gestures
+// only re-render the cheap <Svg viewBox> prop instead of all 81 paths.
+const ProvinceLayer = React.memo(function ProvinceLayer({
+  shapes,
   layer,
-  items,
+  quiz,
   selectedProvince,
-  selectedItemId,
-  onSelectProvince,
-  onSelectItem,
-  quiz = false,
-  correctProvinces = [],
+  correctProvinces,
   wrongProvince,
-}: Props) {
+  showRegionLabels,
+  showPlateLabels,
+  highlightProvinces,
+  onSelect,
+}: ProvinceLayerProps) {
   const colors = useColors();
-  const [zoom, setZoom] = useState(1);
-  const [focus, setFocus] = useState<Point>({ x: VIEW_WIDTH / 2, y: VIEW_HEIGHT / 2 });
-  const [mapWidth, setMapWidth] = useState(VIEW_WIDTH);
-  const shapes = useMemo(() => GEO.features.map(makeShape), []);
-  const shapeByName = useMemo(() => new Map(shapes.map((shape) => [shape.name, shape])), [shapes]);
   const regionColors: Record<string, string> = {
     Marmara: colors.mapMarmara,
     Ege: colors.mapEge,
@@ -138,11 +142,237 @@ export function TurkeyMap({
     'Doğu Anadolu': colors.mapDoguAnadolu,
     'Güneydoğu Anadolu': colors.mapGuneydogu,
   };
+  return (
+    <>
+      {shapes.map((shape) => {
+        const isCorrect = correctProvinces.includes(shape.name);
+        const isWrong = wrongProvince === shape.name;
+        const isSelected = selectedProvince === shape.name;
+        const isHighlight = highlightProvinces.includes(shape.name);
+        const selectProvince = () => onSelect(shape.name);
+        const fill = isWrong
+          ? colors.mapWrong
+          : isCorrect
+            ? colors.mapCorrect
+            : isHighlight
+              ? colors.mapSelected
+              : isSelected
+                ? colors.mapSelected
+                : layer === 'provinces'
+                ? !quiz
+                  ? regionColors[shape.region] ?? colors.mapProvince
+                  : colors.mapProvince
+                : colors.mapRegion;
+        return (
+          <Path
+            key={shape.name}
+            d={shape.path}
+            fill={fill}
+            fillRule="evenodd"
+            stroke={colors.mapStroke}
+            strokeWidth={isSelected || isWrong ? 1.25 : 0.62}
+            {...(Platform.OS === 'web' ? { onClick: selectProvince } : { onPress: selectProvince })}
+          />
+        );
+      })}
+      {showRegionLabels && (
+        <>
+          <SvgText x="51" y="53" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">MARMARA</SvgText>
+          <SvgText x="55" y="108" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">EGE</SvgText>
+          <SvgText x="149" y="168" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">AKDENİZ</SvgText>
+          <SvgText x="153" y="91" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">İÇ ANADOLU</SvgText>
+          <SvgText x="207" y="44" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">KARADENİZ</SvgText>
+          <SvgText x="309" y="97" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">DOĞU ANADOLU</SvgText>
+          <SvgText x="282" y="145" fontSize="5.5" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">GÜNEYDOĞU</SvgText>
+        </>
+      )}
+      {showPlateLabels && shapes.map((shape) => (
+        <SvgText
+          key={`plate-${shape.plate}`}
+          x={shape.center.x}
+          y={shape.center.y + 1.5}
+          fontSize="5.5"
+          fontWeight="700"
+          fill={selectedProvince === shape.name ? colors.primaryForeground : colors.foreground}
+          textAnchor="middle"
+        >
+          {String(shape.plate).padStart(2, '0')}
+        </SvgText>
+      ))}
+    </>
+  );
+});
+
+type MarkerDatum = {
+  key: string;
+  item: MapItem;
+  province: string;
+  provinceIndex: number;
+  cx: number;
+  cy: number;
+};
+
+type FeatureMarkersProps = {
+  items: MapItem[];
+  selectedItemId?: string | null;
+  shapeByName: Map<string, ProvinceShape>;
+  onMarkerPress: (item: MapItem, province: string) => void;
+};
+
+const FeatureMarkers = React.memo(function FeatureMarkers({
+  items,
+  selectedItemId,
+  shapeByName,
+  onMarkerPress,
+}: FeatureMarkersProps) {
+  const colors = useColors();
+  const markers = useMemo<MarkerDatum[]>(() => {
+    const offsets = new Map<string, number>();
+    return items.flatMap((item) =>
+      item.provinces.flatMap((province, provinceIndex) => {
+        const shape = shapeByName.get(province);
+        if (!shape) return [];
+        const index = offsets.get(province) ?? 0;
+        offsets.set(province, index + 1);
+        const angle = index * 2.399963;
+        const radius = index === 0 ? 0 : 3 + Math.sqrt(index) * 2.2;
+        return [{
+          key: `${item.id}:${province}`,
+          item,
+          province,
+          provinceIndex,
+          cx: shape.center.x + Math.cos(angle) * radius,
+          cy: shape.center.y + Math.sin(angle) * radius,
+        }];
+      }),
+    );
+  }, [items, shapeByName]);
+
+  return (
+    <>
+      {markers.map(({ key, item, province, provinceIndex, cx, cy }) => {
+        const active = selectedItemId === item.id;
+        const color = MAP_COLORS[item.subtype] ?? colors.primary;
+        const showLabel = active && provinceIndex === 0;
+        const selectItem = () => onMarkerPress(item, province);
+        return (
+          <React.Fragment key={key}>
+            <Circle
+              cx={cx}
+              cy={cy}
+              r={active ? 9 : 7}
+              fill={color}
+              opacity="0.2"
+              {...(Platform.OS === 'web' ? { onClick: selectItem } : { onPress: selectItem })}
+            />
+            <Circle
+              cx={cx}
+              cy={cy}
+              r={active ? 4.7 : 3.5}
+              fill={color}
+              stroke={colors.mapStroke}
+              strokeWidth={active ? 1.8 : 1.3}
+              {...(Platform.OS === 'web' ? { onClick: selectItem } : { onPress: selectItem })}
+            />
+            {active && <PulseRing cx={cx} cy={cy} color={color} />}
+            {showLabel && (
+              <>
+                <Rect
+                  x={cx - Math.min(46, item.name.length * 2.1 + 8)}
+                  y={cy - 19}
+                  width={Math.min(92, item.name.length * 4.2 + 16)}
+                  height="12"
+                  rx="6"
+                  fill={colors.card}
+                  stroke={colors.border}
+                  strokeWidth="0.65"
+                />
+                <SvgText
+                  x={cx}
+                  y={cy - 10.5}
+                  fontSize="6.5"
+                  fontWeight="700"
+                  fill={colors.foreground}
+                  textAnchor="middle"
+                >
+                  {item.name.length > 20 ? `${item.name.slice(0, 18)}…` : item.name}
+                </SvgText>
+              </>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+});
+
+const AnimatedCircle = Reanimated.createAnimatedComponent(Circle);
+
+function PulseRing({ cx, cy, color, radius = 13 }: { cx: number; cy: number; color: string; radius?: number }) {
+  const opacity = useSharedValue(0.5);
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(
+        withTiming(0.08, { duration: 1100, easing: Easing.out(Easing.quad) }),
+        withTiming(0.5, { duration: 1100, easing: Easing.in(Easing.quad) }),
+      ),
+      -1,
+      false,
+    );
+  }, [opacity]);
+  const animatedProps = useAnimatedProps(() => ({ opacity: opacity.value }));
+  return (
+    <AnimatedCircle
+      cx={cx}
+      cy={cy}
+      r={radius}
+      fill="none"
+      stroke={color}
+      strokeWidth={1.6}
+      animatedProps={animatedProps}
+    />
+  );
+}
+
+const EMPTY_PROVINCES: string[] = [];
+const EMPTY_ITEMS: MapItem[] = [];
+
+export function TurkeyMap({
+  layer,
+  items = EMPTY_ITEMS,
+  selectedProvince,
+  selectedItemId,
+  onSelectProvince,
+  onSelectItem,
+  quiz = false,
+  correctProvinces = EMPTY_PROVINCES,
+  wrongProvince,
+  highlightProvinces = EMPTY_PROVINCES,
+}: Props) {
+  const colors = useColors();
+  const [zoom, setZoomState] = useState(1);
+  const zoomRef = useRef(1);
+  const zoomShared = useSharedValue(1);
+  const gestureStartZoom = useSharedValue(1);
+  const [focus, setFocus] = useState<Point>({ x: VIEW_WIDTH / 2, y: VIEW_HEIGHT / 2 });
+  const [mapWidth, setMapWidth] = useState(VIEW_WIDTH);
+  const canvasDomRef = useRef<HTMLElement | null>(null);
+  const shapes = useMemo(() => GEO.features.map(makeShape), []);
+  const shapeByName = useMemo(() => new Map(shapes.map((shape) => [shape.name, shape])), [shapes]);
   const viewWidth = VIEW_WIDTH / zoom;
   const viewHeight = VIEW_HEIGHT / zoom;
   const focusX = Math.max(viewWidth / 2, Math.min(VIEW_WIDTH - viewWidth / 2, focus.x));
   const focusY = Math.max(viewHeight / 2, Math.min(VIEW_HEIGHT - viewHeight / 2, focus.y));
   const viewBox = `${focusX - viewWidth / 2} ${focusY - viewHeight / 2} ${viewWidth} ${viewHeight}`;
+  const applyZoom = useCallback(
+    (value: number) => {
+      const clamped = Math.max(1, Math.min(3.2, value));
+      zoomRef.current = clamped;
+      zoomShared.value = clamped;
+      setZoomState(clamped);
+    },
+    [zoomShared],
+  );
   const panMap = useCallback(
     (deltaX: number, deltaY: number) => {
       if (zoom <= 1.01) return;
@@ -154,32 +384,96 @@ export function TurkeyMap({
     },
     [mapWidth, viewHeight, viewWidth, zoom],
   );
-  const focusProvince = (name: string) => {
-    onSelectProvince(name);
-    if (!quiz) {
-      const point = shapeByName.get(name)?.center;
-      if (point) {
-        setFocus(point);
-        setZoom((value) => Math.max(value, 1.55));
+  const onSelectProvinceRef = useRef(onSelectProvince);
+  const onSelectItemRef = useRef(onSelectItem);
+  const quizRef = useRef(quiz);
+  onSelectProvinceRef.current = onSelectProvince;
+  onSelectItemRef.current = onSelectItem;
+  quizRef.current = quiz;
+  const focusProvince = useCallback(
+    (name: string) => {
+      onSelectProvinceRef.current(name);
+      if (!quizRef.current) {
+        const point = shapeByName.get(name)?.center;
+        if (point) {
+          setFocus(point);
+          applyZoom(Math.max(zoomRef.current, 1.55));
+        }
       }
-    }
-  };
+    },
+    [applyZoom, shapeByName],
+  );
+  const handleMarkerPress = useCallback(
+    (item: MapItem, province: string) => {
+      focusProvince(province);
+      onSelectItemRef.current?.(item);
+    },
+    [focusProvince],
+  );
   const pinch = useMemo(
     () =>
-      Gesture.Pinch().onEnd((event) => {
-        runOnJS(setZoom)(Math.max(1, Math.min(3.2, zoom * event.scale)));
-      }),
-    [zoom],
+      Gesture.Pinch()
+        .onStart(() => {
+          gestureStartZoom.value = zoomShared.value;
+        })
+        .onUpdate((event) => {
+          runOnJS(applyZoom)(gestureStartZoom.value * event.scale);
+        }),
+    [applyZoom, gestureStartZoom, zoomShared],
   );
   const pan = useMemo(
     () => Gesture.Pan().minDistance(8).onChange((event) => runOnJS(panMap)(event.changeX, event.changeY)),
     [panMap],
   );
   const mapGesture = useMemo(() => Gesture.Simultaneous(pinch, pan), [pan, pinch]);
-  const featureOffsets = new Map<string, number>();
+
+  // Web has no gesture-handler pinch/pan, so wheel-zoom and drag-pan are
+  // wired to the canvas DOM node directly.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const element = canvasDomRef.current;
+    if (!element) return;
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      applyZoom(zoomRef.current * (event.deltaY < 0 ? 1.12 : 1 / 1.12));
+    };
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    const onPointerDown = (event: PointerEvent) => {
+      if (zoomRef.current <= 1.01) return;
+      dragging = true;
+      lastX = event.clientX;
+      lastY = event.clientY;
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (!dragging) return;
+      panMap(event.clientX - lastX, event.clientY - lastY);
+      lastX = event.clientX;
+      lastY = event.clientY;
+    };
+    const onPointerUp = () => {
+      dragging = false;
+    };
+
+    element.addEventListener('wheel', onWheel, { passive: false });
+    element.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    return () => {
+      element.removeEventListener('wheel', onWheel);
+      element.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+  }, [applyZoom, panMap, canvasDomRef]);
 
   const mapContent = (
     <View
+      ref={(node) => {
+        canvasDomRef.current = node as unknown as HTMLElement | null;
+      }}
       style={[styles.canvas, { backgroundColor: colors.mapWater }]}
       onLayout={(event) => setMapWidth(Math.max(1, event.nativeEvent.layout.width))}
       testID="turkey-map"
@@ -203,131 +497,45 @@ export function TurkeyMap({
           strokeLinejoin="round"
         />
           <SvgText x="27" y="15" fontSize="6" fontWeight="700" fill={colors.mutedForeground} textAnchor="middle" fontFamily={FONT_FAMILY.bold}>K</SvgText>
-        {shapes.map((shape) => {
-          const isCorrect = correctProvinces.includes(shape.name);
-          const isWrong = wrongProvince === shape.name;
-          const isSelected = selectedProvince === shape.name;
-          const selectProvince = () => focusProvince(shape.name);
-          const fill = isWrong
-            ? colors.mapWrong
-            : isCorrect
-              ? colors.mapCorrect
-              : isSelected
-                ? colors.mapSelected
-                : layer === 'provinces'
-                  ? !quiz
-                    ? regionColors[shape.region] ?? colors.mapProvince
-                    : colors.mapProvince
-                  : colors.mapRegion;
-          return (
-            <Path
-              key={shape.name}
-              d={shape.path}
-              fill={fill}
-              stroke={colors.mapStroke}
-              strokeWidth={isSelected || isWrong ? 1.25 : 0.62}
-              {...(Platform.OS === 'web' ? { onClick: selectProvince } : { onPress: selectProvince })}
-            />
-          );
-        })}
-        {layer === 'provinces' && !quiz && zoom < 1.8 && (
-          <>
-            <SvgText x="51" y="53" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">MARMARA</SvgText>
-            <SvgText x="55" y="108" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">EGE</SvgText>
-            <SvgText x="149" y="168" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">AKDENİZ</SvgText>
-            <SvgText x="153" y="91" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">İÇ ANADOLU</SvgText>
-            <SvgText x="207" y="44" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">KARADENİZ</SvgText>
-            <SvgText x="309" y="97" fontSize="6" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">DOĞU ANADOLU</SvgText>
-            <SvgText x="282" y="145" fontSize="5.5" fontWeight="700" fill={colors.mutedForeground} opacity="0.66" textAnchor="middle">GÜNEYDOĞU</SvgText>
-          </>
+        <ProvinceLayer
+          shapes={shapes}
+          layer={layer}
+          quiz={quiz}
+          selectedProvince={selectedProvince}
+          correctProvinces={correctProvinces}
+          wrongProvince={wrongProvince ?? null}
+          showRegionLabels={layer === 'provinces' && !quiz && zoom < 1.8}
+          showPlateLabels={layer === 'provinces' && !quiz && zoom >= 1.8}
+          highlightProvinces={highlightProvinces}
+          onSelect={focusProvince}
+        />
+        {layer !== 'provinces' && (
+          <FeatureMarkers
+            items={items}
+            selectedItemId={selectedItemId}
+            shapeByName={shapeByName}
+            onMarkerPress={handleMarkerPress}
+          />
         )}
-        {layer === 'provinces' && !quiz && zoom >= 1.8 && shapes.map((shape) => (
-          <SvgText
-            key={`plate-${shape.plate}`}
-            x={shape.center.x}
-            y={shape.center.y + 1.5}
-            fontSize="5.5"
-            fontWeight="700"
-            fill={selectedProvince === shape.name ? colors.primaryForeground : colors.foreground}
-            textAnchor="middle"
-          >
-            {String(shape.plate).padStart(2, '0')}
-          </SvgText>
-        ))}
-        {layer !== 'provinces' &&
-          items.map((item) => {
-            const province = item.provinces[0];
-            const shape = shapeByName.get(province);
-            if (!shape) return null;
-            const index = featureOffsets.get(province) ?? 0;
-            featureOffsets.set(province, index + 1);
-            const angle = index * 2.399963;
-            const radius = index === 0 ? 0 : 3 + Math.sqrt(index) * 2.2;
-            const dx = Math.cos(angle) * radius;
-            const dy = Math.sin(angle) * radius;
-            const active = selectedItemId === item.id;
-            const color = MAP_COLORS[item.subtype] ?? colors.primary;
-            const selectItem = () => {
-              focusProvince(province);
-              onSelectItem?.(item);
-            };
-            return (
-              <React.Fragment key={item.id}>
-                <Circle
-                  cx={shape.center.x + dx}
-                  cy={shape.center.y + dy}
-                  r={active ? 9 : 7}
-                  fill={color}
-                  opacity="0.2"
-                  {...(Platform.OS === 'web' ? { onClick: selectItem } : { onPress: selectItem })}
-                />
-                <Circle
-                  cx={shape.center.x + dx}
-                  cy={shape.center.y + dy}
-                  r={active ? 4.7 : 3.5}
-                  fill={color}
-                  stroke={colors.mapStroke}
-                  strokeWidth={active ? 1.8 : 1.3}
-                  {...(Platform.OS === 'web' ? { onClick: selectItem } : { onPress: selectItem })}
-                />
-                {active && (
-                  <>
-                    <Rect
-                      x={shape.center.x + dx - Math.min(46, item.name.length * 2.1 + 8)}
-                      y={shape.center.y + dy - 19}
-                      width={Math.min(92, item.name.length * 4.2 + 16)}
-                      height="12"
-                      rx="6"
-                      fill={colors.card}
-                      stroke={colors.border}
-                      strokeWidth="0.65"
-                    />
-                    <SvgText
-                      x={shape.center.x + dx}
-                      y={shape.center.y + dy - 10.5}
-                      fontSize="6.5"
-                      fontWeight="700"
-                      fill={colors.foreground}
-                      textAnchor="middle"
-                    >
-                      {item.name.length > 20 ? `${item.name.slice(0, 18)}…` : item.name}
-                    </SvgText>
-                  </>
-                )}
-              </React.Fragment>
-            );
-          })}
         {layer === 'provinces' && selectedProvince && !quiz && (
-          <SvgText
-            x={shapeByName.get(selectedProvince)?.center.x ?? VIEW_WIDTH / 2}
-            y={(shapeByName.get(selectedProvince)?.center.y ?? VIEW_HEIGHT / 2) - 5}
-            fontSize="8"
-            fontWeight="700"
-            fill={colors.foreground}
-            textAnchor="middle"
-          >
-            {selectedProvince}
-          </SvgText>
+          <>
+            <PulseRing
+              cx={shapeByName.get(selectedProvince)?.center.x ?? VIEW_WIDTH / 2}
+              cy={shapeByName.get(selectedProvince)?.center.y ?? VIEW_HEIGHT / 2}
+              color={colors.primary}
+              radius={15}
+            />
+            <SvgText
+              x={shapeByName.get(selectedProvince)?.center.x ?? VIEW_WIDTH / 2}
+              y={(shapeByName.get(selectedProvince)?.center.y ?? VIEW_HEIGHT / 2) - 5}
+              fontSize="8"
+              fontWeight="700"
+              fill={colors.foreground}
+              textAnchor="middle"
+            >
+              {selectedProvince}
+            </SvgText>
+          </>
         )}
       </Svg>
     </View>
@@ -341,7 +549,7 @@ export function TurkeyMap({
           <Pressable
             accessibilityLabel="Tam harita görünümüne dön"
             onPress={() => {
-              setZoom(1);
+              applyZoom(1);
               setFocus({ x: VIEW_WIDTH / 2, y: VIEW_HEIGHT / 2 });
             }}
             style={[styles.zoomButton, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -351,14 +559,14 @@ export function TurkeyMap({
         )}
         <Pressable
           accessibilityLabel="Haritayı yakınlaştır"
-          onPress={() => setZoom((value) => Math.min(3.2, value + 0.35))}
+          onPress={() => applyZoom(zoomRef.current + 0.35)}
           style={[styles.zoomButton, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <AppText style={[styles.zoomText, { color: colors.foreground }]}>+</AppText>
         </Pressable>
         <Pressable
           accessibilityLabel="Haritayı uzaklaştır"
-          onPress={() => setZoom((value) => Math.max(1, value - 0.35))}
+          onPress={() => applyZoom(zoomRef.current - 0.35)}
           style={[styles.zoomButton, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <AppText style={[styles.zoomText, { color: colors.foreground }]}>−</AppText>

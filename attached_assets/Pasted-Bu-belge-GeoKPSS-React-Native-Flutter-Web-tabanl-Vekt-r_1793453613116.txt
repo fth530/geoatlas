@@ -1,0 +1,490 @@
+Bu belge, GeoKPSS (React Native / Flutter / Web tabanlı Vektörel Harita) uygulamasının veritabanını, 2 seviyeli filtreleme sistemini ve haritadaki tıklanabilir detay bilgi kartlarını (BottomSheet) oluşturmak için hazırlanmış eksiksiz ve yapılandırılmış KPSS-AGS Coğrafya referans veri setidir. Yunus Hoca'nın 2026 müfredatındaki tüm yer şekilleri, jeolojik yapılar, iklim, toprak, beşeri coğrafya unsurları, madenler, enerji santralleri, ulaşım hatları, geçitler, boru hatları, sınır kapıları, bölgesel projeler ve koruma alanları en ince ayrıntısına kadar kategorize edilmiştir.
+
+---
+
+## 1\. MOBİL UYGULAMA KATEGORİ VE 2 SEVİYELİ FİLTRELEME MİMARİSİ
+
+Uygulamanın üst kontrol çubuğunda ve harita katman yönetiminde yer alacak 10 Ana Kategori (Level 1) ile bunlara bağlı Alt Filtreler (Level 2) mimarisi aşağıdaki gibi kurgulanmalıdır:
+
+### 1.1\. İç Kuvvetler &amp; Jeoloji
+
+* **Ana Katman:** `iç-kuvvetler-jeoloji`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Tüm jeolojik unsurları haritada gösterir.
+  * `fay-hatları`: KAF, DAF ve BAF çizgi (Path) hatları.
+  * `volkanik-araziler`: Türkiye'deki volkanik kayaç ve lav alanları (Polygon/Marker).
+  * `masif-araziler`: 1\. Jeolojik Zaman (Paleozoik) sert kütleleri.
+  * `deprem-riski-az`: Deprem tehlikesi düşük olan güvenli bölgeler.
+
+### 1.2\. Dağlar (Orojenez &amp; Volkanizma)
+
+* **Ana Katman:** `dağlar`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Türkiye'deki tüm dağlar.
+  * `kıvrım-dağları`: 3\. Zaman Alp-Himalaya orojenezi antiklinal dağları.
+  * `kırık-horst-dağları`: Ege ve Hatay'daki horst kütleleri.
+  * `volkanik-dağlar`: Tabakalı volkanlar, kalkan volkanları, maar ve batolitler.
+  * `güncel-buzul-sirk-dağları`: Üzerinde güncel buzul veya geçmiş sirk izi bulunan dağlar.
+
+### 1.3\. Platolar &amp; Ovalar
+
+* **Ana Katman:** `platolar-ovalar`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Tüm düzlükler ve aşınım/birikim sahaları.
+  * `karstik-platolar`: Teke ve Taşeli platoları.
+  * `aşınım-platoları`: Çatalca-Kocaeli, Perşembe, Safranbolu (Yeni MEB).
+  * `volkanik-platolar`: Erzurum-Kars-Ardahan lav platosu, Kapadokya tüf platosu (Yeni MEB).
+  * `yatay-duruşlu-platolar`: İç Anadolu, Ege ve Güneydoğu tabaka düzlükleri.
+  * `delta-ovaları`: Akarsuların deniz kıyısında oluşturduğu birikim ovaları.
+  * `tektonik-ovalar`: KAF, DAF ve BAF çöküntü hatlarındaki ovalar.
+  * `karstik-polye-ovaları`: Kireç taşı erimesiyle oluşan ovalar (Tefenni, Acıpayam vb.).
+
+### 1.4\. Dış Kuvvetler, Kıyı Tipleri &amp; Karstik Şekiller
+
+* **Ana Katman:** `dış-kuvvetler-kıyı`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Tüm dış kuvvet şekilleri.
+  * `karstik-şekiller`: Lapya, Dolin, Uvala, Polye, Obruk, Mağara, Traverten.
+  * `rüzgar-aşınım-birikim`: Mantarkaya, Şahitkaya, Tafoni, Barkan, Kumul.
+  * `akarsu-aşınım-birikim`: Peri Bacaları, Kırgıbayır, Kanyonlar, Menderesler.
+  * `kıyı-tipleri`: Boyuna, Enine, Ria, Dalmaçya, Kalanklı, Limanlı kıyılar.
+  * `kıyı-şekilleri`: Tombolo (Saplı Ada), Lagün (Kıyı Seti), Falezler.
+
+### 1.5\. Göller &amp; Barajlar
+
+* **Ana Katman:** `göller-barajlar`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Doğal göller ve baraj gölleri.
+  * `tektonik-göller`: Fay çökmelerinde oluşan göller.
+  * `karstik-göller`: Kireç ve jips erime çukurlarındaki göller.
+  * `karma-yapılı-göller`: Birden fazla kuvvetle oluşanlar (Van, Beyşehir, Eğirdir).
+  * `volkanik-göller`: Krater, kaldera ve maar gölleri (Nemrut, Meke, Acıgöl).
+  * `doğal-set-gölleri`: Lav set, Heyelan set, Alüvyal set, Kıyı set gölleri.
+  * `buzul-sirk-gölleri`: Dağ zirvelerindeki buzul çanağı gölleri.
+  * `barajlar-hes`: Fırat, Dicle, Kızılırmak vb. üzerindeki büyük HES barajları.
+
+### 1.6\. Akarsular &amp; Havzalar
+
+* **Ana Katman:** `akarsular`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Türkiye'nin akarsu ağı.
+  * `karadeniz-havzası`: Karadeniz'e dökülen açık havza nehirleri.
+  * `akdeniz-havzası`: Akdeniz'e dökülen nehirler.
+  * `ege-marmara-havzası`: Ege ve Marmara'ya dökülen nehirler.
+  * `dışa-dökülenler`: Kaynağını Türkiye'den alıp yurt dışına dökülenler (Fırat, Dicle, Çoruh).
+  * `kapalı-havzalar`: Denize ulaşamayanlar (Tuz Gölü, Van Gölü, Aras-Kura Hazar).
+
+### 1.7\. Toprak Tipleri &amp; Bitki Örtüsü
+
+* **Ana Katman:** `toprak-bitki`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Zonal, Azonal ve İntrazonal topraklar ile bitki kuşakları.
+  * `çernozyom`: Erzurum-Kars kara toprakları.
+  * `terra-rossa`: Akdeniz kırmızı toprakları.
+  * `kahverengi-orman-podzol`: Karadeniz nemli orman toprakları.
+  * `bozkır-toprakları`: İç kesimlerdeki kahverengi/kestane renkli topraklar.
+  * `vertisol-rendzina`: Ergene ve Güney Marmara taş doğuran / dönen topraklar.
+  * `alüvyal-regosol`: Azonal taşınmış topraklar ve volkanik kumlu topraklar.
+  * `bitki-örtüsü`: Orman, Maki, Garig, Psödomaki, Bozkır, Alpin Çayır, Endemik Türler.
+
+### 1.8\. Madenler &amp; Enerji Kaynakları
+
+* **Ana Katman:** `madenler-enerji`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Metalik madenler, ametalik madenler ve enerji kaynakları.
+  * `demir-bakır-krom`: Ağır sanayi hammadde madenleri.
+  * `bor-boksit-fosfat`: Stratejik ve kimya sanayisi madenleri.
+  * `mermer-süstaşları`: Mermer, Lületaşı, Oltu Taşı, Çimento/Kalker.
+  * `taşkömürü-linyit`: Fosil katı yakıtlar ve termik santraller.
+  * `petrol-doğalgaz`: Sıvı/gaz fosil yakıtlar, rafineriler ve santraller.
+  * `yenilenebilir-enerji`: Jeotermal, Rüzgar, Güneş, Hidroelektrik, Nükleer.
+
+### 1.9\. Ulaşım, Boru Hatları &amp; Sınır Kapıları
+
+* **Ana Katman:** `ulaşım-sınırlar`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Tüm altyapı ve geçiş noktaları.
+  * `yht-demiryolu`: Yüksek Hızlı Tren güzergahları ve demiryolu ağı.
+  * `geçitler-tüneller`: Karadeniz ve Akdeniz karayolu geçitleri/tünelleri.
+  * `doğalgaz-boru-hatları`: TANAP, Mavi Akım, TürkAkım, BTE.
+  * `petrol-boru-hatları`: BTC (Bakü-Tiflis-Ceyhan), Kerkük-Yumurtalık, Batman-Dörtyol.
+  * `sınır-kapıları`: Bulgaristan, Yunanistan, Gürcistan, İran, Irak, Suriye kapıları.
+
+### 1.10\. Kalkınma Projeleri, Koruma Alanları &amp; Turizm
+
+* **Ana Katman:** `projeler-koruma`
+* **Alt Filtreler (Level 2):**  
+  * `tümü`: Bölgesel kalkınma projeleri ve koruma sahaları.
+  * `bölgesel-projeler`: GAP, KOP, ZBK, YİH, DOKAP, DAP kapsama alanları.
+  * `ramsar-alanları`: Uluslararası öneme sahip 14 sulak alan.
+  * `unesco-milli-parklar`: UNESCO Dünya Mirasları ve önemli Milli Parklar.
+  * `turizm-koridorları`: Kayak merkezleri, termal ve kültür koridorları.
+
+---
+
+## 2\. İÇ KUVVETLER, FAY HATLARI, MASİF VE VOLKANİK ARAZİLER
+
+### 2.1\. Fay Hatları ve Depremsellik
+
+* **Kuzey Anadolu Fay Hattı (KAF) [Line SVG Path]:**  
+  * *Güzergah:* Saros Körfezi'nden başlar; Marmara Denizi altından geçerek İzmit, Adapazarı, Düzce, Bolu, Gerede, Tosya, Merzifon, Suluova, Erbaa, Niksar, Suşehri, Erzincan üzerinden Bingöl Karlıova'ya ve Van Gölü kuzeyine uzanır.
+  * *Teknik Özellik:* Sağ yanal atımlı doğrultu atımlı faydır. Türkiye'nin en uzun (\~1200 km) ve en yüksek sismik tehlikeye sahip kırık hattıdır.
+  * *ÖSYM Sınav İpucu:* Erzincan, Tokat (Erbaa-Niksar), Amasya (Merzifon), Bolu, Düzce KAF üzerindedir.
+* **Doğu Anadolu Fay Hattı (DAF) [Line SVG Path]:**  
+  * *Güzergah:* Hatay/Amik Ovası'ndan (Ölüdeniz Fay Zonu uzantısı) başlar; Osmaniye, Kahramanmaraş, Adıyaman, Malatya, Elazığ (Sivrice), Palu üzerinden Bingöl Karlıova'da KAF ile birleşir.
+  * *Teknik Özellik:* Sol yanal atımlı doğrultu atımlı faydır.
+  * *ÖSYM Tuzak Uyarısı:* Elazığ ve Malatya DAF üzerindedir; KAF ile karışmamalıdır!
+* **Batı Anadolu Fay Hattı (BAF) [Area / Line System]:**  
+  * *Güzergah:* Ege Bölgesi'ndeki doğu-batı uzanışlı horst-graben çöküntü hatlarıdır (İzmir, Manisa, Aydın, Denizli, Muğla, Afyonkarahisar).
+  * *Teknik Özellik:* Normal (düşey atımlı) fay sistemidir. Jeotermal kaynakların ve kırık kaplıcalarının en yoğun olduğu alandır.
+* **Deprem Riski En Az Olan Güvenli Alanlar [Polygon]:**  
+  * Konya - Karaman - Mersin (Anamur/Taşeli) hattı, Tuz Gölü güneyi.
+  * Mardin Eşiği (Güneydoğu Anadolu'nun güney sınır şeridi).
+  * Yıldız Dağları (Kırklareli / Trakya'nın kuzeyi).
+  * Sinop çevresi ve Doğu Karadeniz kıyı şeridi.
+
+### 2.2\. Masif Araziler (1\. Jeolojik Zaman - Paleozoik Sert Kütleler)
+
+Türkiye 1\. Jeolojik Zaman'da genel olarak Tethys Denizi altında olduğundan yaşlı masif kütleler adalar halinde yer alır. Masif araziler esnekliğini kaybettiği için doğrudan kırılır ve deprem riski genelde düşüktür.
+
+* **M-A Şablonu Masifleri:**  
+  * **Yıldız (Istranca) Masifi (Kırklareli):** Trakya'nın kuzeyinde yer alır, deprem riski çok düşüktür.
+  * **Zonguldak Masifi:** Taş kömürü yataklarının bulunduğu Paleozoik kütledir.
+  * **Kastamonu (Daday-Devrekani) ve Ilgaz Masifi:** Batı Karadeniz'in sert temelidir.
+  * **Uludağ Masifi (Bursa):** Hem masif hem de iç püskürük (batolit) kütledir.
+  * **Kazdağı Masifi (Çanakkale/Balıkesir):** Biga Yarımadası'ndaki yaşlı temeldir.
+  * **Menderes - Saruhan - Menteşe Masifi (Ege):** Geniş bir alanı kaplayan gneys ve mermer masifidir.
+  * **Sultan Dağları Masifi (Isparta/Afyon/Konya):** Göller Yöresi'nin yaşlı temelidir.
+  * **Kırşehir ve Niğde-Akdağmadeni Masifi:** İç Anadolu'nun orta kütlesidir.
+  * **Tokat ve Amasya Masifleri:** Orta Karadeniz iç kesimi.
+  * **Alanya - Anamur Masifi (Antalya/Mersin):** Akdeniz kıyı kuşağındaki masiftir.
+  * **Bitlis Masifi:** Doğu Anadolu'nun en büyük sert kütlesidir.
+  * **Mardin (Derik) Masifi:** Güneydoğu Anadolu'nun en eski Paleozoik kütlesidir.
+
+### 2.3\. Volkanik Araziler ve Püskürük Yapılar
+
+* **Doğu Anadolu Volkan Kuşağı:** Nemrut, Süphan, Tendürek, Ağrı doğrultusu boyunca uzanan kırık hattı volkanizması ve Erzurum-Kars-Ardahan lav platoları (çizgisel/fisür püskürme).
+* **İç Anadolu Volkan Kuşağı:** Karadağ, Karacadağ (Konya), Hasan Dağı, Melendiz ve Erciyes Dağları zinciri ile Kapadokya tüf sahası.
+* **Güneydoğu Anadolu Volkan Sahası:** Karacadağ (Şanlıurfa/Diyarbakır) – Akıcı bazaltik lavların geniş alana yayılmasıyla oluşan Türkiye'nin tek kalkan volkanı.
+* **Ege Volkanizması:** Manisa Kula Volkanları – Türkiye'nin en genç volkanik cüruf konileri (UNESCO Jeoparkı).
+* **Marmara / İç Püskürük:** Bursa Uludağ – Magmanın yüzeye çıkamayıp yer altında katılaşmasıyla oluşan Derinlik Volkanizması (Batolit).
+
+---
+
+## 3\. TÜRKİYE'NİN DAĞLARI (OROJENEZ VE VOLKANİZMA)
+
+### 3.1\. Kırık (Horst) Dağları
+
+Sert arazilerin orojenez esnasında kıvrılamayıp kırılmasıyla yüksekte kalan kütlelere **Horst**, çöken çukurlara **Graben** denir.
+
+* **Kaz Dağları (Çanakkale/Balıkesir):** 1774 m. Biga Yarımadası'nda yer alır; Ege horstlarının en kuzeydekidir. Masif niteliktedir, buzul şekli yoktur.
+* **Madra Dağı (Balıkesir/İzmir):** 1344 m. Edremit ile Bakırçay grabenleri arasındadır.
+* **Yunt Dağı (Manisa/İzmir):** 1076 m. Bakırçay ile Gediz grabenleri arasında yer alır.
+* **Bozdağlar (İzmir/Manisa):** 2159 m. Gediz Ovası ile Küçük Menderes Ovası arasında yer alır.
+* **Aydın Dağları (Aydın/İzmir):** 1831 m. Küçük Menderes ile Büyük Menderes grabenlerini ayırır.
+* **Menteşe Dağları (Muğla):** 1792 m. **KPSS TUZAĞI:** Ege'deki diğer horst dağlarının aksine Menteşe Dağları kıyıya **PARALEL** uzanır! Bu yüzden Muğla bol yamaç yağışı alır, kıyı engebelidir ve nüfusu seyrektir.
+* **Amanos (Nur) Dağları (Hatay):** 2240 m. **KPSS TUZAĞI:** Akdeniz Bölgesi'nde yer alan tek kırık (horst) dağıdır. ÖSYM şıklarda Amanos yerine sıklıkla "Nur Dağları" adını kullanır. Yanındaki Amik Ovası bir grabendir.
+
+### 3.2\. Volkanik Dağlar
+
+* **Büyük Ağrı Dağı (Ağrı/Iğdır):** 5137 m. Türkiye'nin en yüksek dağıdır. Tabakalı volkandır. Zirvesinde Türkiye'nin en büyük Takke Buzulu bulunur.
+* **Küçük Ağrı Dağı (Ağrı):** 3896 m. Büyük Ağrı'nın güneydoğusundaki volkanik konidir.
+* **Süphan Dağı (Bitlis/Ağrı):** 4058 m. Türkiye'nin 3\. en yüksek dağıdır. Van Gölü kuzeyinde yer alır; zirvesinde sirk buzulları ve gölleri vardır.
+* **Tendürek Dağı (Ağrı/Van):** 3533 m. Çift kraterli aktif gaz çıkışları olan sönmüş volkandır.
+* **Nemrut Dağı (Bitlis/Tatvan):** 2935 m. **KPSS TUZAĞI:** Yükseltisi yetersiz olduğu için zirvesinde **BUZUL ŞEKLİ YOKTUR!** Çıkardığı lavlar Van Gölü'nü oluşturmuştur. Zirvesindeki Nemrut Kalderası dünya tatlı/sıcak su kalderalarının en büyüğündendir ve Ramsar alanıdır. (Adıyaman'daki kommagene heykelli Nemrut Dağı ile karıştırılmamalıdır).
+* **Erciyes Dağı (Kayseri):** 3917 m. İç Anadolu'nun en yüksek dağıdır. Zirvesinde güncel buzul izleri ve kış kayak merkezi bulunur.
+* **Hasan Dağı (Aksaray/Niğde):** 3268 m. Çift zirveli volkandır. Tüfleri Çatalhöyük duvar resimlerinde tasvir edilmiştir.
+* **Melendiz Dağı (Niğde/Aksaray):** 2963 m. Erciyes ile Hasan Dağı arasında yer alır.
+* **Karacadağ (Konya/Aksaray):** 2025 m. İç Anadolu volkanik sırasındadır.
+* **Karadağ (Karaman):** 2271 m. İç Anadolu volkan dizisinin güneybatı ucudur.
+* **Karacadağ (Şanlıurfa/Diyarbakır):** 1957 m. Akıcı bazalt lavlarından oluşmuş geniş tabanlı Kalkan Volkanıdır.
+* **Kula Volkanları (Manisa):** 850 m. Türkiye'nin en genç volkanik tüf/cüruf konileridir (UNESCO Jeoparkı).
+* **Uludağ (Bursa):** 2543 m. Volkan konisi değil, İç Püskürük / Batolit kütledir. Zirvesinde geçmiş dönemden kalma sirk gölleri (Aynalı, Kilimli, Karagöl) bulunur.
+
+### 3.3\. Kıvrım Dağları (Alp-Himalaya Orojenezi)
+
+Esnek Tortulların sıkışıp kıvrılmasıyla üstte kalan kısımlara **Antiklinal**, altta kalan kısımlara **Senklinal** denir.
+
+* **Karadeniz Kıvrım Dağları:**  
+  * *Yıldız (Istranca) Dağları (Kırklareli):* 1031 m. Alçak, masif, buzulsuz kıvrım dağı.
+  * *Küre (İsfendiyar) Dağları (Kastamonu/Bartın):* 2019 m. Kıyıya paralel ve çok yakın.
+  * *Bolu ve Köroğlu Dağları (Bolu/Düzce):* 2400 m. İç sırada yer alır; Kartalkaya kayak merkezi buradadır.
+  * *Ilgaz Dağları (Kastamonu/Çankırı):* 2587 m. 15 Temmuz İstiklal Tüneli ve milli park alanı.
+  * *Canik Dağları (Samsun):* 1500 m. **KPSS KLASİĞİ:** Canik Dağları alçaktır ve kıyıdan GERİDE uzanır! Bu sayede Samsun'da ulaşım kolaydır, Bafra ve Çarşamba deltaları gelişmiştir, falez azdır, yağış miktarı Doğu ve Batı Karadeniz'e göre daha düşüktür.
+  * *Giresun Dağları (Giresun/Ordu):* 3107 m. Kıyıya paralel, yüksek, sirk izleri bulunur.
+  * *Kaçkar Dağları (Rize/Artvin):* 3932 m. Kuzey Anadolu Dağları'nın en yüksek zirvesidir. Güncel vadi ve sirk buzulları (Verçenik, Karagöl), en bol yağış ve milli park buradadır.
+  * *Yalnızçam, Mescit, Kop, Mercan (Munzur), Allahuekber Dağları:* Doğu Karadeniz ve Doğu Anadolu iç sıraları. (Sarıkamış Allahuekber Dağları "kristal kar" yapısıyla kış turizminde birincidir).
+* **Toroslar (Akdeniz ve Güneydoğu Kıvrım Dağları):**  
+  * *Bey Dağları ve Akdağlar (Antalya):* 3086 m. Batı Toroslar; Saklıkent kayak merkezi ve sirk izleri.
+  * *Sultan Dağları ve Dedegöl Dağları (Isparta/Afyon/Konya):* 2992 m. Göller Yöresi kıvrım dağları; Sultan Dağları aynı zamanda masif arazidir.
+  * *Geyik Dağları (Antalya/Konya/Karaman):* 2877 m.
+  * *Bolkar Dağları (Mersin/Niğde):* 3524 m. **2025 KPSS SORUSU:** Üzerinde sirk gölleri (Çinili Göl, Karagöl) ve doğusunda Gülek Boğazı yer alır.
+  * *Aladağlar (Niğde/Adana/Kayseri):* 3756 m. Orta Torosların en yüksek kütlesidir (Demirkazık zirvesi). Güncel vadi buzulları ve Aladağlar Milli Parkı buradadır.
+  * *Tahtalı ve Binboğa Dağları (Adana/Kahramanmaraş):* Orta Torosların uzantıları.
+  * *Hakkari Cilo (Buzul) ve Sat Dağları (Hakkari):* 4135 m. **KPSS KLASİĞİ:** Türkiye'nin 2\. en yüksek zirvesidir (Uludoruk) ve Türkiye'nin EN YÜKSEK KIVRIM DAĞIDIR! Türkiye'nin en büyük vadi buzulları ve sirk gölleri buradadır.
+
+### 3.4\. Buzul Şekilleri Görülen Dağlar Özeti
+
+* **Güncel Buzul + Sirk İzi Olanlar:** Ağrı, Cilo (Sat), Süphan, Kaçkar, Erciyes, Aladağlar, Bolkar.
+* **Sadece Geçmiş Sivil/Buzul İzi (Sirk) Olanlar:** Uludağ, Bey Dağları, Dedegöl, Davraz, Geyik, Bingöl, Mercan, Mescit, Yalnızçam, Giresun Dağları.
+* **BUZUL ŞEKLİ OLMAYAN DAĞLAR (KPSS Tuzakları):** Ege'deki tüm kırık dağlar (Kaz, Madra, Yunt, Boz, Aydın, Menteşe), Amanos (Nur) Dağları, Yıldız Dağları, Küre Dağları, Canik Dağları, Bitlis Nemrut Dağı, Karacadağ (Güneydoğu ve İç Anadolu), Kula Volkanları.
+
+---
+
+## 4\. PLATOLAR VE OVALAR (YENİ MEB MAARİF MODELİ DAHİL)
+
+### 4.1\. Platolar (Toptan Yükselme / Epirojenez Kanıtları)
+
+Akarsular tarafından derin vadilerle yarılmış yüksek düzlüklere **Plato** denir.
+
+* **Karstik Platolar:**  
+  * **Teke Platosu (Antalya/Muğla):** Kalker erimesiyle oluşmuş geçirgen arazi. Tarım ve nüfus seyrek, kıl keçisi yetiştiriciliği yaygın.
+  * **Taşeli Platosu (Mersin/Karaman):** Türkiye'nin en engebeli karstik platosudur. Nüfus çok seyrektir.
+* **Aşınım Düzlüğü Platoları:**  
+  * **Çatalca - Kocaeli Platosu (İstanbul/Kocaeli):** Türkiye'nin en alçak, nüfus, sanayi ve kentleşme yoğunluğu en fazla olan platosudur.
+  * **Perşembe Platosu (Ordu):** Menderesli yayla akarsularıyla ünlü aşınım platosudur.
+  * **Safranbolu Platosu (Karabük):** Batı Karadeniz'de yer alan aşınım platosudur *(Yeni MEB Müfredat Eklentisi)*.
+* **Volkanik (Lav ve Tüf) Platolar:**  
+  * **Erzurum - Kars - Ardahan Platosu:** Türkiye'nin en yüksek platosudur (\~2000 m). Çernozyom (kara) topraklar, yaz yağışları, alçak boylu çayır bitki örtüsü ve büyükbaş mera hayvancılığı ile karakterizedir.
+  * **Kapadokya Platosu (Nevşehir/Niğde):** Volkanik tüf örtülü platodur *(Yeni MEB Müfredat Eklentisi)*. Patates ve üzüm tarımı gelişmiştir.
+* **Yatay Duruşlu (Tabaka Düzlüğü) Platolar:**  
+  * **Haymana Platosu (Ankara):** İç Anadolu tahıl ve küçükbaş hayvancılık sahası.
+  * **Cihanbeyli Platosu (Konya):** Tuz Gölü batısında geniş buğday tarım alanı.
+  * **Obruk Platosu (Konya):** **KPSS TUZAĞI:** Üzerinde karstik obruklar bulunmasına rağmen oluşum kökeni olarak Karstik Plato DEĞİL, Yatay Duruşlu Tabaka Düzlüğü Platosu olarak sınıflandırılır!
+  * **Bozok Platosu (Yozgat):** İç Anadolu'nun en geniş tabaka platosudur.
+  * **Uzunyayla Platosu (Sivas/Kayseri):** Doğu Anadolu sınırında yüksek tabaka platosu.
+  * **Yazılıkaya (Bayat) Platosu (Eskişehir/Afyon):** Ege Bölgesi İç Batı Anadolu platosudur.
+  * **Gaziantep ve Şanlıurfa Platoları:** Fırat Nehri tarafından yarılmış Güneydoğu platoları.
+
+### 4.2\. Ovalar
+
+* **Delta Ovaları (Kıyı Birikim Ovaları):**  
+  * *Bafra Ovası (Samsun):* Kızılırmak nehri oluşturur.
+  * *Çarşamba Ovası (Samsun):* Yeşilırmak nehri oluşturur.
+  * *Meriç Deltası (Edirne - Enez):* Meriç nehri oluşturur.
+  * *Dikili Ovası (İzmir):* Bakırçay oluşturur.
+  * *Menemen Ovası (İzmir):* Gediz nehri oluşturur.
+  * *Selçuk Ovası (İzmir):* Küçük Menderes oluşturur (Efes antik kenti limanken karada kalmıştır).
+  * *Balat Ovası (Aydın):* Büyük Menderes oluşturur (Milet antik kenti karada kalmıştır).
+  * *Silifke Ovası (Mersin):* Göksu nehri oluşturur.
+  * *Çukurova (Adana):* Seyhan ve Ceyhan nehirleri oluşturur; Türkiye'nin en büyük delta ovasıdır.
+* **Karstik (Polye) Ovalar [TAKKE / TAKKEM C3]:**  
+  * Tefenni (Burdur), Acıpayam (Denizli), Korkuteli (Antalya), Kestel (Burdur), Elmalı (Antalya), Muğla Ovası, Çeltikçi (Burdur), Gembos (Isparta), Tavas (Denizli).
+* **Tektonik (Çöküntü) Ovalar:**  
+  * **Ergene Ovası (Trakya):** **2025 KPSS SORUSU:** Aktif fay hattı üzerinde yer almayan tektonik ovadır!
+  * **Ege Graben Ovaları:** Bakırçay, Gediz (Salihli, Turgutlu, Akhisar), Küçük Menderes (Torbalı, Ödemiş, Tire), Büyük Menderes (Söke, Nazilli, Sarayköy).
+  * **KAF Hattı Ovaları:** Adapazarı, Düzce, Bolu, Tosya, Merzifon, Suluova, Taşova, Ladik, Erbaa, Niksar, Tokat (Kazova), Suşehri, Erzincan, Tercan, Pasinler.
+  * **DAF Hattı Ovaları:** Amik (Hatay), Dörtyol, Kahramanmaraş, Elbistan, Malatya, Elazığ, Bingöl, Muş.
+  * **İç ve Doğu Ovaları:** Konya, Aksaray, Kayseri (Develi), Eskişehir, Iğdır Ovası (çukurda mikroklima alanı - pamuk), Harran (Altınbaşak), Suruç, Ceylanpınar.
+
+---
+
+## 5\. DIŞ KUVVETLER, KIYI TİPLERİ, KARSTİK VE RÜZGAR ŞEKİLLERİ
+
+### 5.1\. Akarsu Aşınım ve Birikim Şekilleri
+
+* **Peri Bacaları:** Kapadokya (Nevşehir/Ürgüp/Göreme), Erzurum Narman (Kırmızı Peri Bacaları), Vanadokya (Van Başkale), Afyon Frig Vadisi, Manisa Kula. Akarsu/sel sularının tüf ve bazaltı aşındırmasıyla oluşur; rüzgar dolaylı etkiye sahiptir.
+* **Kırgıbayır (Badlands):** Aşınmış kurak yarıklar. Kapadokya ve Ankara Nallıhan.
+* **Kanyon Vadiler:** Dik ve basamaklı yamaçlar. Köprülü Kanyon (Antalya), Valla Kanyonu (Kastamonu - dünyanın en derin 2\. kanyonu), Ulubey Kanyonu (Uşak - dünyanın en uzun 2\. kanyonu), Ihlara Vadisi (Aksaray).
+* **Menderesler:** Eğim azalınca oluşan S çizmeleri. Ege nehirlerinde yaygındır.
+
+### 5.2\. Rüzgar Şekilleri (Kurak / Yarı Kurak Alanlar)
+
+İç Anadolu (Konya Karapınar, Tuz Gölü çevresi), Güneydoğu Anadolu ve Iğdır çevresinde belirgindir.
+
+* *Aşınım:* Mantarkaya, Şahitkaya (Diyarbakır Zerzevan), Tafoni (delikli kayaçlar).
+* *Birikim:* Kumullar (Konya Karapınar erg sahası), Lös toprakları, Barkan (Hilal şekilli kumul).
+
+### 5.3\. Karstik Şekiller (Erime ve Çökelme)
+
+Kalker (Akdeniz, Göller Yöresi, Muğla, Zonguldak), Jips (Sivas, Çankırı) ve Kaya Tuzu üzerinde görülür.
+
+* **Erime Şekilleri (Küçükten Büyüğe):** Lapya -&gt; Dolin -&gt; Uvala -&gt; Polye (Karstik Ova).
+* **Obruklar:** Yeraltı mağara tavanlarının çökmesiyle oluşan derin kuyular. Cennet ve Cehennem Obrukları (Mersin), Kızören ve Timraş Obrukları (Konya - Yeraltı suyunun bilinçsiz çekimi obruk oluşumunu artırmıştır).
+* **Mağaralar:** Karain, Beldibi, Damlataş, Dim (Antalya), İnsuyu (Burdur), Ballıca (Tokat - damlataş sütunları), Karaca (Gümüşhane), Kaklık (Denizli - yeraltı traverteni).
+* **Travertenler:** Denizli Pamukkale (UNESCO Karma Miras). Sıcak kalsiyum bikarbonatlı suların çökelmesiyle basamaklı beyaz kayalar oluşur.
+
+### 5.4\. Kıyı Tipleri ve Kıyı Şekilleri
+
+* **Boyuna Kıyı Tipi:** Karadeniz ve Akdeniz. Dağlar kıyıya paraleldir. Falez çok, kıta sahanlığı dar, doğal liman azdır (Sinop hariç).
+* **Enine Kıyı Tipi:** Ege (Edremit-Kuşadası arası). Dağlar kıyıya diktir. Girinti-çıkıntı, koy, körfez, ada çokdur; kıta sahanlığı geniştir.
+* **Ria Kıyı Tipi:** Eski akarsu vadilerinin deniz altında kalması. İstanbul Boğazı, Çanakkale Boğazı, Haliç ve Muğla Menteşe kıyıları (Güneybatı Ege).
+* **Dalmaçya Kıyı Tipi:** Kıyıya paralel dağların sular altında kalıp adalar dizisine dönüşmesi. Antalya Kaş - Finike kıyıları.
+* **Kalanklı Kıyı Tipi:** Karstik kanyon vadilerin sular altında kalması. Mersin Silifke - Taşucu kıyıları.
+* **Limanlı Kıyı Tipi:** Sinop Limanı ve İstanbul Büyükçekmece / Küçükçekmece kıyıları.
+* **Tombolo (Saplı Ada):** Kıyı okuyla adanın karaya bağlanması. Kapıdağ Yarımadası (Balıkesir) ve Sinop Boztepe Yarımadası.
+* **Lagün (Kıyı Set Gölü):** Büyükçekmece, Küçükçekmece, Durusu/Terkos (İstanbul), Akyatan ve Yumurtalık (Adana).
+* **Falez (Yalıyar) Yoğun Bölgeler:** Doğu Karadeniz (Rize/Trabzon/Artvin), Batı Karadeniz (Zonguldak/Kastamonu), Antalya (Kemer/Kaş) ve Muğla kıyıları. (Samsun ve Adana deltalarında falez YOKTUR!).
+
+---
+
+## 6\. GÖLLER, SU KİMYASI, DOĞAL/YAPAY SETLER VE BARAJLAR
+
+### 6.1\. Göllerin Oluşum ve Kimyasal Sınıflandırması
+
+* **Tektonik Göller:**  
+  * *Tuz Gölü:* Kapalı havza, suları aşırı tuzlu, yazın buharlaşmayla alanı en çok daralan göldür. Türkiye tuz ihtiyacının %60'ını karşılar.
+  * *Marmara Gölleri (Sapanca, İznik, Uluabat, Manyas/Kuş):* Dördü de tektonik kökenlidir ve dördünün de gideğeni (ayas) olduğu için **SULARI TATLIDIR** (Açık havza).
+  * *Diğer Tektonik Göller:* Eber, Akşehir, Burdur (acı), Acıgöl (tuzlu), Seyfe (Kırşehir - Ramsar), Hazar Gölü (Elazığ - Dicle'nin kaynağını besler, tatlı su), Aktaş (Ardahan/Gürcistan sınırı).
+* **Karstik Göller:**  
+  * Salda Gölü (Burdur - beyaz hidromanyezit kumsallı, derin göl), Kestel, Avlan, Kızören Obruk Gölü (Konya - Ramsar), Timraş Obruğu, Hafik ve Tödürge (Sivas - jips karstı).
+* **Karma Yapılı Göller:**  
+  * **Van Gölü (Tektonik + Volkanik Lav Set):** Türkiye'nin ve dünyanın en büyük **sodalı** gölüdür. Nemrut Dağı lavlarının tektonik çanağın önünü kapatmasıyla oluşmuştur. Kapalı havzadır. Sadece **İnci Kefali** yaşar. Üzerinde Akdamar Adası bulunur.
+  * **Beyşehir Gölü (Tektonik + Karstik):** Türkiye'nin **en büyük tatlı su gölüdür**. Suları kanalla Konya Ovası'na akıtılır; ancak denize ulaşmadığı için **Kapalı Havza** kabul edilir.
+  * **Eğirdir ve Kovada Gölleri (Tektonik + Karstik):** Eğirdir'in gideğeni Kovada Gölü'ne, oradan Aksu Çayı ile Akdeniz'e dökülür. **Açık havza ve tatlı sudur**.
+* **Volkanik Göller (Krater / Kaldera / Maar):**  
+  * Nemrut Kalderası (Bitlis - Ramsar alanı, sıcak/soğuk göller).
+  * Meke Maarı (Konya Karapınar - "Dünyanın Nazar Boncuğu", volkanik gaz patlaması çukuru, Ramsar alanı).
+  * Acıgöl Maarı (Nevşehir).
+* **Doğal Set Gölleri:**  
+  * *Volkanik (Lav) Set:* Erçek, Nazik, Haçlı, Balık, Çıldır Gölü (Ardahan/Kars - yüzeyi kışın donar, tatlı sudur).
+  * *Heyelan Set (Karadeniz):* Tortum (Erzurum - Tortum Şelalesi), Sera (Trabzon), Abant, Yedigöller, Sülüklü (Bolu), Borabay (Amasya), Zinav (Tokat).
+  * *Alüvyal Set:* Mogan, Eymir (Ankara), Bafa/Çamiçi (Aydın), Köyceğiz (Muğla), Marmara Gölü (Manisa), Uzungöl (Trabzon).
+  * *Kıyı Set (Lagün):* Büyükçekmece, Küçükçekmece, Durusu/Terkos (İstanbul), Akyatan, Yumurtalık (Adana).
+* **Buzul (Sirk) Gölleri:**  
+  * Cilo/Sat, Kaçkar (Karagöl, Verçenik), Uludağ (Kilimli, Aynalı, Karagöl), Toroslar (Çinili, Dipsiz).
+
+### 6.2\. Yapay Göller (Büyük HES Barajları)
+
+* **Fırat Nehri:** Atatürk (Türkiye'nin en büyüğü), Keban, Karakaya, Birecik, Karkamış.
+* **Dicle Nehri:** Ilısu (Veysel Eroğlu - Hasankeyf), Kralkızı, Dicle, Devegeçidi.
+* **Kızılırmak:** Hirfanlı, Kesikköprü, Kapulukaya, Altınkaya, Derbent, Obruk.
+* **Yeşilırmak:** Almus, Hasan Uğurlu, Suat Uğurlu, Kılıçkaya.
+* **Çoruh Nehri:** Yusufeli (Türkiye'nin en yüksek barajı - 275 m), Deriner, Borçka, Muratlı.
+* **Manavgat Nehri:** Oymapınar Barajı (Seydişehir Alüminyum Tesisleri enerjisini verir).
+* **Sakarya Nehri:** Sarıyar (Hasan Polatkan), Gökçekaya.
+
+---
+
+## 7\. AKARSULAR, HAVZALAR VE HİDROGRAFİK ÖZELLİKLER
+
+### 7.1\. Akarsu Havzaları
+
+* **Karadeniz'e Dökülenler:** Çoruh (en hızlı akan, rafting, Yusufeli barajı), Yeşilırmak (Çarşamba deltası), Kızılırmak (en uzun yerli nehir, Bafra deltası), Filyos (Yenice), Bartın Çayı (üzerinde ulaşım yapılan tek nehir), Sakarya.
+* **Marmara ve Ege'ye Dökülenler:** Susurluk, Meriç (Bulgaristan'dan doğar, Ergene kolunu alır, Yunanistan sınırı), Bakırçay, Gediz, Küçük Menderes, Büyük Menderes.
+* **Akdeniz'e Dökülenler:** Dalaman, Aksu, Köprüçay, Manavgat (karstik beslenmeli, rejim nispeten düzenli), Göksu (Silifke deltası), Seyhan ve Ceyhan (Çukurova deltası), Asi Nehri (Lübnan'dan doğar, Suriye'den geçer, Hatay'dan dökülür - ters akan nehir).
+* **Yurt Dışına Dökülenler (Basra Körfezi - Açık Havza):** Fırat (Karasu ve Murat kollarının birleşimi) ve Dicle (Zap Suyu kolu ile birlikte Irak'ta Şattülarap'ı oluştururlar).
+* **Kapalı Havza Akarsuları (Hazar Denizi/Gölü):** Aras ve Kura nehirleri (Arpaçay kolu Ermenistan sınırını çizer). Hazar bir göl olduğu için kapalı havzadır.
+
+---
+
+## 8\. TOPRAK TİPLERİ VE BİTKİ ÖRTÜSÜ DAĞILIMI
+
+### 8.1\. Toprak Sınıflandırması
+
+* **Zonal (Yerli) Topraklar:**  
+  * **Çernozyom (Kara Toprak):** Erzurum-Kars-Ardahan platosunda, sert karasal iklimde, çayır örtüsü altında oluşur. Organik madde (humus) bakımından Türkiye'nin EN VERİMLİ toprağıdır; iklim soğuk olduğu için büyükbaş hayvancılık yapılır.
+  * **Terra Rossa (Kırmızı Akdeniz Toprağı):** Akdeniz ve Ege'de kalker (kireç taşı) üzerinde oluşur. İçindeki demir oksit nedeniyle kırmızıdır. Zeytin, turunçgil tarımına uygundur.
+  * **Kahverengi Orman Toprağı:** Karadeniz nemli geniş yapraklı ormanları altında oluşur. Yıkanmış, kireçsiz, asitli topraktır (Çay ve fındık tarımı).
+  * **Podzol:** Batı Karadeniz yükseklerinde soğuk/nemli iğne yapraklı orman altında oluşan kül renkli verimsiz topraktır.
+  * **Kahverengi ve Kestane Renkli Bozkır Toprakları:** İç Anadolu, Doğu ve Güneydoğu'da bozkır altında oluşur. Yağış azlığı nedeniyle kireçlidir, humusu azdır (Tahıl ve küçükbaş hayvancılık).
+* **İntrazonal Topraklar:**  
+  * **Vertisol (Taş Doğuran / Dönen Toprak):** Kil oranı çok yüksektir. Kuraklıkta çatlar, dökülen taşlar yağışla yüzeye çıkar. Trakya (Ergene Havzası - Ayçiçeği), Bursa ve Muş Ovası'nda görülür.
+  * **Rendzina:** Yumuşak kireç taşı üzerinde oluşan koyu renkli kalsimorfik topraktır.
+  * **Halomorfik Topraklar:** Tuz Gölü çevresi ve Iğdır Ovası'nda oluşan tuzlu topraklardır.
+* **Azonal (Taşınmış / Horizonlu Olmayan) Topraklar:**  
+  * **Alüvyal:** Akarsuların taşıdığı mineralce zengin toprak. Tüm delta ve çöküntü ovalarında bulunur.
+  * **Regosol:** Volkanik kumlu-tüflü arazilerde (Nevşehir Kapadokya) oluşur. Patates ve üzüm bağcılığına çok uygundur.
+  * **Litosol:** Dağlık taşlı yamaç toprakları.
+
+### 8.2\. Bitki Örtüsü ve Endemik Türler
+
+* **Karadeniz Ormanları ve Psödomaki (Yalancı Maki):** Geniş ve iğne yapraklı ormanlar. Kıyı çalılarına psödomaki denir.
+* **Akdeniz Makisi ve Garig:** Kızılçam ormanlarının tahribiyle Maki (zeytin, zakkum, defne, keçiboynuzu, mersin); makinin tahribiyle Garig (frigana) oluşur.
+* **Bozkır (Step) ve Alpin Çayırlar:** İç kesimlerde ilkbaharda yeşerip yazın sararan bozkır (Geven, gelincik, çoban yastığı); Erzurum-Kars yükseklerinde yazın yeşeren Alpin çayırlar.
+* **Kritik Endemik Türler (Yunus Hoca Kodlamalarıyla):**  
+  * **Sığla (Günlük) Ağacı:** Muğla Köyceğiz ve Fethiye çevresinde.
+  * **Datça Hurması:** Muğla Datça ve Teke Yarımadası'nda.
+  * **Kazdağı Göknarı:** Balıkesir/Çanakkale Kaz Dağları'nda.
+  * **İspir Meşesi:** Yozgat ve Erzurum çevresinde ("Yoz kişiler ispiyonlar" kodlaması).
+  * **Kasnak Meşesi:** Isparta Eğirdir çevresinde ("Kasları parlayan Ispartalı" kodlaması).
+  * **Ters Lale:** Hakkari ve Erzurum çevresinde.
+
+---
+
+## 9\. MADENLER VE ENERJİ KAYNAKLARI (ÇIKARILDIĞI İLÇE + İŞLENDİĞİ TESİS)
+
+### 9.1\. Metalik Madenler
+
+* **Bakır ("Deli Bekir" Kodlaması):**  
+  * *Çıkarıldığı Yerler:* Kastamonu (**Küre**), Artvin (**Murgul**), Rize (**Çayeli**), Elazığ (**Maden**), Diyarbakır (**Ergani**).
+  * *İşlendiği Yerler (İzabe):* **Samsun** (Küre'den gelir; ulaşım/liman avantajı), **Artvin Murgul** ve **Elazığ Maden** (hammaddeye yakınlık).
+* **Krom (Ferrokrom):**  
+  * *Çıkarıldığı Yerler:* Elazığ (**Guleman**), Muğla (**Fethiye, Köyceğiz, Dalaman**), Bursa (**Orhaneli**), Eskişehir (**Mihalıççık**), Adana (**Aladağ/Pozantı**), Erzincan-Kop Dağı.
+  * *İşlendiği Tesisler:* **Elazığ Ferrokrom** (Hammadde) ve **Antalya Ferrokrom** (Ulaşım/Liman). Paslanmaz çelik yapımında kullanılır, ihracatı yüksektir.
+* **Demir:**  
+  * *Çıkarıldığı Yerler:* Sivas (**Divriği**) ve Malatya (**Hekimhan - Hasançelebi**) en büyük kaynaklardır. Ayrıca Adana (Feke), Kayseri (Yahyalı), Sakarya (Çamdağ).
+  * *İşlendiği Fabrikalar:* **Zonguldak Ereğli ve Karabük** (Taş kömürü / Enerjiye yakınlık), **Hatay İskenderun ve İzmir** (Liman / Ulaşım), **Sivas** (Hammadde), **Kırıkkale** (Silah sanayisi / Stratejik güvenlik).
+* **Bor Mineralleri (Dünya Rezervinde %73 ile 1\. Sıradayız):**  
+  * *Çıkarıldığı Yerler:* Balıkesir (**Susurluk, Bigadiç**), Bursa (**Mustafakemalpaşa/Kestelek**), Kütahya (**Emet**), Eskişehir (**Kırka**).
+  * *İşlendiği Tesisler:* **Eskişehir Kırka** ve **Balıkesir Bandırma** (Bandırma Limanı'ndan ihraç edilir).
+* **Boksit (Alüminyum Hammaddesi):**  
+  * *Çıkarıldığı ve İşlendiği Yer:* **Konya (Seydişehir)** ve **Antalya (Akseki)**. Tek entegre alüminyum tesisi **Konya Seydişehir**'dedir.
+* **Fosfat (Suni Gübre Hammaddesi):**  
+  * *Çıkarıldığı ve İşlendiği Yer:* **Mardin (Mazıdağı)**. Üretim yetmediği için ithal edilir.
+* **Diğer Metalik/Ametalik Madenler:**  
+  * **Kurşun-Çinko:** Elazığ (Keban), Kayseri, Yozgat (Akdağmadeni).
+  * **Manganez:** Adana (Ceyhan), Denizli (Tavas), Zonguldak (Ereğli).
+  * **Trona (Doğal Soda Külü):** Ankara (Beypazarı ve Kahramankazan).
+  * **Cıva (Tek Sıvı Metal):** İzmir (Ödemiş, Karaburun), Konya (Sarayönü).
+  * **Mermer (En Çok İhraç Edilen Taş):** Afyonkarahisar (İscehisar), Balıkesir (Marmara Adası), Muğla, Bursa, Elazığ (Vişne mermeri).
+  * **Lületaşı:** Eskişehir | **Oltu Taşı:** Erzurum (Oltu) | **Zımpara Taşı:** Aydın, Muğla, İzmir.
+
+### 9.2\. Enerji Kaynakları ve Santraller
+
+* **Taş Kömürü (1\. Zaman Paleozoik):** Zonguldak (Kozlu, Karadon) ve Bartın (Amasra). Kalorisi yüksektir. *Termik Santral:* **Zonguldak Çatalağzı** (Hammadde) ve İthal kömürle çalışan İstanbul/İzmir/Adana santralleri.
+* **Linyit (3\. Zaman Tersiyer):** Genç oluşumlu Türkiye'de en yaygın fosil yakıttır. *Termik Santraller ("İtten Kaçan Avşin Kızı" Kodlaması):* **Kahramanmaraş (Afşin-Elbistan - En büyük rezerv)**, **Manisa (Soma)**, **Muğla (Yatağan, Yeniköy, Kemerköy/Gökova)**, **Kütahya (Tunçbilek, Seyitömer, Tavşanlı)**, **Ankara (Çayırhan)**, **Sivas (Kangal)**, **Çanakkale (Çan)**, **Bursa (Orhaneli)**.
+* **Petrol:** %90'ı Güneydoğu Anadolu'dan çıkarılır (Batman Raman, Garzan, Adıyaman, Diyarbakır). *Rafineriler:* **Batman** (Hammadde), **Kırıkkale (Orta Anadolu)**, **İzmit (İpraş/Tüpraş)**, **İzmir (Aliağa)** ve **Star Rafinerisi (İzmir)**. (Mersin Ataş depolamadır).
+* **Doğalgaz:** Kırklareli (Hamitabat), Tekirdağ (Hayrabolu), Mardin (Çamurlu), Sakarya Gaz Sahası (Karadeniz Filyos). *Santraller ("OHA" Kodlaması):* **Ovaakça (Bursa), Hamitabat (Kırklareli), Ambarlı (İstanbul)**, Bandırma, İzmir.
+* **Jeotermal Enerji (Sıcak Buhar - Fay Hatları):** Tamamı Ege'dedir. **Denizli (Sarayköy)** (İlk santral), **Aydın (Germencik, Salavatlı)**, **Manisa (Alaşehir)**.
+* **Rüzgar Enerjisi:** **Çanakkale, Balıkesir, İzmir (Çeşme)**, Bozcaada, Hatay.
+* **Nükleer Enerji:** Hammaddeleri Uranyum (Yozgat Sorgun) ve Toryum (Eskişehir Sivrihisar). Santraller: **Mersin Akkuyu** (Yapımı süren ilk santral) ve **Sinop** (Planlanan). (Deprem riski azlığı ve soğutma suyu nedeniyle kıyıda seçilmiştir).
+
+---
+
+## 10\. ULAŞIM, BORU HATLARI, SINIR KAPILARI, KALKINMA PROJELERİ VE KORUMA ALANLARI
+
+### 10.1\. Ulaşım ve Geçitler
+
+* **Yüksek Hızlı Tren (YHT) Aktif Hatları:** İstanbul - Kocaeli - Sakarya - Bilecik - Eskişehir - Ankara, Ankara - Kırıkkale - Yozgat - Sivas, Ankara - Konya - Karaman.
+* **Demiryolu BULUNMAYAN YERLER (KPSS Klasiği):** Doğu Karadeniz'in tamamı (Trabzon, Rize, Ordu, Giresun, Artvin vb.), Batı Karadeniz'de Sinop, Kastamonu, Bartın, Bolu *(Karadeniz'de demiryolu sadece Zonguldak ve Samsun'dadır!)*, Çanakkale, Muğla, Antalya, Hakkari, Şırnak, Ağrı, Nevşehir.
+* **Karayolu Geçitleri ve Tüneller:**  
+  * *Akdeniz Geçitleri ("Çubukla Sert Tavuğu Gülerek Beline Vur"):* Çubuk (Antalya-Göller Yöresi), Sertavul (Mersin-Karaman), Gülek Boğazı (Adana-Niğde), Belen Geçidi (İskenderun-Antakya).
+  * *Karadeniz Tünelleri/Geçitleri:* Ecevit ve Ilgaz 15 Temmuz İstiklal Tüneli (Kastamonu-Çankırı), Bolu Dağı Tüneli, Nefise Akçelik (Ordu), Zigana Tüneli (Trabzon-Gümüşhane - en uzun çift tüplü), Ovit Tüneli (Rize-Erzurum), Kop Geçidi (Bayburt-Erzurum), Cankurtaran Tüneli (Artvin Hopa).
+
+### 10.2\. Boru Hatları (Stratejik Enerji Koridoru)
+
+* **Doğalgaz Boru Hatları:**  
+  1. **Mavi Akım:** Rusya'dan Karadeniz altından Samsun/Ankara'ya.
+  2. **TürkAkım:** Rusya'dan Karadeniz altından Trakya Kıyıköy'e, oradan Avrupa'ya.
+  3. **TANAP (Trans Anadolu):** Azerbaycan Şahdeniz gazını Gürcistan üzerinden Türkiye'yi baştan başa geçip (20 il) Yunanistan/Avrupa sınırına taşır.
+  4. **BTE (Bakü-Tiflis-Erzurum):** Azerbaycan gazını Erzurum'a taşır.
+  5. **İran - Türkiye Hattı:** Tebriz'den Ağrı/Ankara'ya.
+* **Petrol Boru Hatları:**  
+  1. **BTC (Bakü-Tiflis-Ceyhan):** Hazar ham petrolünü Gürcistan üzerinden Adana Ceyhan Limanı'na taşır.
+  2. **Kerkük - Yumurtalık:** Irak petrolünü Ceyhan'a taşır.
+  3. **Batman - Dörtyol:** Yerli Güneydoğu petrolünü İskenderun Körfezi'ne taşır.
+
+### 10.3\. Sınır Kapıları
+
+* **Bulgaristan:** **Kapıkule** (Edirne - en işlek kapı, demiryolu var), Hamzabeyli, Dereköy.
+* **Yunanistan:** **İpsala** (en işlek Yunan kapısı), **Uzunköprü** (demiryolu).
+* **Gürcistan:** **Sarp** (Artvin - çok işlek), Türkgözü, Aktaş, Çıldır-Akyaka (Canbaz YHT/demiryolu).
+* **Ermenistan:** Alican (Iğdır), Akyaka (Kars). *(Siyasi nedenlerle KAPALIDIR).*
+* **Nahçıvan (Azerbaycan):** **Dilucu (Umut)** Kapısı (Iğdır - en kısa sınırımız, 18 km).
+* **İran:** **Gürbulak** (Ağrı - transit ticaret en işlek), **Kapıköy** (Van - demiryolu), Esendere (Hakkari). *(Kasr-ı Şirin'den beri en eski değişmeyen sınır).*
+* **Irak:** **Habur** (Şırnak Silopi - Ortadoğu'ya en işlek kapımız), Üzümlü.
+* **Suriye (En uzun kara sınırımız - 911 km):** Cilvegözü, Yayladağı (Hatay), Öncüpınar, Karkamış, Çobanbey (Kilis - demiryolu), Nusaybin (Mardin - demiryolu).
+
+### 10.4\. Kalkınma Projeleri &amp; Koruma Alanları
+
+* **Bölgesel Kalkınma Projeleri:**  
+  * **GAP:** Güneydoğu ili + Kilis ve Şırnak (Sulama ve HES odaklı en kapsamlı proje).
+  * **KOP:** Konya, Karaman, Aksaray, Niğde, Nevşehir, Kırşehir, Yozgat, Kırıkkale (8 il - Mavi Tünel Göksu sulaması).
+  * **ZBK:** Zonguldak, Bartın, Karabük (3 il - Taşkömürü ve demir-çelik modernizasyonu).
+  * **YİH:** Samsun, Amasya, Çorum, Tokat (Erozyon ve taşkın önleme).
+  * **DOKAP:** Doğu Karadeniz 7 il + Samsun, Amasya, Çorum, Tokat (11 il - Yeşil Yol ve yayla turizmi).
+  * **DAP:** Doğu Anadolu 14 il + Sivas (15 il - en çok ili kapsayan proje, hayvancılık).
+  * *KPSS Tuzağı:* **Kayseri, Kahramanmaraş, Osmaniye, Hatay, Adana, Mersin, Ankara, Eskişehir** HİÇBİR bölgesel kalkınma projesinde YER ALMAZ!
+* **14 Ramsar Alanı (Sulak Alanlar):** Manyas (Kuş) Gölü, Uluabat Gölü, Gediz Deltası, Burdur Gölü, Sultan Sazlığı (Kayseri), Meke Maarı, Kızören Obruğu, Seyfe Gölü, Göksu Deltası, Akyatan Lagünü, Yumurtalık Lagünü, Kızılırmak Deltası, Kuyucuk Gölü (Kars), Nemrut Kalderası (Bitlis).
+* **UNESCO Karma Mirasları (Hem Doğal Hem Kültürel):** Göreme Milli Parkı / Kapadokya (Nevşehir) ve Hierapolis / Pamukkale Travertenleri (Denizli).

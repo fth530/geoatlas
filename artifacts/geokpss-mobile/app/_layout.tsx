@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { Platform, View } from 'react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { OnboardingGate } from '@/components/Onboarding';
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -19,8 +19,6 @@ import { ThemeProvider } from '@/context/ThemeContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
@@ -49,7 +47,9 @@ export default function RootLayout() {
 
   const appContent = (
     <StudyProvider>
-      <RootLayoutNav />
+      <OnboardingGate>
+        <RootLayoutNav />
+      </OnboardingGate>
     </StudyProvider>
   );
 
@@ -57,15 +57,13 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <ErrorBoundary>
-          <QueryClientProvider client={queryClient}>
-            {Platform.OS === 'web' ? (
-              <View style={{ flex: 1 }}>{appContent}</View>
-            ) : (
-              <GestureHandlerRootView style={{ flex: 1 }}>
-                <KeyboardProvider>{appContent}</KeyboardProvider>
-              </GestureHandlerRootView>
-            )}
-          </QueryClientProvider>
+          {Platform.OS === 'web' ? (
+            <View style={{ flex: 1 }}>{appContent}</View>
+          ) : (
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <KeyboardProvider>{appContent}</KeyboardProvider>
+            </GestureHandlerRootView>
+          )}
         </ErrorBoundary>
       </ThemeProvider>
     </SafeAreaProvider>

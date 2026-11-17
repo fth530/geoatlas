@@ -1,0 +1,394 @@
+import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Switch,
+  TextInput,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { STATUS_LABEL, STATUS_OPTIONS, TOPIC_DETAILS, TopicStatus } from '@/data/geography';
+import { useStudy } from '@/context/StudyContext';
+import { AppText as Text } from '@/components/AppText';
+import { FONT_FAMILY } from '@/constants/typography';
+import { PressableScale } from '@/components/PressableScale';
+import { useColors } from '@/hooks/useColors';
+import { isReminderEnabled, REMINDER_HOUR, REMINDER_MINUTE, setReminderEnabled } from '@/utils/reminders';
+
+export default function StatsScreen() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, hydrated, importStudyData } = useStudy();
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [reminderEnabled, setReminderEnabledState] = useState(false);
+  const [reminderBusy, setReminderBusy] = useState(false);
+
+  useEffect(() => {
+    void isReminderEnabled().then(setReminderEnabledState);
+  }, []);
+
+  const toggleReminder = async (next: boolean) => {
+    if (reminderBusy) return;
+    setReminderBusy(true);
+    const ok = await setReminderEnabled(next);
+    setReminderBusy(false);
+    if (ok) {
+      setReminderEnabledState(next);
+      setImportMessage({ ok: true, text: next ? 'Hatırlatıcı açıldı.' : 'Hatırlatıcı kapatıldı.' });
+    } else {
+      setImportMessage({ ok: false, text: next ? 'Bildirim izni verilmedi; hatırlatıcı açılamadı.' : 'Hatırlatıcı kapatılamadı.' });
+    }
+  };
+
+  const stats = useMemo(() => {
+    const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+    const dueCount = reviewItems.filter((item) => item.dueAt <= Date.now()).length;
+    const mastered = reviewItems.filter((item) => item.successStreak >= 3).length;
+    const weakCount = reviewItems.filter((item) => !item.lastCorrect).length;
+    const statusCounts = TOPIC_DETAILS.reduce<Record<TopicStatus, number>>(
+      (acc, topic) => {
+        const status = (topicStatuses[topic.id] ?? 'new') as TopicStatus;
+        acc[status] += 1;
+        return acc;
+      },
+      { new: 0, studying: 0, review: 0, weak: 0, done: 0 },
+    );
+    const layerStats = TOPIC_DETAILS.map((topic) => {
+      const items = reviewItems.filter((item) => item.layer === topic.id);
+      return {
+        topic,
+        studied: items.length,
+        mastered: items.filter((item) => item.successStreak >= 3).length,
+        weak: items.filter((item) => !item.lastCorrect).length,
+      };
+    }).filter((entry) => entry.studied > 0);
+    const topWeak = reviewItems
+      .filter((item) => !item.lastCorrect)
+      .sort((a, b) => b.attempts - a.attempts)
+      .slice(0, 5);
+    return { accuracy, dueCount, mastered, weakCount, statusCounts, layerStats, topWeak };
+  }, [answered, correct, notes, reviewItems, topicStatuses]);
+
+  const exportData = async () => {
+    const payload = {
+      app: 'geokpss',
+      version: 2,
+      exportedAt: new Date().toISOString(),
+      study: { notes, topicStatuses, reviewItems, answered, correct, proCandidates },
+    };
+    try {
+      await Share.share({
+        message: JSON.stringify(payload, null, 2),
+        title: 'geokpss-yedek.json',
+      });
+    } catch {
+      setImportMessage({ ok: false, text: 'Dışa aktarma bu platformda desteklenmiyor.' });
+    }
+  };
+
+  const runImport = () => {
+    Alert.alert(
+      'Veriler içe aktarılsın mı?',
+      'Yedekteki veriler bu cihazdaki mevcut ilerlemenin yerine geçecek.',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        { text: 'İçe aktar', onPress: () => void applyImport() },
+      ],
+    );
+  };
+  const applyImport = () => {
+    const ok = importStudyData(importText);
+    setImportMessage(
+      ok
+        ? { ok: true, text: 'Veriler başarıyla içe aktarıldı.' }
+        : { ok: false, text: 'Geçersiz yedek dosyası. GeoKPSS dışa aktarımını yapıştır.' },
+    );
+    if (ok) {
+      setImportText('');
+      setTimeout(() => setImportOpen(false), 900);
+    }
+  };
+
+  const summaryCards = [
+    { label: 'Doğru oranı', value: `${stats.accuracy}%`, icon: 'target' as const },
+    { label: 'Cevaplanan', value: String(answered), icon: 'check-circle' as const },
+    { label: 'Tekrar bekleyen', value: String(stats.dueCount), icon: 'clock' as const },
+    { label: 'Not sayısı', value: String(notes.length), icon: 'book-open' as const },
+  ];
+
+  return (
+    <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 108 }]} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.eyebrow, { color: colors.primary }]}>ÇALIŞMA ÖZETİ</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>İstatistik</Text>
+          </View>
+          <View style={[styles.scorePill, { backgroundColor: colors.accent }]}>
+            <Feather name="bar-chart-2" size={15} color={colors.primary} />
+            <Text style={[styles.scoreText, { color: colors.primary }]}>{stats.mastered} güçlü</Text>
+          </View>
+        </View>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+          Quiz cevapların ve tekrar performansın burada özetlenir. Veriler bu cihazda saklanır.
+        </Text>
+
+        {!hydrated ? (
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.muted, { color: colors.mutedForeground }]}>Veriler yükleniyor…</Text>
+          </View>
+        ) : answered === 0 && reviewItems.length === 0 ? (
+          <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.accent }]}>
+              <Feather name="bar-chart" size={22} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Henüz veri yok</Text>
+            <Text style={[styles.muted, { color: colors.mutedForeground }]}>Quiz çözmeye başladığında istatistiklerin burada oluşacak.</Text>
+            <PressableScale
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/quiz' })}
+              style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+              testID="stats-start-quiz"
+            >
+              <Text style={[styles.emptyButtonText, { color: colors.primaryForeground }]}>İlk quiz'i başlat</Text>
+              <Feather name="arrow-right" size={14} color={colors.primaryForeground} />
+            </PressableScale>
+          </View>
+        ) : (
+          <>
+            <View style={styles.summaryGrid}>
+              {summaryCards.map((card) => (
+                <View key={card.label} style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Feather name={card.icon} size={15} color={colors.primary} />
+                  <Text style={[styles.summaryValue, { color: colors.foreground }]}>{card.value}</Text>
+                  <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>{card.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.accuracyRow}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>Genel doğruluk</Text>
+                <Text style={[styles.accuracyValue, { color: colors.primary }]}>%{stats.accuracy}</Text>
+              </View>
+              <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
+                <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${stats.accuracy}%` }]} />
+              </View>
+              <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+                {answered} cevaptan {correct} tanesi doğru.
+              </Text>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.cardTitle, { color: colors.foreground }]}>Konu durumları</Text>
+              <View style={styles.statusRow}>
+                {STATUS_OPTIONS.map((option) => (
+                  <View key={option.id} style={styles.statusItem}>
+                    <View style={[styles.statusDot, { backgroundColor: option.color }]} />
+                    <Text style={[styles.statusCount, { color: colors.foreground }]}>{stats.statusCounts[option.id]}</Text>
+                    <Text style={[styles.statusName, { color: colors.mutedForeground }]} numberOfLines={1}>{STATUS_LABEL[option.id]}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {stats.layerStats.length > 0 && (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>Konu bazlı tekrar</Text>
+                {stats.layerStats.map(({ topic, studied, mastered: strong, weak }) => (
+                  <View key={topic.id} style={[styles.layerRow, { borderTopColor: colors.border }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.layerTitle, { color: colors.foreground }]}>{topic.title}</Text>
+                      <Text style={[styles.layerSub, { color: colors.mutedForeground }]}>{studied} öğe takipte</Text>
+                      <View style={[styles.miniTrack, { backgroundColor: colors.muted }]}>
+                        <View
+                          style={[
+                            styles.miniFill,
+                            { backgroundColor: colors.success, width: `${studied > 0 ? Math.round((strong / studied) * 100) : 0}%` },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.layerBadges}>
+                      {strong > 0 && (
+                        <View style={[styles.badge, { backgroundColor: colors.successBackground }]}>
+                          <Text style={[styles.badgeText, { color: colors.successForeground }]}>{strong} güçlü</Text>
+                        </View>
+                      )}
+                      {weak > 0 && (
+                        <View style={[styles.badge, { backgroundColor: colors.errorBackground }]}>
+                          <Text style={[styles.badgeText, { color: colors.errorForeground }]}>{weak} zayıf</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {stats.topWeak.length > 0 && (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>Sık yanlış yapılanlar</Text>
+                {stats.topWeak.map((item, index) => (
+                  <View key={item.id} style={[styles.weakRow, index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }]}>
+                    <View style={[styles.weakRank, { backgroundColor: colors.errorBackground }]}>
+                      <Text style={[styles.weakRankText, { color: colors.errorForeground }]}>{index + 1}</Text>
+                    </View>
+                    <Text style={[styles.weakName, { color: colors.foreground }]} numberOfLines={1}>{item.targetName}</Text>
+                    <Text style={[styles.weakCount, { color: colors.mutedForeground }]}>{item.attempts} deneme</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.reminderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.cardTitle, { color: colors.foreground }]}>Günlük hatırlatıcı</Text>
+              <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+                Her gün saat {String(REMINDER_HOUR).padStart(2, '0')}:{String(REMINDER_MINUTE).padStart(2, '0')}'de tekrar hatırlatması gönderir.
+              </Text>
+            </View>
+            <Switch
+              value={reminderEnabled}
+              onValueChange={(next) => void toggleReminder(next)}
+              disabled={reminderBusy || Platform.OS === 'web'}
+              trackColor={{ false: colors.muted, true: colors.primary }}
+              thumbColor={colors.card}
+              accessibilityLabel="Günlük çalışma hatırlatıcısı"
+              testID="reminder-toggle"
+            />
+          </View>
+          {Platform.OS === 'web' && (
+            <Text style={[styles.muted, { color: colors.mutedForeground }]}>Hatırlatıcı yalnızca mobil uygulamada çalışır.</Text>
+          )}
+        </View>
+
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.cardTitle, { color: colors.foreground }]}>Çalışma verileri</Text>
+          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+            İlerleme, notlar ve tekrar listesini yedekleyip başka cihaza taşıyabilirsin.
+          </Text>
+          <View style={styles.dataButtons}>
+            <Pressable onPress={() => void exportData()} style={[styles.dataButton, { backgroundColor: colors.accent }]} testID="export-study-data">
+              <Feather name="upload" size={14} color={colors.primary} />
+              <Text style={[styles.dataButtonText, { color: colors.primary }]}>Yedeği dışa aktar</Text>
+            </Pressable>
+            <Pressable onPress={() => { setImportMessage(null); setImportOpen(true); }} style={[styles.dataButton, { backgroundColor: colors.accent }]} testID="import-study-data">
+              <Feather name="download" size={14} color={colors.primary} />
+              <Text style={[styles.dataButtonText, { color: colors.primary }]}>Yedekten içe aktar</Text>
+            </Pressable>
+          </View>
+          {importMessage && !importOpen && (
+            <Text style={[styles.importNote, { color: importMessage.ok ? colors.success : colors.destructive }]}>{importMessage.text}</Text>
+          )}
+        </View>
+      </ScrollView>
+
+      <Modal visible={importOpen} animationType="slide" onRequestClose={() => setImportOpen(false)}>
+        <View style={[styles.modalScreen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
+          <View style={styles.modalHeader}>
+            <View>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Yedekten içe aktar</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>Dışa aktardığın GeoKPSS yedeğini buraya yapıştır.</Text>
+            </View>
+            <Pressable accessibilityLabel="Kapat" onPress={() => setImportOpen(false)} style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="x" size={19} color={colors.foreground} />
+            </Pressable>
+          </View>
+          <TextInput
+            value={importText}
+            onChangeText={setImportText}
+            placeholder='{"app":"geokpss", ...}'
+            placeholderTextColor={colors.mutedForeground}
+            multiline
+            style={[styles.importInput, { backgroundColor: colors.card, color: colors.foreground, borderColor: colors.border, fontFamily: FONT_FAMILY.regular }]}
+            autoCapitalize="none"
+            autoCorrect={false}
+            testID="import-data-input"
+          />
+          {importMessage && (
+            <Text style={[styles.importNote, { color: importMessage.ok ? colors.success : colors.destructive }]}>{importMessage.text}</Text>
+          )}
+          <PressableScale
+            onPress={runImport}
+            disabled={!importText.trim()}
+            style={[styles.importButton, { backgroundColor: colors.primary, opacity: importText.trim() ? 1 : 0.5 }]}
+            testID="run-import"
+          >
+            <Text style={[styles.importButtonText, { color: colors.primaryForeground }]}>İçe aktar</Text>
+          </PressableScale>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  content: { paddingHorizontal: 18, paddingTop: 16, gap: 14 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  eyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 0.9 },
+  title: { fontSize: 25, fontWeight: '700', marginTop: 4, letterSpacing: -0.4 },
+  subtitle: { fontSize: 12, lineHeight: 18, marginTop: -7 },
+  scorePill: { borderRadius: 14, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center' },
+  scoreText: { fontSize: 12, fontWeight: '700' },
+  card: { borderWidth: 1, borderRadius: 20, padding: 14, gap: 12 },
+  cardTitle: { fontSize: 14, fontWeight: '700' },
+  accuracyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  accuracyValue: { fontSize: 20, fontWeight: '700' },
+  progressTrack: { height: 8, borderRadius: 4, overflow: 'hidden' },
+  progressFill: { height: 8, borderRadius: 4 },
+  miniTrack: { height: 4, borderRadius: 2, marginTop: 6, overflow: 'hidden' },
+  miniFill: { height: 4, borderRadius: 2 },
+  weakRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9 },
+  weakRank: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  weakRankText: { fontSize: 10, fontWeight: '700' },
+  weakName: { flex: 1, fontSize: 12, fontWeight: '600' },
+  weakCount: { fontSize: 10, fontWeight: '600' },
+  reminderRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  muted: { fontSize: 12, lineHeight: 18 },
+  empty: { borderWidth: 1, borderRadius: 22, padding: 24, alignItems: 'center', gap: 9 },
+  emptyIcon: { width: 46, height: 46, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { fontSize: 15, fontWeight: '700' },
+  emptyButton: { marginTop: 3, minHeight: 42, borderRadius: 13, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  emptyButtonText: { fontSize: 12, fontWeight: '700' },
+  summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
+  summaryCard: { flexBasis: '47%', flexGrow: 1, borderWidth: 1, borderRadius: 18, padding: 13, gap: 5 },
+  summaryValue: { fontSize: 20, fontWeight: '700', letterSpacing: -0.4 },
+  summaryLabel: { fontSize: 10 },
+  statusRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  statusItem: { alignItems: 'center', gap: 4, flex: 1 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusCount: { fontSize: 15, fontWeight: '700' },
+  statusName: { fontSize: 8, maxWidth: 60 },
+  layerRow: { borderTopWidth: 1, paddingTop: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  layerTitle: { fontSize: 12, fontWeight: '700' },
+  layerSub: { fontSize: 10, marginTop: 2 },
+  layerBadges: { flexDirection: 'row', gap: 5 },
+  badge: { borderRadius: 8, paddingHorizontal: 7, paddingVertical: 4 },
+  badgeText: { fontSize: 9, fontWeight: '700' },
+  dataButtons: { flexDirection: 'row', gap: 8 },
+  dataButton: { flex: 1, minHeight: 40, borderRadius: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  dataButtonText: { fontSize: 11, fontWeight: '700' },
+  importNote: { fontSize: 11, lineHeight: 16 },
+  modalScreen: { flex: 1, paddingHorizontal: 20 },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16 },
+  modalTitle: { fontSize: 20, fontWeight: '700' },
+  modalSubtitle: { fontSize: 12, marginTop: 4 },
+  iconButton: { height: 38, width: 38, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  importInput: { flex: 1, borderWidth: 1, borderRadius: 15, padding: 13, fontSize: 11, textAlignVertical: 'top' },
+  importButton: { minHeight: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  importButtonText: { fontSize: 13, fontWeight: '700' },
+});

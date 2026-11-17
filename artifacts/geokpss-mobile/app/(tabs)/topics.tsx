@@ -95,9 +95,9 @@ export default function TopicsScreen() {
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Tüm konular</Text>
           <View style={styles.statusLegend}>
-            <View style={[styles.legendDot, { backgroundColor: '#C36D5C' }]} />
+            <View style={[styles.legendDot, { backgroundColor: STATUS_OPTIONS.find((o) => o.id === 'weak')?.color }]} />
             <Text style={[styles.legendText, { color: colors.mutedForeground }]}>Zayıf</Text>
-            <View style={[styles.legendDot, { backgroundColor: '#B78948' }]} />
+            <View style={[styles.legendDot, { backgroundColor: STATUS_OPTIONS.find((o) => o.id === 'review')?.color }]} />
             <Text style={[styles.legendText, { color: colors.mutedForeground }]}>Tekrar</Text>
           </View>
         </View>
@@ -105,6 +105,9 @@ export default function TopicsScreen() {
         {TOPIC_DETAILS.map((topic) => {
           const status: TopicStatus = topicStatuses[topic.id] ?? 'new';
           const statusColor = STATUS_OPTIONS.find((option) => option.id === status)?.color ?? colors.mutedForeground;
+          const topicItems = reviewItems.filter((item) => item.layer === topic.id);
+          const topicWeak = topicItems.filter((item) => !item.lastCorrect).length;
+          const topicMastered = topicItems.filter((item) => item.successStreak >= 3).length;
           return (
             <View key={topic.id} style={[styles.topicCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.topicIcon, { backgroundColor: colors.accent }]}>
@@ -113,6 +116,11 @@ export default function TopicsScreen() {
               <View style={styles.topicBody}>
                 <Text style={[styles.topicTitle, { color: colors.foreground }]}>{topic.title}</Text>
                 <Text style={[styles.topicSubtitle, { color: colors.mutedForeground }]}>{topic.subtitle}</Text>
+                {topicItems.length > 0 && (
+                  <Text style={[styles.topicStats, { color: colors.mutedForeground }]}>
+                    {topicItems.length} öğe takipte{topicMastered > 0 ? ` · ${topicMastered} güçlü` : ''}{topicWeak > 0 ? ` · ${topicWeak} zayıf` : ''}
+                  </Text>
+                )}
                 <View style={styles.topicActions}>
                   <Pressable
                     accessibilityLabel={`${topic.title} durumu: ${STATUS_LABEL[status]}. Durumu değiştir`}
@@ -122,6 +130,13 @@ export default function TopicsScreen() {
                     <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
                     <Text style={[styles.statusText, { color: statusColor }]}>{STATUS_LABEL[status]}</Text>
                     <Feather name="chevron-down" size={12} color={statusColor} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/quiz', params: { mode: topic.id } })}
+                    style={[styles.mapLink, { borderColor: colors.border }]}
+                  >
+                    <Feather name="target" size={12} color={colors.primary} />
+                    <Text style={[styles.mapLinkText, { color: colors.primary }]}>Quiz</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => router.push({ pathname: '/', params: { layer: topic.id } })}
@@ -205,6 +220,7 @@ const styles = StyleSheet.create({
   topicBody: { flex: 1, gap: 3 },
   topicTitle: { fontSize: 12, fontWeight: '700' },
   topicSubtitle: { fontSize: 10, lineHeight: 14 },
+  topicStats: { fontSize: 9, fontWeight: '600', marginTop: 2 },
   topicActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 5 },
   statusBadge: { minHeight: 27, borderRadius: 10, paddingHorizontal: 8, flexDirection: 'row', gap: 5, alignItems: 'center' },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
