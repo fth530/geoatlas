@@ -74,6 +74,8 @@ const MAX_IMPORTED_NOTES = 500;
 const MAX_NOTE_TITLE_LENGTH = 120;
 const MAX_NOTE_BODY_LENGTH = 2000;
 
+export type DailyActivity = { answered: number; correct: number };
+
 export type PersistedStudyData = {
   notes: StudyNote[];
   topicStatuses: Record<string, TopicStatus>;
@@ -81,7 +83,11 @@ export type PersistedStudyData = {
   answered: number;
   correct: number;
   proCandidates: string[];
+  dailyActivity: Record<string, DailyActivity>;
 };
+
+const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_DAILY_ACTIVITY_DAYS = 120;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -157,5 +163,25 @@ export function sanitizePersistedStudy(value: unknown): PersistedStudyData {
     proCandidates: Array.isArray(raw.proCandidates)
       ? raw.proCandidates.filter((id): id is string => typeof id === 'string')
       : [],
+    dailyActivity: isRecord(raw.dailyActivity)
+      ? Object.fromEntries(
+          Object.entries(raw.dailyActivity)
+            .filter(([key]) => DAY_KEY_PATTERN.test(key))
+            .slice(-MAX_DAILY_ACTIVITY_DAYS)
+            .map(([key, value]) => [
+              key,
+              isRecord(value)
+                ? { answered: asNumber(value.answered), correct: asNumber(value.correct) }
+                : { answered: 0, correct: 0 },
+            ]),
+        )
+      : {},
   };
+}
+
+export function localDayKey(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

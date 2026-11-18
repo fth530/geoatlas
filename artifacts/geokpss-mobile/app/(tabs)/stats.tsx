@@ -14,8 +14,10 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 import { STATUS_LABEL, STATUS_OPTIONS, TOPIC_DETAILS, TopicStatus } from '@/data/geography';
 import { useStudy } from '@/context/StudyContext';
+import { localDayKey } from '@/utils/study';
 import { AppText as Text } from '@/components/AppText';
 import { FONT_FAMILY } from '@/constants/typography';
 import { PressableScale } from '@/components/PressableScale';
@@ -25,7 +27,7 @@ import { isReminderEnabled, REMINDER_HOUR, REMINDER_MINUTE, setReminderEnabled }
 export default function StatsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, hydrated, importStudyData, resetStudyData } = useStudy();
+  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, dailyActivity, hydrated, importStudyData, resetStudyData } = useStudy();
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -75,15 +77,25 @@ export default function StatsScreen() {
       .filter((item) => !item.lastCorrect)
       .sort((a, b) => b.attempts - a.attempts)
       .slice(0, 5);
-    return { accuracy, dueCount, mastered, weakCount, statusCounts, layerStats, topWeak };
-  }, [answered, correct, notes, reviewItems, topicStatuses]);
+    const week: { key: string; label: string; answered: number; correct: number }[] = [];
+    const dayNames = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const date = new Date(Date.now() - offset * 24 * 60 * 60 * 1000);
+      const key = localDayKey(date);
+      const day = dailyActivity[key] ?? { answered: 0, correct: 0 };
+      week.push({ key, label: dayNames[date.getDay()], answered: day.answered, correct: day.correct });
+    }
+    const weekMax = Math.max(1, ...week.map((day) => day.answered));
+    const weekTotal = week.reduce((sum, day) => sum + day.answered, 0);
+    return { accuracy, dueCount, mastered, weakCount, statusCounts, layerStats, topWeak, week, weekMax, weekTotal };
+  }, [answered, correct, notes, reviewItems, topicStatuses, dailyActivity]);
 
   const exportData = async () => {
     const payload = {
       app: 'geokpss',
       version: 2,
       exportedAt: new Date().toISOString(),
-      study: { notes, topicStatuses, reviewItems, answered, correct, proCandidates },
+      study: { notes, topicStatuses, reviewItems, answered, correct, proCandidates, dailyActivity },
     };
     try {
       await Share.share({
@@ -149,12 +161,12 @@ export default function StatsScreen() {
     }
   };
 
-  const summaryCards = [
-    { label: 'Doğru oranı', value: `${stats.accuracy}%`, icon: 'target' as const },
+  const heroMetrics = [
     { label: 'Cevaplanan', value: String(answered), icon: 'check-circle' as const },
     { label: 'Tekrar bekleyen', value: String(stats.dueCount), icon: 'clock' as const },
     { label: 'Not sayısı', value: String(notes.length), icon: 'book-open' as const },
   ];
+  const ringCircumference = 2 * Math.PI * 30;
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
@@ -196,27 +208,74 @@ export default function StatsScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.summaryGrid}>
-              {summaryCards.map((card) => (
-                <View key={card.label} style={[styles.summaryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Feather name={card.icon} size={15} color={colors.primary} />
-                  <Text style={[styles.summaryValue, { color: colors.foreground }]}>{card.value}</Text>
-                  <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>{card.label}</Text>
+            <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
+              <View style={styles.heroTop}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.heroEyebrow, { color: colors.primaryForeground }]}>GENEL BAŞARI</Text>
+                  <Text style={[styles.heroPercent, { color: colors.primaryForeground }]}>%{stats.accuracy}</Text>
+                  <Text style={[styles.heroSub, { color: colors.primaryForeground }]}>doğruluk oranı</Text>
                 </View>
-              ))}
+                <View style={styles.heroRingWrap}>
+                  <Svg width={72} height={72} viewBox="0 0 72 72">
+                    <Circle cx={36} cy={36} r={30} stroke={`${colors.primaryForeground}33`} strokeWidth={7} fill="none" />
+                    <Circle
+                      cx={36}
+                      cy={36}
+                      r={30}
+                      stroke={colors.primaryForeground}
+                      strokeWidth={7}
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeDasharray={`${(stats.accuracy / 100) * ringCircumference} ${ringCircumference}`}
+                      rotation={-90}
+                      origin="36, 36"
+                    />
+                  </Svg>
+                  <View style={styles.heroRingCenter} pointerEvents="none">
+                    <Text style={[styles.heroRingText, { color: colors.primaryForeground }]}>{stats.mastered} güçlü</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={[styles.heroDivider, { backgroundColor: `${colors.primaryForeground}2E` }]} />
+              <View style={styles.heroMetrics}>
+                {heroMetrics.map((metric) => (
+                  <View key={metric.label} style={styles.heroMetric}>
+                    <Feather name={metric.icon} size={14} color={colors.primaryForeground} />
+                    <Text style={[styles.heroMetricValue, { color: colors.primaryForeground }]}>{metric.value}</Text>
+                    <Text style={[styles.heroMetricLabel, { color: colors.primaryForeground }]} numberOfLines={1}>{metric.label}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.accuracyRow}>
-                <Text style={[styles.cardTitle, { color: colors.foreground }]}>Genel doğruluk</Text>
-                <Text style={[styles.accuracyValue, { color: colors.primary }]}>%{stats.accuracy}</Text>
+              <View style={styles.weekHeader}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>Haftalık Aktivite</Text>
+                <Text style={[styles.weekTotal, { color: colors.mutedForeground }]}>{stats.weekTotal} soru</Text>
               </View>
-              <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
-                <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${stats.accuracy}%` }]} />
+              <View style={styles.weekRow}>
+                {stats.week.map((day, index) => {
+                  const isToday = index === stats.week.length - 1;
+                  const barHeight = day.answered > 0 ? Math.max(8, Math.round((day.answered / stats.weekMax) * 72)) : 4;
+                  return (
+                    <View key={day.key} style={styles.weekCol}>
+                      <View style={[styles.weekBarTrack, { backgroundColor: colors.muted }]}>
+                        <View
+                          style={[
+                            styles.weekBar,
+                            {
+                              height: barHeight,
+                              backgroundColor: colors.primary,
+                              opacity: day.answered > 0 ? (isToday ? 1 : 0.45) : 1,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={[styles.weekLabel, { color: isToday ? colors.primary : colors.mutedForeground }]}>{day.label}</Text>
+                    </View>
+                  );
+                })}
               </View>
-              <Text style={[styles.muted, { color: colors.mutedForeground }]}>
-                {answered} cevaptan {correct} tanesi doğru.
-              </Text>
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -383,12 +442,28 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 12, lineHeight: 18, marginTop: -7 },
   scorePill: { borderRadius: 14, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center' },
   scoreText: { fontSize: 12, fontWeight: '700' },
-  card: { borderWidth: 1, borderRadius: 20, padding: 14, gap: 12 },
+  card: { borderWidth: 1, borderRadius: 22, padding: 16, gap: 12 },
   cardTitle: { fontSize: 14, fontWeight: '700' },
-  accuracyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  accuracyValue: { fontSize: 20, fontWeight: '700' },
-  progressTrack: { height: 8, borderRadius: 4, overflow: 'hidden' },
-  progressFill: { height: 8, borderRadius: 4 },
+  heroCard: { borderRadius: 24, padding: 18, gap: 14 },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  heroEyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 1.1, opacity: 0.85 },
+  heroPercent: { fontSize: 40, fontWeight: '700', letterSpacing: -1, marginTop: 4 },
+  heroSub: { fontSize: 11, fontWeight: '600', opacity: 0.85, marginTop: 2 },
+  heroRingWrap: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
+  heroRingCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  heroRingText: { fontSize: 9, fontWeight: '700' },
+  heroDivider: { height: 1 },
+  heroMetrics: { flexDirection: 'row' },
+  heroMetric: { flex: 1, alignItems: 'center', gap: 3 },
+  heroMetricValue: { fontSize: 16, fontWeight: '700' },
+  heroMetricLabel: { fontSize: 9, fontWeight: '600', opacity: 0.8 },
+  weekHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  weekTotal: { fontSize: 11, fontWeight: '700' },
+  weekRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 96 },
+  weekCol: { flex: 1, alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end' },
+  weekBarTrack: { flex: 1, width: '100%', borderRadius: 8, justifyContent: 'flex-end', overflow: 'hidden' },
+  weekBar: { width: '100%', borderRadius: 8 },
+  weekLabel: { fontSize: 9, fontWeight: '700' },
   miniTrack: { height: 4, borderRadius: 2, marginTop: 6, overflow: 'hidden' },
   miniFill: { height: 4, borderRadius: 2 },
   weakRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9 },
@@ -403,10 +478,6 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 15, fontWeight: '700' },
   emptyButton: { marginTop: 3, minHeight: 42, borderRadius: 13, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 7 },
   emptyButtonText: { fontSize: 12, fontWeight: '700' },
-  summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
-  summaryCard: { flexBasis: '47%', flexGrow: 1, borderWidth: 1, borderRadius: 18, padding: 13, gap: 5 },
-  summaryValue: { fontSize: 20, fontWeight: '700', letterSpacing: -0.4 },
-  summaryLabel: { fontSize: 10 },
   statusRow: { flexDirection: 'row', justifyContent: 'space-between' },
   statusItem: { alignItems: 'center', gap: 4, flex: 1 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },

@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayerId, STATUS_LABEL, STATUS_OPTIONS, TOPIC_DETAILS, TopicStatus } from '@/data/geography';
 import { useStudy } from '@/context/StudyContext';
@@ -14,6 +14,8 @@ export default function TopicsScreen() {
   const insets = useSafeAreaInsets();
   const { hydrated, reviewItems, topicStatuses, setTopicStatus } = useStudy();
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'due' | 'fresh' | 'mastered'>('all');
+  const [searchText, setSearchText] = useState('');
   const completed = TOPIC_DETAILS.filter((topic) => topicStatuses[topic.id] === 'done').length;
   const selectedTopic = TOPIC_DETAILS.find((topic) => topic.id === activeTopic);
   const dueReviews = hydrated ? reviewItems.filter((item) => item.dueAt <= Date.now()) : [];
@@ -23,6 +25,23 @@ export default function TopicsScreen() {
       items: dueReviews.filter((item) => item.layer === topic.id),
     }))
     .filter((group) => group.items.length > 0);
+  const dueTopicIds = new Set(dueReviewGroups.map((group) => group.topic.id));
+  const progressPercent = Math.round((completed / TOPIC_DETAILS.length) * 100);
+  const query = searchText.trim().toLocaleLowerCase('tr');
+  const visibleTopics = TOPIC_DETAILS.filter((topic) => {
+    if (query && !`${topic.title} ${topic.subtitle}`.toLocaleLowerCase('tr').includes(query)) return false;
+    const status: TopicStatus = topicStatuses[topic.id] ?? 'new';
+    if (statusFilter === 'due') return dueTopicIds.has(topic.id);
+    if (statusFilter === 'fresh') return status === 'new';
+    if (statusFilter === 'mastered') return status === 'done';
+    return true;
+  });
+  const filterChips: { id: typeof statusFilter; label: string; count: number }[] = [
+    { id: 'all', label: 'Tümü', count: TOPIC_DETAILS.length },
+    { id: 'due', label: 'Tekrar', count: dueTopicIds.size },
+    { id: 'fresh', label: 'Çalışılmadı', count: TOPIC_DETAILS.filter((t) => (topicStatuses[t.id] ?? 'new') === 'new').length },
+    { id: 'mastered', label: 'Biten', count: completed },
+  ];
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
@@ -39,18 +58,54 @@ export default function TopicsScreen() {
         </View>
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Her başlığı kendi çalışma durumuna göre işaretle. Tekrar ve zayıf konuların burada kalsın.</Text>
 
-        <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.progressCard, { backgroundColor: colors.primary }]}>
           <View style={styles.progressHeader}>
-            <View>
-              <Text style={[styles.progressTitle, { color: colors.foreground }]}>Genel ilerleme</Text>
-              <Text style={[styles.progressSub, { color: colors.mutedForeground }]}>Tamamladığın konu sayısı</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.progressTitle, { color: colors.primaryForeground }]}>%{progressPercent} Genel İlerleme</Text>
+              <Text style={[styles.progressSub, { color: colors.primaryForeground }]}>Tamamladığın konu sayısı</Text>
             </View>
-            <Feather name="trending-up" size={18} color={colors.primary} />
+            <Feather name="trending-up" size={18} color={colors.primaryForeground} />
           </View>
-          <View style={[styles.track, { backgroundColor: colors.muted }]}>
-            <View style={[styles.fill, { backgroundColor: colors.primary, width: `${(completed / TOPIC_DETAILS.length) * 100}%` }]} />
+          <View style={[styles.track, { backgroundColor: `${colors.primaryForeground}33` }]}>
+            <View style={[styles.fill, { backgroundColor: colors.primaryForeground, width: `${progressPercent}%` }]} />
           </View>
         </View>
+
+        <View style={[styles.searchWrap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Feather name="search" size={16} color={colors.mutedForeground} />
+          <TextInput
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholder="Konu ara…"
+            placeholderTextColor={colors.mutedForeground}
+            style={[styles.searchInput, { color: colors.foreground }]}
+            autoCapitalize="none"
+            testID="topic-search"
+          />
+          {searchText.length > 0 && (
+            <Pressable accessibilityLabel="Aramayı temizle" onPress={() => setSearchText('')} hitSlop={8}>
+              <Feather name="x" size={16} color={colors.mutedForeground} />
+            </Pressable>
+          )}
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          {filterChips.map((chip) => {
+            const active = statusFilter === chip.id;
+            return (
+              <Pressable
+                key={chip.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                onPress={() => setStatusFilter(chip.id)}
+                style={[styles.filterChip, active ? { backgroundColor: colors.primary } : { backgroundColor: colors.muted }]}
+              >
+                <Text style={[styles.filterChipText, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>{chip.label}</Text>
+                <Text style={[styles.filterChipCount, { color: active ? colors.primaryForeground : colors.mutedForeground, opacity: active ? 0.8 : 0.6 }]}>{chip.count}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
         {hydrated && dueReviewGroups.length > 0 && (
           <View style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -103,12 +158,20 @@ export default function TopicsScreen() {
           </View>
         </View>
 
-        {TOPIC_DETAILS.map((topic) => {
+        {visibleTopics.length === 0 && (
+          <View style={[styles.emptyFilter, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="search" size={18} color={colors.mutedForeground} />
+            <Text style={[styles.emptyFilterText, { color: colors.mutedForeground }]}>Bu filtreyle eşleşen konu yok.</Text>
+          </View>
+        )}
+        {visibleTopics.map((topic) => {
           const status: TopicStatus = topicStatuses[topic.id] ?? 'new';
           const statusColor = STATUS_OPTIONS.find((option) => option.id === status)?.color ?? colors.mutedForeground;
           const topicItems = reviewItems.filter((item) => item.layer === topic.id);
           const topicWeak = topicItems.filter((item) => !item.lastCorrect).length;
           const topicMastered = topicItems.filter((item) => item.successStreak >= 3).length;
+          const dueCount = dueReviews.filter((item) => item.layer === topic.id).length;
+          const masteryPercent = topicItems.length > 0 ? Math.round((topicMastered / topicItems.length) * 100) : 0;
           return (
             <View key={topic.id} style={[styles.topicCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.topicIcon, { backgroundColor: colors.accent }]}>
@@ -120,12 +183,25 @@ export default function TopicsScreen() {
                 />
               </View>
               <View style={styles.topicBody}>
-                <Text style={[styles.topicTitle, { color: colors.foreground }]}>{topic.title}</Text>
-                <Text style={[styles.topicSubtitle, { color: colors.mutedForeground }]}>{topic.subtitle}</Text>
+                <View style={styles.topicTitleRow}>
+                  <Text style={[styles.topicTitle, { color: colors.foreground }]} numberOfLines={1}>{topic.title}</Text>
+                  {dueCount > 0 && (
+                    <View style={[styles.dueBadge, { backgroundColor: colors.errorBackground }]}>
+                      <Feather name="clock" size={10} color={colors.errorForeground} />
+                      <Text style={[styles.dueBadgeText, { color: colors.errorForeground }]}>{dueCount}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={[styles.topicSubtitle, { color: colors.mutedForeground }]} numberOfLines={1}>{topic.subtitle}</Text>
                 {topicItems.length > 0 && (
-                  <Text style={[styles.topicStats, { color: colors.mutedForeground }]}>
-                    {topicItems.length} öğe takipte{topicMastered > 0 ? ` · ${topicMastered} güçlü` : ''}{topicWeak > 0 ? ` · ${topicWeak} zayıf` : ''}
-                  </Text>
+                  <>
+                    <View style={[styles.topicTrack, { backgroundColor: colors.muted }]}>
+                      <View style={[styles.topicFill, { backgroundColor: colors.success, width: `${masteryPercent}%` }]} />
+                    </View>
+                    <Text style={[styles.topicStats, { color: colors.mutedForeground }]}>
+                      {topicItems.length} öğe takipte{topicMastered > 0 ? ` · %${masteryPercent} güçlü` : ''}{topicWeak > 0 ? ` · ${topicWeak} zayıf` : ''}
+                    </Text>
+                  </>
                 )}
                 <View style={styles.topicActions}>
                   <Pressable
@@ -206,6 +282,14 @@ const styles = StyleSheet.create({
   progressSub: { fontSize: 10, marginTop: 3 },
   track: { height: 6, borderRadius: 4, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 4 },
+  searchWrap: { height: 44, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 9 },
+  searchInput: { flex: 1, height: '100%', fontSize: 13 },
+  filterRow: { gap: 8, paddingVertical: 2, paddingRight: 16 },
+  filterChip: { borderRadius: 999, paddingHorizontal: 13, minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  filterChipText: { fontSize: 12, fontWeight: '600' },
+  filterChipCount: { fontSize: 10, fontWeight: '700' },
+  emptyFilter: { borderWidth: 1, borderRadius: 18, padding: 18, flexDirection: 'row', gap: 10, alignItems: 'center' },
+  emptyFilterText: { fontSize: 12, fontWeight: '600' },
   reviewCard: { borderWidth: 1, borderRadius: 20, padding: 12, gap: 11 },
   reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   reviewIcon: { width: 32, height: 32, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
@@ -224,7 +308,12 @@ const styles = StyleSheet.create({
   topicCard: { borderWidth: 1, borderRadius: 18, padding: 12, flexDirection: 'row', gap: 10 },
   topicIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   topicBody: { flex: 1, gap: 3 },
-  topicTitle: { fontSize: 12, fontWeight: '700' },
+  topicTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  topicTitle: { fontSize: 12, fontWeight: '700', flexShrink: 1 },
+  dueBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  dueBadgeText: { fontSize: 10, fontWeight: '700' },
+  topicTrack: { height: 5, borderRadius: 3, marginTop: 6, overflow: 'hidden' },
+  topicFill: { height: 5, borderRadius: 3 },
   topicSubtitle: { fontSize: 10, lineHeight: 14 },
   topicStats: { fontSize: 9, fontWeight: '600', marginTop: 2 },
   topicActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 5 },

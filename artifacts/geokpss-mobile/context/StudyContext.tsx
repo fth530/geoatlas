@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { LayerId, TopicStatus } from '@/data/geography';
 import {
   buildReviewItem,
+  localDayKey,
   PersistedStudyData,
   STUDY_STORE_VERSION,
   sanitizePersistedStudy,
@@ -56,6 +57,7 @@ const initialState: PersistedStudyData = {
   answered: 0,
   correct: 0,
   proCandidates: [],
+  dailyActivity: {},
 };
 
 const StudyContext = createContext<StudyContextValue | null>(null);
@@ -124,11 +126,17 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
             topicStatuses = { ...state.topicStatuses, [answer.layer]: 'review' as TopicStatus };
           }
         }
+        const dayKey = localDayKey();
+        const day = state.dailyActivity[dayKey] ?? { answered: 0, correct: 0 };
         commit({
           ...state,
           answered: state.answered + 1,
           correct: state.correct + (answer.isCorrect ? 1 : 0),
           topicStatuses,
+          dailyActivity: {
+            ...state.dailyActivity,
+            [dayKey]: { answered: day.answered + 1, correct: day.correct + (answer.isCorrect ? 1 : 0) },
+          },
           reviewItems: [reviewItem, ...state.reviewItems.filter((item) => item.id !== id)],
         });
       },

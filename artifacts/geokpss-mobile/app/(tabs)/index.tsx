@@ -373,28 +373,28 @@ export default function MapScreen() {
             <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>
               Kaynak: {selectedItem.source ?? LAYER_SOURCES[selectedItem.layer]}
             </Text>
-            <PressableScale
-              accessibilityRole="button"
-              onPress={() => router.push({ pathname: '/quiz', params: { mode: selectedItem.layer } })}
-              style={[styles.detailQuiz, { backgroundColor: colors.primary }]}
-              testID="quiz-from-item"
-            >
-              <Feather name="target" size={15} color={colors.primaryForeground} />
-              <Text style={[styles.detailQuizText, { color: colors.primaryForeground }]}>Bu katmanda quiz çöz</Text>
-              <Feather name="arrow-right" size={14} color={colors.primaryForeground} />
-            </PressableScale>
-            <PressableScale
-              accessibilityRole="button"
-              onPress={() => router.push({ pathname: '/notes', params: { create: '1', itemId: selectedItem.id } })}
-              style={[styles.noteFromMap, { backgroundColor: colors.accent }]}
-              testID="create-note-from-map"
-            >
-              <Feather name="book-open" size={15} color={colors.primary} />
-              <Text style={[styles.noteFromMapText, { color: colors.primary }]}>
-                Bu özellik için kodlama notu ekle{notes.some((note) => note.relatedItemId === selectedItem.id) ? ` (${notes.filter((note) => note.relatedItemId === selectedItem.id).length})` : ''}
-              </Text>
-              <Feather name="arrow-right" size={14} color={colors.primary} />
-            </PressableScale>
+            <View style={styles.detailActions}>
+              <PressableScale
+                accessibilityRole="button"
+                onPress={() => router.push({ pathname: '/quiz', params: { mode: selectedItem.layer } })}
+                style={[styles.detailQuiz, { backgroundColor: colors.primary }]}
+                testID="quiz-from-item"
+              >
+                <Feather name="target" size={15} color={colors.primaryForeground} />
+                <Text style={[styles.detailQuizText, { color: colors.primaryForeground }]} numberOfLines={1}>Quiz Çöz</Text>
+              </PressableScale>
+              <PressableScale
+                accessibilityRole="button"
+                onPress={() => router.push({ pathname: '/notes', params: { create: '1', itemId: selectedItem.id } })}
+                style={[styles.noteFromMap, { backgroundColor: colors.accent }]}
+                testID="create-note-from-map"
+              >
+                <Feather name="book-open" size={15} color={colors.primary} />
+                <Text style={[styles.noteFromMapText, { color: colors.primary }]} numberOfLines={1}>
+                  Not Ekle{notes.some((note) => note.relatedItemId === selectedItem.id) ? ` (${notes.filter((note) => note.relatedItemId === selectedItem.id).length})` : ''}
+                </Text>
+              </PressableScale>
+            </View>
           </Animated.View>
         ) : selectedProvince ? (
           <Animated.View key={selectedProvince} entering={FadeInDown.duration(200)} style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -704,12 +704,12 @@ const styles = StyleSheet.create({
   sectionHint: { marginTop: 3, fontSize: 12 },
   countBadge: { fontSize: 9, fontWeight: '700', letterSpacing: 0.8, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 10, overflow: 'hidden' },
   layerRow: { gap: 8, paddingVertical: 3, paddingRight: 16 },
-  layerChip: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 8 },
+  layerChip: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
   layerIconBadge: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   layerLabel: { fontSize: 12, fontWeight: '700' },
   layerCountPill: { borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
   filterRow: { gap: 7, marginTop: -9, paddingVertical: 2, paddingRight: 15 },
-  filterChip: { borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  filterChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 5 },
   filterLabel: { fontSize: 11, fontWeight: '600' },
   filterCount: { fontSize: 9, fontWeight: '700' },
   layerCount: { fontSize: 9, fontWeight: '700' },
@@ -750,10 +750,11 @@ const styles = StyleSheet.create({
   examTip: { flexDirection: 'row', gap: 8, borderRadius: 14, padding: 11, alignItems: 'flex-start' },
   examTipText: { flex: 1, fontSize: 12, lineHeight: 17, fontWeight: '500' },
   sourceText: { fontSize: 10, lineHeight: 14 },
-  detailQuiz: { minHeight: 42, borderRadius: 12, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  detailQuizText: { flex: 1, fontSize: 11, fontWeight: '700' },
-  noteFromMap: { minHeight: 39, borderRadius: 12, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  noteFromMapText: { flex: 1, fontSize: 10, fontWeight: '700' },
+  detailActions: { flexDirection: 'row', gap: 8 },
+  detailQuiz: { flex: 1, minHeight: 44, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  detailQuizText: { fontSize: 12, fontWeight: '700' },
+  noteFromMap: { flex: 1, minHeight: 44, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  noteFromMapText: { fontSize: 12, fontWeight: '700' },
   relatedList: { gap: 8 },
   relatedHeading: { fontSize: 9, letterSpacing: 0.8, fontWeight: '700' },
   relatedChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
