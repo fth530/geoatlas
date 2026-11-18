@@ -53,8 +53,8 @@ const MODE_GROUPS: { label: string; options: { id: QuizMode; label: string }[] }
   },
 ];
 
-const EXAM_LENGTH = 10;
-const EXAM_SECONDS = 5 * 60;
+const EXAM_LENGTH = 18;
+const EXAM_SECONDS = 15 * 60;
 const EXAM_RING_RADIUS = 36;
 const EXAM_RING_CIRCUMFERENCE = 2 * Math.PI * EXAM_RING_RADIUS;
 const EMPTY_MAP_ITEMS: MapItem[] = [];
@@ -82,6 +82,7 @@ export default function QuizScreen() {
     [reviewIdsParam],
   );
   const [mode, setMode] = useState<QuizMode>('provinces');
+  const [layerQuizFormat, setLayerQuizFormat] = useState<'map' | 'mcq'>('map');
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewComplete, setReviewComplete] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -156,17 +157,24 @@ export default function QuizScreen() {
     [mode, reviewItems, routeReviewIds],
   );
   const orderedBankQuestions = useMemo(() => {
+    const isLayerSpecific = mode !== 'mixed' && mode !== 'bank' && mode !== 'exam';
+    const pool = isLayerSpecific
+      ? BANK_QUESTIONS.filter((entry) =>
+          mode === 'provinces' ? entry.provinceName !== null : entry.item?.layer === mode,
+        )
+      : BANK_QUESTIONS;
     const isWeak = (entry: BankEntry) =>
       entry.item
         ? isWeakKey(entry.item.layer, entry.item.id)
         : isWeakKey('provinces', entry.provinceName ?? '');
-    return [...BANK_QUESTIONS.filter(isWeak), ...BANK_QUESTIONS.filter((entry) => !isWeak(entry))];
+    return [...pool.filter(isWeak), ...pool.filter((entry) => !isWeak(entry))];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hydrated]);
   const isMixed = mode === 'mixed';
   const isBank = mode === 'bank';
   const isExam = mode === 'exam';
-  const isMcq = isBank || isExam;
+  const isLayerMode = !isMixed && !isBank && !isExam;
+  const isMcq = isBank || isExam || (isLayerMode && !reviewMode && layerQuizFormat === 'mcq');
   const examQuestions = useMemo(
     () => (isExam ? shuffle(BANK_QUESTIONS).slice(0, EXAM_LENGTH) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -269,6 +277,22 @@ export default function QuizScreen() {
     }, 1000);
     return () => clearInterval(timer);
   }, [isExam, examDone, reviewMode]);
+
+  useEffect(() => {
+    if (!isExam || !examDone || examSecondsLeft > 0) return;
+    const answeredCount = examStats.correct + examStats.wrong;
+    if (answeredCount >= EXAM_LENGTH) return;
+    const remainingEntries = examQuestions.slice(answeredCount, EXAM_LENGTH);
+    for (const entry of remainingEntries) {
+      recordQuizAnswer({
+        layer: entry.item?.layer ?? 'provinces',
+        targetId: entry.item?.id ?? entry.provinceName ?? '',
+        targetName: entry.item?.name ?? entry.provinceName ?? 'Soru',
+        isCorrect: false,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [examDone, examSecondsLeft, isExam]);
 
   const examTimeLabel = `${Math.floor(examSecondsLeft / 60)}:${String(examSecondsLeft % 60).padStart(2, '0')}`;
   const examAnswered = examStats.correct + examStats.wrong;
@@ -390,32 +414,96 @@ export default function QuizScreen() {
               : 'Doğru yeri dilsiz haritada seç. Yanlış cevap kırmızı, doğru yer yeşil görünür.'}
         </Text>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modeScroll}>
-          <View style={styles.modeGroups}>
-            {MODE_GROUPS.map((group) => (
+        <View style={styles.modeGroups}>
+          {MODE_GROUPS.map((group) => {
+            const isScrollableGroup = group.options.length > 3;
+            const buttons = group.options.map((option) => {
+              const active = mode === option.id;
+              return (
+                <Pressable
+                  key={option.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => changeMode(option.id)}
+                  style={[
+                    styles.modeOption,
+                    !isScrollableGroup && styles.modeOptionFlex,
+                    active && { backgroundColor: colors.card },
+                  ]}
+                  testID={`quiz-mode-${option.id}`}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.modeText, { color: active ? colors.foreground : colors.mutedForeground }]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            });
+
+            return (
               <View key={group.label} style={styles.modeGroup}>
                 <Text style={[styles.modeGroupLabel, { color: colors.mutedForeground }]}>{group.label}</Text>
-                <View style={[styles.modeSwitch, { backgroundColor: colors.muted }]}>
-                  {group.options.map((option) => {
-                    const active = mode === option.id;
-                    return (
-                      <Pressable
-                        key={option.id}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: active }}
-                        onPress={() => changeMode(option.id)}
-                        style={[styles.modeOption, active && { backgroundColor: colors.card }]}
-                        testID={`quiz-mode-${option.id}`}
-                      >
-                        <Text style={[styles.modeText, { color: active ? colors.foreground : colors.mutedForeground }]}>{option.label}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                {isScrollableGroup ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={[styles.modeSwitchScroll, { backgroundColor: colors.muted }]}
+                    contentContainerStyle={styles.modeSwitchScrollContent}
+                  >
+                    {buttons}
+                  </ScrollView>
+                ) : (
+                  <View style={[styles.modeSwitch, { backgroundColor: colors.muted }]}>
+                    {buttons}
+                  </View>
+                )}
               </View>
-            ))}
-          </View>
-        </ScrollView>
+            );
+          })}
+          {isLayerMode && !reviewMode && (
+            <View style={styles.modeGroup}>
+              <Text style={[styles.modeGroupLabel, { color: colors.mutedForeground }]}>
+                {LAYERS.find((l) => l.id === mode)?.label.toLocaleUpperCase('tr') ?? 'KONU'} SORU TİPİ
+              </Text>
+              <View style={[styles.modeSwitch, { backgroundColor: colors.muted }]}>
+                {(
+                  [
+                    { id: 'map', label: 'Haritada Bul' },
+                    { id: 'mcq', label: 'Çoktan Seçmeli Test' },
+                  ] as const
+                ).map((fmt) => {
+                  const active = layerQuizFormat === fmt.id;
+                  return (
+                    <Pressable
+                      key={fmt.id}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      onPress={() => {
+                        setLayerQuizFormat(fmt.id);
+                        setQuestionIndex(0);
+                        setAnswer(null);
+                        setSelectedProvince(null);
+                        setMcqPick(null);
+                      }}
+                      style={[
+                        styles.modeOption,
+                        styles.modeOptionFlex,
+                        active && { backgroundColor: colors.card },
+                      ]}
+                      testID={`quiz-format-${fmt.id}`}
+                    >
+                      <Text style={[styles.modeText, { color: active ? colors.primary : colors.mutedForeground }]}>
+                        {fmt.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+        </View>
 
         <Animated.View
           key={`${mode}-${questionIndex}-${reviewMode ? 'r' : 'n'}`}
@@ -455,7 +543,9 @@ export default function QuizScreen() {
                 : hasTarget
                 ? isMcq
                   ? 'Şıklardan doğru cevabı seç.'
-                  : 'Cevaplamak için haritadaki doğru ile dokun.'
+                  : !isProvinceQuestion && (targetItem?.provinces.length ?? 0) > 1
+                    ? `Bu özellik ${targetItem?.provinces.length} ili kapsar; haritada bu illerden birine dokun.`
+                    : 'Cevaplamak için haritadaki doğru ile dokun.'
                 : 'Konu Takibi bölümünden diğer tekrarlarını açabilirsin.'}
           </Text>
         </Animated.View>
@@ -629,7 +719,11 @@ export default function QuizScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.feedbackTitle, { color: answer.correct ? colors.successForeground : colors.errorForeground }]}>{answer.correct ? 'Doğru cevap' : 'Bu kez olmadı'}</Text>
                   <Text style={[styles.feedbackText, { color: answer.correct ? colors.successMuted : colors.errorMuted }]}>
-                    {answer.correct ? `${answer.province} doğru konum.` : `Doğru konum: ${isProvinceQuestion ? targetProvince : targetItem?.provinces.join(' / ')}`}
+                    {answer.correct
+                      ? !isProvinceQuestion && (targetItem?.provinces.length ?? 0) > 1
+                        ? `${answer.province} doğru! Kapsadığı tüm iller: ${targetItem?.provinces.join(', ')}`
+                        : `${answer.province} doğru konum.`
+                      : `Doğru konum: ${isProvinceQuestion ? targetProvince : targetItem?.provinces.join(' / ')}`}
                   </Text>
                 </View>
               </Animated.View>
@@ -644,10 +738,13 @@ export default function QuizScreen() {
           </View>
         )}
 
-        {(answer || mcqPick) && targetItem?.examTip && (
+        {(answer || mcqPick) && (targetItem?.examTip || targetItem?.description) && (
           <View style={[styles.tip, { backgroundColor: colors.accent }]}>
             <Feather name="bookmark" size={15} color={colors.primary} />
-            <Text style={[styles.tipText, { color: colors.accentForeground }]}>{targetItem.examTip}</Text>
+            <Text style={[styles.tipText, { color: colors.accentForeground }]}>
+              {targetItem.examTip ? `${targetItem.examTip} ` : ''}
+              {targetItem.description}
+            </Text>
           </View>
         )}
 
@@ -698,12 +795,14 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 12, lineHeight: 18, marginTop: -9 },
   scorePill: { borderRadius: 14, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center' },
   scoreText: { fontSize: 12, fontWeight: '700' },
-  modeScroll: { flexGrow: 0 },
   modeGroups: { flexDirection: 'column', gap: 8 },
   modeGroup: { gap: 4 },
   modeGroupLabel: { fontSize: 8, fontWeight: '700', letterSpacing: 1, paddingLeft: 4 },
-  modeSwitch: { borderRadius: 15, padding: 4, flexDirection: 'row', gap: 3 },
-  modeOption: { flex: 1, borderRadius: 11, minHeight: 35, alignItems: 'center', justifyContent: 'center' },
+  modeSwitch: { borderRadius: 15, padding: 4, flexDirection: 'row', gap: 4 },
+  modeSwitchScroll: { borderRadius: 15, flexGrow: 0 },
+  modeSwitchScrollContent: { padding: 4, flexDirection: 'row', gap: 4 },
+  modeOption: { borderRadius: 11, minHeight: 44, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
+  modeOptionFlex: { flex: 1 },
   modeText: { fontSize: 11, fontWeight: '600' },
   promptCard: { borderWidth: 1, borderRadius: 21, padding: 15, gap: 8 },
   promptTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },

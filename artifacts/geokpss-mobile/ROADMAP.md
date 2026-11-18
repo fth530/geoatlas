@@ -58,3 +58,4 @@
 - An incorrect answer resets the interval to one day.
 - Manually marked `done` topics are never downgraded by quiz answers.
 - Mixed mode interleaves all 81 province questions with every map item; answers record against the correct topic layer.
+- [x] Map visual evolution: sea gradient + frame, province silhouette shadow, per-layer marker glyphs (triangle/ring/wave/gem/star/dart), sparse-item name labels, high-zoom province names, legend counts

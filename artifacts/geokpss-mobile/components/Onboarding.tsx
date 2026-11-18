@@ -14,25 +14,28 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText as Text } from '@/components/AppText';
+import { LAYERS, MAP_ITEMS } from '@/data/geography';
+import { itemMcqs, PROVINCE_MCQ } from '@/data/questions';
 import { useColors } from '@/hooks/useColors';
 
 const STORAGE_KEY = 'geokpss-onboarded-v1';
+const TOTAL_MCQS = PROVINCE_MCQ.length + MAP_ITEMS.reduce((acc, item) => acc + itemMcqs(item).length, 0);
 
 const SLIDES = [
   {
     icon: 'map' as const,
     title: 'Haritada keşfet',
-    body: '10 coğrafya katmanında 158 harita öğesini ve 81 ili interaktif Türkiye haritasında incele.',
+    body: `${LAYERS.length} coğrafya katmanında ${MAP_ITEMS.length} harita öğesini ve 81 ili interaktif Türkiye haritasında incele.`,
   },
   {
     icon: 'target' as const,
     title: 'Quiz ve deneme çöz',
-    body: 'Dilsiz harita soruları, 459 çoktan seçmeli soru ve 10 soruluk süreli denemelerle kendini test et.',
+    body: `Dilsiz harita soruları, ${TOTAL_MCQS} çoktan seçmeli soru ve 18 soruluk KPSS denemeleriyle kendini test et.`,
   },
   {
     icon: 'trending-up' as const,
-    title: 'Tekrarı sistem bırakma',
-    body: 'Yanlış bildiklerin otomatik tekrara düşer; istatistikler, kodlama notları ve günlük hatırlatıcıyla takip et.',
+    title: 'Tekrarı şansa bırakma',
+    body: 'Yanlış bildiklerin otomatik tekrara düşer; hazır KPSS kodlamaları, not defteri ve günlük hatırlatıcıyla takip et.',
   },
 ];
 

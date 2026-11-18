@@ -25,7 +25,7 @@ import { isReminderEnabled, REMINDER_HOUR, REMINDER_MINUTE, setReminderEnabled }
 export default function StatsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, hydrated, importStudyData } = useStudy();
+  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, hydrated, importStudyData, resetStudyData } = useStudy();
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -96,12 +96,43 @@ export default function StatsScreen() {
   };
 
   const runImport = () => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Yedekteki veriler bu cihazdaki mevcut ilerlemenin yerine geçecek. Onaylıyor musun?')) {
+        applyImport();
+      }
+      return;
+    }
     Alert.alert(
       'Veriler içe aktarılsın mı?',
       'Yedekteki veriler bu cihazdaki mevcut ilerlemenin yerine geçecek.',
       [
         { text: 'Vazgeç', style: 'cancel' },
         { text: 'İçe aktar', onPress: () => void applyImport() },
+      ],
+    );
+  };
+
+  const confirmReset = () => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Tüm çalışma istatistiklerin, tekrar listen ve notların sıfırlanacak. Emin misin?')) {
+        resetStudyData();
+        setImportMessage({ ok: true, text: 'Tüm çalışma verileri sıfırlandı.' });
+      }
+      return;
+    }
+    Alert.alert(
+      'Veriler sıfırlansın mı?',
+      'Tüm çalışma istatistiklerin, tekrar listen ve notların kalıcı olarak silinecek.',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Sıfırla',
+          style: 'destructive',
+          onPress: () => {
+            resetStudyData();
+            setImportMessage({ ok: true, text: 'Tüm çalışma verileri sıfırlandı.' });
+          },
+        },
       ],
     );
   };
@@ -290,6 +321,14 @@ export default function StatsScreen() {
               <Text style={[styles.dataButtonText, { color: colors.primary }]}>Yedekten içe aktar</Text>
             </Pressable>
           </View>
+          <Pressable
+            onPress={confirmReset}
+            style={[styles.dataButton, { backgroundColor: colors.errorBackground }]}
+            testID="reset-study-data"
+          >
+            <Feather name="trash-2" size={14} color={colors.destructive} />
+            <Text style={[styles.dataButtonText, { color: colors.destructive }]}>İlerlemeyi ve verileri sıfırla</Text>
+          </Pressable>
           {importMessage && !importOpen && (
             <Text style={[styles.importNote, { color: importMessage.ok ? colors.success : colors.destructive }]}>{importMessage.text}</Text>
           )}

@@ -45,6 +45,7 @@ type StudyContextValue = PersistedStudyData & {
   recordQuizAnswer: (answer: QuizAnswerRecord) => void;
   toggleProCandidate: (candidateId: string) => void;
   importStudyData: (data: unknown) => boolean;
+  resetStudyData: () => void;
 };
 
 const STORAGE_KEY = 'geokpss-study-v1';
@@ -155,6 +156,9 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
         } catch {
           return false;
         }
+      },
+      resetStudyData: () => {
+        commit(initialState);
       },
     }),
     [state, hydrated],

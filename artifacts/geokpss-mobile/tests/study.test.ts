@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   buildReviewItem,
+  LAYER_IDS,
   nextReviewSchedule,
   REVIEW_INTERVALS,
   sanitizePersistedStudy,
 } from '../utils/study';
+import { LAYERS } from '../data/geography';
 import type { QuizAnswerRecord, StudyReviewItem } from '../context/StudyContext';
 
 const NOW = 1_700_000_000_000;
@@ -112,5 +114,28 @@ test('sanitizePersistedStudy survives corrupt payloads', () => {
     assert.deepEqual(clean.topicStatuses, {});
     assert.deepEqual(clean.proCandidates, []);
     assert.equal(clean.answered, 0);
+  }
+});
+
+test('all geography layers are preserved by sanitizePersistedStudy (including transport and human/economic layers)', () => {
+  for (const layer of LAYERS) {
+    assert.ok(LAYER_IDS.includes(layer.id), `LAYER_IDS missing ${layer.id}`);
+    const clean = sanitizePersistedStudy({
+      reviewItems: [
+        {
+          id: `${layer.id}:test-item`,
+          layer: layer.id,
+          targetId: 'test-item',
+          targetName: 'Test Öğesi',
+          dueAt: NOW,
+          intervalDays: 1,
+          successStreak: 1,
+          attempts: 1,
+          lastCorrect: true,
+        },
+      ],
+    });
+    assert.equal(clean.reviewItems.length, 1, `reviewItem for layer ${layer.id} was dropped`);
+    assert.equal(clean.reviewItems[0].layer, layer.id);
   }
 });

@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { test } from 'node:test';
+import geoData from '../data/turkiye_iller.json';
 import { project, VIEW_HEIGHT, VIEW_WIDTH } from '../utils/geo';
 
-const require = createRequire(import.meta.url);
-const geo = require('../data/turkiye_iller.json') as {
+const geo = geoData as {
   features: { geometry: { coordinates: unknown } }[];
 };
 

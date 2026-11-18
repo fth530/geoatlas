@@ -139,7 +139,7 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
   ],
   palandoken: [
     { q: 'Palandöken Dağları hangi ildedir?', options: ['Erzurum', 'Kars', 'Ağrı', 'Bingöl'], answer: 0 },
-    { q: 'Palandöken hangi oluşum tipindedir?', options: ['Kıvrım', 'Kırık (horst)', 'Volkanik', 'Buzul'], answer: 1 },
+    { q: 'Palandöken Dağları hangi oluşum tipindedir?', options: ['Kıvrım', 'Kırık (horst)', 'Volkanik', 'Buzul'], answer: 0 },
   ],
   'tuz-golu': [
     { q: 'Tuz Gölü hangi illerde yer alır?', options: ['Ankara-Konya-Aksaray', 'Konya-Karaman', 'Nevşehir-Niğde', 'Eskişehir-Kütahya'], answer: 0 },
@@ -193,10 +193,10 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
   ],
   manyas: [
     { q: 'Manyas Gölü hangi ildedir?', options: ['Balıkesir', 'Bursa', 'Çanakkale', 'İzmir'], answer: 0 },
-    { q: 'Manyas Gölü hangi adla da bilinir?', options: ['Uluabat', 'Sapanca', 'Terkos', 'Abant'], answer: 0 },
+    { q: 'Manyas Gölü hangi adla da bilinir?', options: ['Kuş Gölü', 'Uluabat', 'Sapanca', 'Terkos'], answer: 0 },
   ],
   eber: [
-    { q: 'Eber Gölü hangi illerde yer alır?', options: ['Isparta-Burdur', 'Antalya-Muğla', 'Afyon-Denizli', 'Konya-Aksaray'], answer: 0 },
+    { q: 'Eber Gölü hangi ilimizde yer alır?', options: ['Afyonkarahisar', 'Isparta', 'Burdur', 'Denizli'], answer: 0 },
   ],
   'erzurum-kars': [
     { q: 'Erzurum-Kars-Ardahan Platosu hangi oluşumla meydana gelmiştir?', options: ['Lav örtüleri (volkanik)', 'Buzul aşındırması', 'Deniz birikimi', 'Rüzgar erozyonu'], answer: 0 },
@@ -226,8 +226,8 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
     { q: 'Çukurova hangi ürünleriyle ünlüdür?', options: ['Pamuk ve narenciye', 'Çay ve fındık', 'Buğday ve arpa', 'Zeytin ve incir'], answer: 0 },
   ],
   amik: [
-    { q: 'Amik Ovası hangi nehrin oluşturduğu ovadır?', options: ['Asi (Orontes)', 'Fırat', 'Ceyhan', 'Seyhan'], answer: 0 },
-    { q: 'Amik Ovası hangi bölgede yer alır?', options: ['Hatay', 'Adana', 'Mersin', 'Antalya'], answer: 0 },
+    { q: 'Amik Ovası hangi nehir tarafından sulanır?', options: ['Asi (Orontes)', 'Fırat', 'Ceyhan', 'Seyhan'], answer: 0 },
+    { q: 'Amik Ovası hangi ilde yer alan tektonik (graben) ovadır?', options: ['Hatay', 'Adana', 'Mersin', 'Antalya'], answer: 0 },
   ],
   'konya-ova': [
     { q: 'Konya Ovası hangi havzadadır?', options: ['Kapalı havza', 'Karadeniz havzası', 'Akdeniz havzası', 'Ege havzası'], answer: 0 },
@@ -275,8 +275,8 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
     { q: 'Meriç deltasının Türkiye’deki konumu neresidir?', options: ['En batı', 'En doğu', 'En kuzey', 'En güney'], answer: 0 },
   ],
   coruh: [
-    { q: 'Çoruh Nehri hangi denize dökülür?', options: ['Karadeniz', 'Ege', 'Akdeniz', 'Marmara'], answer: 0 },
-    { q: 'Çoruh üzerinde hangi baraj bulunmaktadır?', options: ['Deriner', 'Atatürk', 'Ilısu', 'Keban'], answer: 0 },
+    { q: 'Çoruh Nehri hangi ülke topraklarından Karadeniz’e dökülür?', options: ['Gürcistan (Batum)', 'Rusya', 'Bulgaristan', 'İran'], answer: 0 },
+    { q: 'Çoruh üzerinde hangi barajlar bulunmaktadır?', options: ['Yusufeli ve Deriner', 'Atatürk ve Keban', 'Ilısu ve Kralkızı', 'Oymapınar ve Manavgat'], answer: 0 },
   ],
   sakarya: [
     { q: 'Sakarya Nehri hangi illerde kaynağını alır?', options: ['Afyonkarahisar-Eskişehir', 'Konya-Karaman', 'Sivas-Yozgat', 'Kastamonu-Çankırı'], answer: 0 },
@@ -336,16 +336,16 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
     { q: 'Kekova hangi kıyı tipinin Akdeniz’deki örneğidir?', options: ['Dalmaçya', 'Ria', 'Enine', 'Delta'], answer: 0 },
   ],
   kusadasi: [
-    { q: 'Kuşadası Körfezi hangi kıyı tipindedir?', options: ['Ria', 'Boyuna', 'Dalmaçya', 'Delta'], answer: 0 },
-    { q: 'Kuşadası Körfezi hangi ildedir?', options: ['İzmir', 'Aydın', 'Muğla', 'Denizli'], answer: 0 },
+    { q: 'Kuşadası Körfezi hangi kıyı tipindedir?', options: ['Enine kıyı', 'Boyuna kıyı', 'Dalmaçya kıyı', 'Haliçli kıyı'], answer: 0 },
+    { q: 'Kuşadası Körfezi hangi ilimizdedir?', options: ['Aydın', 'Muğla', 'Antalya', 'Çanakkale'], answer: 0 },
   ],
   'gokova-ria': [
-    { q: 'Gökova Körfezi hangi illde yer alır?', options: ['Muğla', 'Aydın', 'İzmir', 'Antalya'], answer: 0 },
+    { q: 'Gökova Körfezi hangi ilde yer alır?', options: ['Muğla', 'Aydın', 'İzmir', 'Antalya'], answer: 0 },
     { q: 'Gökova Körfezi hangi kıyı tipinin en tipik örneğidir?', options: ['Ria', 'Boyuna', 'Enine', 'Kıyı seti'], answer: 0 },
   ],
   'amik-delta': [
-    { q: 'Amik Ovası kıyısı hangi nehrin deltasına dayanır?', options: ['Asi (Orontes)', 'Fırat', 'Ceyhan', 'Seyhan'], answer: 0 },
-    { q: 'Amik deltası hangi ildedir?', options: ['Hatay', 'Adana', 'Mersin', 'Osmaniye'], answer: 0 },
+    { q: 'Samandağ kıyı deltası hangi nehrin Akdeniz’e ulaştığı yerdedir?', options: ['Asi (Orontes)', 'Fırat', 'Ceyhan', 'Seyhan'], answer: 0 },
+    { q: 'Samandağ deltası hangi ildedir?', options: ['Hatay', 'Adana', 'Mersin', 'Osmaniye'], answer: 0 },
   ],
   'goksu-delta': [
     { q: 'Göksu deltası hangi ildedir?', options: ['Mersin', 'Adana', 'Antalya', 'Hatay'], answer: 0 },
@@ -433,7 +433,7 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
   ],
   'yedigoller': [
     { q: 'Yedigöller Milli Parkı hangi ildedir?', options: ['Bolu', 'Düzce', 'Zonguldak', 'Bursa'], answer: 0 },
-    { q: 'Yedigöller Milli Parkı hangi oluşumlarla bilinir?', options: ['Karstik göller', 'Volkanik kraterler', 'Buzul cirkleri', 'Kıyı setleri'], answer: 0 },
+    { q: 'Yedigöller Milli Parkı hangi göl oluşumlarıyla bilinir?', options: ['Heyelan set gölleri', 'Karstik göller', 'Volkanik kraterler', 'Kıyı setleri'], answer: 0 },
   ],
   'uludag-park': [
     { q: 'Uludağ Milli Parkı hangi ildedir?', options: ['Bursa', 'Bilecik', 'Kütahya', 'Eskişehir'], answer: 0 },
@@ -486,10 +486,10 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
     { q: 'Nikel yatakları hangi illerde bulunur?', options: ['Manisa-Balıkesir', 'Trabzon-Rize', 'Adana-Mersin', 'Kars-Ardahan'], answer: 0 },
   ],
   manganez: [
-    { q: 'Manganez hangi illerde çıkarılır?', options: ['Bolu-Sivas', 'Zonguldak-Bartın', 'Mersin-Adana', 'Kütahya-Eskişehir'], answer: 0 },
+    { q: 'Manganez yatakları aşağıdaki illerden hangilerinde çıkarılır?', options: ['Adana-Denizli-Karabük', 'Zonguldak-Bartın', 'Edirne-Tekirdağ', 'Rize-Trabzon'], answer: 0 },
   ],
   sulfur: [
-    { q: 'Kükürt yatakları hangi bölgede yoğundur?', options: ['Doğu Anadolu', 'Ege', 'Marmara', 'Akdeniz'], answer: 0 },
+    { q: 'Türkiye’de Keçiborlu kükürt yatakları hangi ilimizde yer alır?', options: ['Isparta', 'Edirne', 'Sinop', 'Trabzon'], answer: 0 },
   ],
   'kumlu-step': [
     { q: 'Kumlu step toprakları hangi bölgede yaygındır?', options: ['Kapadokya-İç Anadolu', 'Karadeniz', 'Ege kıyıları', 'Akdeniz'], answer: 0 },
@@ -511,26 +511,26 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
   ],
   uludag: [
     { q: 'Uludağ hangi ildedir?', options: ['Bursa', 'Bilecik', 'Kütahya', 'Eskişehir'], answer: 0 },
-    { q: 'Uludağ hangi oluşum tipindedir?', options: ['Kıvrım', 'Kırık (horst)', 'Volkanik', 'Buzul'], answer: 1 },
+    { q: 'Uludağ hangi oluşum tipindedir?', options: ['İç püskürük (batolit)', 'Kırık (horst)', 'Kıvrım', 'Kaldera'], answer: 0 },
   ],
   'murat-daglari': [
-    { q: 'Murat Dağları hangi illerde yer alır?', options: ['Elazığ-Bingöl-Tunceli', 'Malatya-Sivas', 'Erzincan-Erzurum', 'Van-Muş'], answer: 0 },
+    { q: 'Gediz ve Büyük Menderes kollarının doğduğu Murat Dağı hangi iller arasındadır?', options: ['Kütahya-Uşak', 'Elazığ-Bingöl', 'Malatya-Sivas', 'Van-Muş'], answer: 0 },
   ],
   binboga: [
-    { q: 'Binboğa Dağları hangi ildedir?', options: ['Kahramanmaraş', 'Adana', 'Mersin', 'Gaziantep'], answer: 0 },
+    { q: 'Binboğa Dağları hangi iller arasında uzanır?', options: ['Kahramanmaraş-Kayseri', 'Adana-Mersin', 'Hatay-Kilis', 'Gaziantep-Şanlıurfa'], answer: 0 },
   ],
   ilgaz: [
     { q: 'Ilgaz Dağları hangi illerde uzanır?', options: ['Kastamonu-Çankırı', 'Sinop-Kastamonu', 'Kırıkkale-Kırşehir', 'Amasya-Tokat'], answer: 0 },
   ],
   'susuz-daglari': [
-    { q: 'Susuz Dağları hangi illerde yer alır?', options: ['Erzincan-Erzurum', 'Erzurum-Kars', 'Bingöl-Tunceli', 'Van-Muş'], answer: 0 },
+    { q: 'Susuz Dağları hangi iller çevresinde yer alır?', options: ['Kars-Ardahan', 'Erzincan-Tunceli', 'Bingöl-Muş', 'İzmir-Manisa'], answer: 0 },
   ],
   abant: [
     { q: 'Abant Gölü hangi ildedir?', options: ['Bolu', 'Düzce', 'Zonguldak', 'Bursa'], answer: 0 },
-    { q: 'Abant Gölü hangi oluşum tipindedir?', options: ['Tektonik', 'Karstik', 'Volkanik', 'Kıyı seti'], answer: 0 },
+    { q: 'Abant Gölü hangi oluşum tipindedir?', options: ['Heyelan set gölü', 'Tektonik', 'Karstik', 'Kıyı seti'], answer: 0 },
   ],
   narligol: [
-    { q: 'Narlıgöl hangi oluşum tipindedir?', options: ['Karstik', 'Tektonik', 'Volkanik', 'Buzul'], answer: 0 },
+    { q: 'Niğde-Aksaray sınırındaki Narlıgöl hangi oluşum tipindedir?', options: ['Volkanik (maar/krater)', 'Karstik', 'Tektonik', 'Buzul'], answer: 0 },
   ],
   'kucuk-cekmece': [
     { q: 'Küçükçekmece Gölü hangi oluşum tipindedir?', options: ['Kıyı set gölü', 'Tektonik', 'Karstik', 'Volkanik'], answer: 0 },
@@ -539,27 +539,27 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
     { q: 'Büyükçekmece Gölü hangi oluşum tipindedir?', options: ['Kıyı set gölü', 'Tektonik', 'Karstik', 'Buzul'], answer: 0 },
   ],
   filyos: [
-    { q: 'Filyos Nehri hangi bölgenin akarsusudur?', options: ['Karadeniz', 'Akdeniz', 'Ege', 'Marmara'], answer: 0 },
-    { q: 'Filyos hangi illerden geçer?', options: ['Zonguldak-Bartın', 'Sinop-Kastamonu', 'Ordu-Giresun', 'Trabzon-Rize'], answer: 0 },
+    { q: 'Filyos (Yenice) Çayı hangi bölgenin akarsuyudur?', options: ['Karadeniz', 'Akdeniz', 'Ege', 'Marmara'], answer: 0 },
+    { q: 'Filyos Çayı hangi illerden geçerek Karadeniz’e dökülür?', options: ['Karabük-Bolu-Zonguldak', 'Sinop-Kastamonu', 'Ordu-Giresun', 'Trabzon-Rize'], answer: 0 },
   ],
   goksu: [
-    { q: 'Göksu Nehri hangi nehre karışır?', options: ['Seyhan', 'Ceyhan', 'Manavgat', 'Asi'], answer: 0 },
-    { q: 'Göksu vadisi hangi ilde milli parktır?', options: ['Mersin', 'Adana', 'Antalya', 'Hatay'], answer: 0 },
+    { q: 'Mersin’de Silifke Deltası’nı oluşturarak Akdeniz’e dökülen akarsu hangisidir?', options: ['Göksu', 'Seyhan', 'Ceyhan', 'Asi'], answer: 0 },
+    { q: 'Mavi Tünel projesiyle suları Konya Ovası’na aktarılan nehir hangisidir?', options: ['Göksu', 'Manavgat', 'Aksu', 'Dalaman'], answer: 0 },
   ],
   zap: [
-    { q: 'Zap Suyu hangi nehrin koludur?', options: ['Dicle', 'Fırat', 'Seyhan', 'Yeşilırmak'], answer: 0 },
-    { q: 'Zap Suyu hangi ülkeye de uzanır?', options: ['Irak', 'Suriye', 'İran', 'Yunanistan'], answer: 0 },
+    { q: 'Hakkâri’den geçen Zap Suyu hangi nehrin koludur?', options: ['Dicle', 'Fırat', 'Seyhan', 'Yeşilırmak'], answer: 0 },
+    { q: 'Zap Suyu hangi ülkeye geçerek Dicle ile birleşir?', options: ['Irak', 'Suriye', 'İran', 'Yunanistan'], answer: 0 },
   ],
   tunca: [
-    { q: 'Tunca Çayı hangi nehrin koludur?', options: ['Çoruh', 'Fırat', 'Kızılırmak', 'Yeşilırmak'], answer: 0 },
+    { q: 'Edirne’den geçen Tunca Nehri hangi akarsuyun koludur?', options: ['Meriç', 'Çoruh', 'Fırat', 'Kızılırmak'], answer: 0 },
   ],
   gokirmak: [
     { q: 'Gökırmak Nehri hangi nehrin koludur?', options: ['Kızılırmak', 'Yeşilırmak', 'Sakarya', 'Filyos'], answer: 0 },
-    { q: 'Gökırmak hangi illerden geçer?', options: ['Kastamonu-Çankırı', 'Sinop-Kastamonu', 'Kırıkkale-Kırşehir', 'Çorum-Amasya'], answer: 0 },
+    { q: 'Gökırmak hangi illerden geçerek Kızılırmak’a katılır?', options: ['Kastamonu-Sinop-Samsun', 'Kırıkkale-Kırşehir', 'Çorum-Amasya', 'Bolu-Düzce'], answer: 0 },
   ],
   delice: [
-    { q: 'Delice Nehri hangi nehrin koludur?', options: ['Kızılırmak', 'Yeşilırmak', 'Sakarya', 'Filyos'], answer: 0 },
-    { q: 'Delice hangi havzaya ulaşır?', options: ['Kapalı havza (Tuz Gölü)', 'Karadeniz', 'Akdeniz', 'Ege'], answer: 0 },
+    { q: 'Delice Irmağı hangi nehrin koludur?', options: ['Kızılırmak', 'Yeşilırmak', 'Sakarya', 'Filyos'], answer: 0 },
+    { q: 'Kızılırmak’ın kolu olan Delice Irmağı’nın suları hangi havzaya ulaşır?', options: ['Karadeniz açık havzası', 'Tuz Gölü kapalı havzası', 'Akdeniz havzası', 'Van Gölü kapalı havzası'], answer: 0 },
   ],
   'gediz-graben': [
     { q: 'Gediz grabeni hangi nehrin yerleştiği çöküntüdür?', options: ['Gediz', 'Küçük Menderes', 'Büyük Menderes', 'Aksu'], answer: 0 },
@@ -588,14 +588,14 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
     { q: 'Pomza hangi oluşumla ilişkilidir?', options: ['Volkanik kül', 'Kalker erimesi', 'Buzul aşındırması', 'Deniz birikimi'], answer: 0 },
   ],
   perlit: [
-    { q: 'Perlit yatakları hangi illerde bulunur?', options: ['Manisa-Kütahya-Balıkesir', 'Trabzon-Rize', 'Konya-Karaman', 'Şanlıurfa-Mardin'], answer: 0 },
+    { q: 'Perlit yatakları hangi illerde bulunur?', options: ['İzmir-Manisa-Balıkesir-Nevşehir', 'Trabzon-Rize', 'Konya-Karaman', 'Şanlıurfa-Mardin'], answer: 0 },
   ],
   manyezit: [
-    { q: 'Manyezit hangi illerde çıkarılır?', options: ['Kütahya-Eskişehir', 'Zonguldak-Sinop', 'Antalya-Muğla', 'Erzurum-Kars'], answer: 0 },
+    { q: 'Manyezit hangi illerde çıkarılır?', options: ['Eskişehir-Kütahya-Konya', 'Zonguldak-Sinop', 'Antalya-Muğla', 'Erzurum-Kars'], answer: 0 },
   ],
   dap: [
-    { q: 'DAP hangi bölgeyi kapsar?', options: ['Doğu Anadolu', 'Güneydoğu Anadolu', 'İç Anadolu', 'Karadeniz'], answer: 0 },
-    { q: 'Türkiye’nin iki büyük bölgesel projesi hangileridir?', options: ['GAP ve DAP', 'GAP ve KOP', 'DAP ve KOP', 'GAP ve YHDP'], answer: 0 },
+    { q: 'DAP hangi bölgeyi kapsar?', options: ['Doğu Anadolu (ve Sivas)', 'Güneydoğu Anadolu', 'İç Anadolu', 'Karadeniz'], answer: 0 },
+    { q: 'İç Anadolu’da yer almasına rağmen DAP kapsamına dahil edilen il hangisidir?', options: ['Sivas', 'Kayseri', 'Yozgat', 'Konya'], answer: 0 },
   ],
   kop: [
     { q: 'KOP hangi havzayı hedefler?', options: ['Konya kapalı havzası', 'Fırat havzası', 'Dicle havzası', 'Yeşilırmak havzası'], answer: 0 },
@@ -606,26 +606,27 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
   ],
   altinkaya: [
     { q: 'Altınkaya Barajı hangi nehir üzerindedir?', options: ['Kızılırmak', 'Yeşilırmak', 'Sakarya', 'Filyos'], answer: 0 },
+    { q: 'Altınkaya Barajı hangi ilimizdedir?', options: ['Samsun', 'Kastamonu', 'Sinop', 'Trabzon'], answer: 0 },
   ],
   'hasan-ugurlu': [
     { q: 'Hasan Uğurlu Barajı hangi nehir üzerindedir?', options: ['Yeşilırmak', 'Kızılırmak', 'Çoruh', 'Sakarya'], answer: 0 },
   ],
   koprulu: [
-    { q: 'Köprülü Kanyon Milli Parkı hangi nehir vadisindedir?', options: ['Manavgat', 'Aksu', 'Alara', 'Duden'], answer: 0 },
+    { q: 'Köprülü Kanyon Milli Parkı hangi akarsu vadisindedir?', options: ['Köprüçay', 'Manavgat', 'Aksu', 'Dalaman'], answer: 0 },
     { q: 'Köprülü Kanyon hangi ildedir?', options: ['Antalya', 'Mersin', 'Isparta', 'Burdur'], answer: 0 },
   ],
   dilek: [
-    { q: 'Dilek Yarımadası Milli Parkı hangi illeri kapsar?', options: ['İzmir-Aydın', 'Muğla-Aydın', 'Balıkesir-Çanakkale', 'İstanbul-Kocaeli'], answer: 0 },
+    { q: 'Dilek Yarımadası Büyük Menderes Deltası Milli Parkı hangi ildedir?', options: ['Aydın', 'Muğla', 'Balıkesir', 'Çanakkale'], answer: 0 },
   ],
   dalyan: [
-    { q: 'Dalyan Ramsar alanı hangi ildedir?', options: ['Muğla', 'Antalya', 'Mersin', 'İzmir'], answer: 0 },
-    { q: 'İztuzu Kumsalı hangi canlıyla ünlüdür?', options: ['Deniz kaplumbağası', 'Akdeniz foku', 'Yunus', 'Fok'], answer: 0 },
+    { q: 'Köyceğiz-Dalyan koruma alanı hangi ildedir?', options: ['Muğla', 'Antalya', 'Mersin', 'İzmir'], answer: 0 },
+    { q: 'İztuzu Kumsalı hangi canlıyla ünlüdür?', options: ['Caretta caretta (deniz kaplumbağası)', 'Akdeniz foku', 'Kelaynak', 'Flamingo'], answer: 0 },
   ],
   menemen: [
-    { q: 'Menemen Ovası hangi nehrin deltasının kuzeyindedir?', options: ['Gediz', 'Büyük Menderes', 'Küçük Menderes', 'Aksu'], answer: 0 },
+    { q: 'Menemen Ovası hangi nehrin oluşturduğu deltadır?', options: ['Gediz', 'Büyük Menderes', 'Küçük Menderes', 'Bakırçay'], answer: 0 },
   ],
   silifke: [
-    { q: 'Silifke Ovası hangi nehrin deltasının kuzeyindedir?', options: ['Göksu', 'Seyhan', 'Ceyhan', 'Manavgat'], answer: 0 },
+    { q: 'Silifke Delta Ovası hangi nehrin Akdeniz’e döküldüğü yerde oluşmuştur?', options: ['Göksu', 'Seyhan', 'Ceyhan', 'Manavgat'], answer: 0 },
   ],
   'ataturk-bara': [
     { q: 'Atatürk Barajı hangi nehir üzerindedir?', options: ['Fırat', 'Dicle', 'Seyhan', 'Ceyhan'], answer: 0 },
@@ -637,31 +638,31 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
   ],
   deriner: [
     { q: 'Deriner Barajı hangi nehir üzerindedir?', options: ['Çoruh', 'Fırat', 'Kızılırmak', 'Yeşilırmak'], answer: 0 },
-    { q: 'Deriner Barajı hangi illerde yer alır?', options: ['Artvin-Rize', 'Erzurum-Ağrı', 'Trabzon-Giresun', 'Ordu-Giresun'], answer: 0 },
+    { q: 'Deriner ve Yusufeli barajları hangi ilimizdedir?', options: ['Artvin', 'Erzurum', 'Trabzon', 'Ordu'], answer: 0 },
   ],
   ilisu: [
-    { q: 'Ilısu Barajı hangi nehir üzerindedir?', options: ['Dicle', 'Fırat', 'Seyhan', 'Ceyhan'], answer: 0 },
+    { q: 'Ilısu (Veysel Eroğlu) Barajı hangi nehir üzerindedir?', options: ['Dicle', 'Fırat', 'Seyhan', 'Ceyhan'], answer: 0 },
     { q: 'Ilısu Barajı hangi illeri kapsar?', options: ['Şırnak-Mardin', 'Şanlıurfa-Adıyaman', 'Batman-Siirt', 'Diyarbakır-Mardin'], answer: 0 },
   ],
   civa: [
-    { q: 'Civa madeni hangi çevrede çıkarılır?', options: ['Simav (Balıkesir)', 'Zonguldak', 'Mardin', 'Erzurum'], answer: 0 },
-    { q: 'Civa hangi oluşumla ilişkilendirilir?', options: ['Volkanik ve hidrotermal sahalar', 'Buzul birikimi', 'Delta çökelleri', 'Kıyı setleri'], answer: 0 },
+    { q: 'Doğada sıvı halde bulunan cıva madeni hangi illerde çıkarılır?', options: ['İzmir (Ödemiş) - Konya (Sarayönü)', 'Zonguldak - Bartın', 'Mardin - Şırnak', 'Erzurum - Kars'], answer: 0 },
+    { q: 'Cıva hangi oluşumla ilişkilendirilir?', options: ['Volkanik ve hidrotermal sahalar', 'Buzul birikimi', 'Delta çökelleri', 'Kıyı setleri'], answer: 0 },
   ],
   gumus: [
-    { q: 'Gümüş madeni hangi illerimizde çıkarılır?', options: ['Gümüşhane', 'Zonguldak', 'Antalya', 'İzmir'], answer: 0 },
+    { q: 'Türkiye’nin en büyük gümüş işletmesi (Gümüşköy) hangi ilimizdedir?', options: ['Kütahya', 'Zonguldak', 'Antalya', 'İzmir'], answer: 0 },
     { q: 'Gümüşhane ili adını hangi madenden almıştır?', options: ['Gümüş', 'Altın', 'Bakır', 'Krom'], answer: 0 },
   ],
   kayatuzu: [
-    { q: 'Kaya tuzu hangi illerimizde çıkarılır?', options: ['İzmir-Çankırı', 'Samsun-Ordu', 'Bursa-Kocaeli', 'Adana-Mersin'], answer: 0 },
-    { q: 'Çamaltı tuzla gölleri hangi ildedir?', options: ['İzmir', 'Aydın', 'Muğla', 'Manisa'], answer: 0 },
+    { q: 'Deniz tuzundan üretim yapılan Çamaltı Tuzlası hangi ilimizdedir?', options: ['İzmir', 'Aydın', 'Muğla', 'Manisa'], answer: 0 },
+    { q: 'Kaya tuzu mağaralarıyla ünlü ilimiz hangisidir?', options: ['Çankırı', 'Samsun', 'Bursa', 'Adana'], answer: 0 },
   ],
   'karst-kiyi': [
-    { q: 'Karstik kıyıların oluşumunda hangi süreç etkilidir?', options: ['Kireçtaşı erozyonu', 'Buzul aşındırması', 'Volkanik patlama', 'Rüzgâr birikimi'], answer: 0 },
-    { q: 'Karstik kıyıların tipik örnekleri hangi bölgededir?', options: ['Akdeniz (Teke Yarımadası)', 'Karadeniz', 'Marmara', 'İç Anadolu'], answer: 0 },
+    { q: 'Karstik kıyıların oluşumunda hangi süreç etkilidir?', options: ['Kireçtaşı (kalker) erimesi', 'Buzul aşındırması', 'Volkanik patlama', 'Rüzgâr birikimi'], answer: 0 },
+    { q: 'Karstik kıyıların tipik örnekleri hangi bölgededir?', options: ['Akdeniz (Teke ve Taşeli)', 'Doğu Karadeniz', 'Ergene Havzası', 'İç Anadolu'], answer: 0 },
   ],
   tombolo: [
-    { q: 'Tombolo (bağlama kumsalı) hangi oluşumla meydana gelir?', options: ['Kıyı setinin adayı anakaraya bağlaması', 'Nehir deltasının ilerlemesi', 'Buzul vadisinin derinleşmesi', 'Fay bloklarının kayması'], answer: 0 },
-    { q: 'Salih Adası tombolo örneği hangi ildedir?', options: ['Muğla', 'Antalya', 'İzmir', 'Çanakkale'], answer: 0 },
+    { q: 'Tombolo (saplı ada) hangi oluşumla meydana gelir?', options: ['Kıyı okunun adayı anakaraya bağlaması', 'Nehir deltasının ilerlemesi', 'Buzul vadisinin derinleşmesi', 'Fay bloklarının kayması'], answer: 0 },
+    { q: 'Türkiye’de Kapıdağ Yarımadası ve Sinop Burnu hangi illerdeki tombolo örnekleridir?', options: ['Balıkesir ve Sinop', 'Antalya ve Mersin', 'İzmir ve Aydın', 'Rize ve Artvin'], answer: 0 },
   ],
   'kiyi-ovasi': [
     { q: 'Kıyı ovaları nasıl oluşur?', options: ['Akarsuların kıyıya paralel biriktirmesiyle', 'Volkanik lavların soğumasıyla', 'Buzulların erimesiyle', 'Fay kırılmasıyla'], answer: 0 },
@@ -670,6 +671,101 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
   'falez-kiyi': [
     { q: 'Falezli kayalık kıyıların yaygın olduğu bölge hangisidir?', options: ['Karadeniz', 'Ege', 'Akdeniz', 'Marmara'], answer: 0 },
     { q: 'Falezlerin oluşumunda hangi etken rol oynar?', options: ['Dalgaların kıyı kayalarını aşındırması', 'Akarsu birikimi', 'Rüzgâr erozyonu', 'Buzul sürüklenmesi'], answer: 0 },
+  ],
+  karayel: [
+    { q: 'Türkiye’ye kuzeybatıdan esen soğuk yerel rüzgar hangisidir?', options: ['Karayel', 'Poyraz', 'Lodos', 'Samyeli'], answer: 0 },
+  ],
+  'yildiz-ruzgari': [
+    { q: 'Karadeniz kıyılarına tam kuzeyden esen soğuk yerel rüzgar hangisidir?', options: ['Yıldız', 'Kıble', 'Lodos', 'Keşişleme'], answer: 0 },
+  ],
+  poyraz: [
+    { q: 'Kuzeydoğudan esen soğuk ve kuru yerel rüzgar hangisidir?', options: ['Poyraz', 'Lodos', 'Samyeli', 'Kıble'], answer: 0 },
+  ],
+  samyeli: [
+    { q: 'Güneydoğu Anadolu’da buharlaşmayı şiddetlendiren, güneydoğudan esen sıcak rüzgar hangisidir?', options: ['Samyeli (Keşişleme)', 'Karayel', 'Yıldız', 'Poyraz'], answer: 0 },
+  ],
+  lodos: [
+    { q: 'Güneybatıdan esen, kışın kar erimelerine ve soba zehirlenmelerine yol açan sıcak rüzgar hangisidir?', options: ['Lodos', 'Poyraz', 'Yıldız', 'Karayel'], answer: 0 },
+  ],
+  'fon-ruzgari': [
+    { q: 'Dağ yamacından alçalarak her 100 metrede yaklaşık 1 °C ısınan kurutucu rüzgar hangisidir?', options: ['Fön rüzgarı', 'Etezyen', 'Meltem', 'Poyraz'], answer: 0 },
+  ],
+  'karadeniz-yagis': [
+    { q: 'Karadeniz ikliminde en fazla yağış hangi mevsimde düşer?', options: ['Sonbahar', 'İlkbahar', 'Yaz', 'Kış'], answer: 0 },
+  ],
+  'akdeniz-yagis': [
+    { q: 'Akdeniz ikliminde en fazla yağış hangi mevsimde ve hangi oluşumla düşer?', options: ['Kış - Cephesel (frontal)', 'Yaz - Konveksiyonel', 'İlkbahar - Yükselim', 'Sonbahar - Yamaç'], answer: 0 },
+  ],
+  'ic-anadolu-yagis': [
+    { q: 'İç Anadolu’da ilkbaharda görülen “Kırkikindi” yağışları hangi oluşum tipindedir?', options: ['Konveksiyonel (Yükselim)', 'Cephesel (Frontal)', 'Orografik (Yamaç)', 'Muson'], answer: 0 },
+  ],
+  'erzurum-kars-yagis': [
+    { q: 'Erzurum-Kars-Ardahan çevresinde en fazla yağış hangi mevsimde düşer?', options: ['Yaz', 'Kış', 'İlkbahar', 'Sonbahar'], answer: 0 },
+  ],
+  'divan-yerlesme': [
+    { q: 'Batı Karadeniz’de (Sinop, Kastamonu, Bolu, Sakarya) yaygın olan kalıcı köy altı yerleşmesi hangisidir?', options: ['Divan', 'Kom', 'Oba', 'Dalyan'], answer: 0 },
+  ],
+  'mezra-yerlesme': [
+    { q: 'Doğu ve Güneydoğu Anadolu’da tarım ve hayvancılık yapılan kalıcı köy altı yerleşmesi hangisidir?', options: ['Mezra', 'Ağıl', 'Dam', 'Oba'], answer: 0 },
+  ],
+  'kom-agil': [
+    { q: 'Doğu Anadolu’da hayvancılık amacıyla kurulan geçici köy altı yerleşmesi hangisidir?', options: ['Kom', 'Divan', 'Mahalle', 'Çiftlik'], answer: 0 },
+  ],
+  'dalyan-dam': [
+    { q: 'Ege ve Akdeniz kıyılarında balıkçılık faaliyetleriyle ilişkili geçici köy altı yerleşmesi hangisidir?', options: ['Dalyan', 'Kom', 'Mezra', 'Divan'], answer: 0 },
+  ],
+  cittaslow: [
+    { q: 'Türkiye’nin ilk “Sakin Şehri” (Cittaslow) unvanını alan ilçesi hangisidir?', options: ['Seferihisar (İzmir)', 'Halfeti (Şanlıurfa)', 'Akyaka (Muğla)', 'Şavşat (Artvin)'], answer: 0 },
+    { q: 'Dünyanın ilk “Sakin Adası” (Cittaslow) unvanına sahip yerimiz hangisidir?', options: ['Gökçeada (Çanakkale)', 'Bozcaada', 'Marmara Adası', 'Avşa Adası'], answer: 0 },
+  ],
+  findik: [
+    { q: 'Türkiye’de fındık üretiminde 1. sırada yer alan ilimiz hangisidir?', options: ['Ordu', 'Trabzon', 'Rize', 'Bartın'], answer: 0 },
+  ],
+  cay: [
+    { q: 'Türkiye’de çay üretiminin tamamına yakını hangi bölümde yapılır?', options: ['Doğu Karadeniz (Rize çevresi)', 'Batı Karadeniz', 'Orta Karadeniz', 'Antalya Bölümü'], answer: 0 },
+  ],
+  pamuk: [
+    { q: 'GAP ile birlikte Türkiye’de pamuk üretiminde 1. sıraya yükselen ilimiz hangisidir?', options: ['Şanlıurfa', 'Adana', 'İzmir', 'Antalya'], answer: 0 },
+  ],
+  incir: [
+    { q: 'Türkiye’de incir üretiminde açık ara 1. sırada yer alan ilimiz hangisidir?', options: ['Aydın', 'Mersin', 'Bursa', 'Hatay'], answer: 0 },
+  ],
+  'uzum-kayisi': [
+    { q: 'Dünya kuru kayısı üretiminde 1. sırada yer alan ilimiz hangisidir?', options: ['Malatya', 'Manisa', 'Aydın', 'Mersin'], answer: 0 },
+    { q: 'Çekirdeksiz kuru üzüm üretiminde 1. sırada yer alan ilimiz hangisidir?', options: ['Manisa', 'Denizli', 'Nevşehir', 'Gaziantep'], answer: 0 },
+  ],
+  'hashas-kenevir': [
+    { q: 'Devlet kontrolünde yetiştirilen haşhaş üretiminde 1. sıradaki ilimiz hangisidir?', options: ['Afyonkarahisar', 'Edirne', 'Rize', 'Adana'], answer: 0 },
+  ],
+  pirinc: [
+    { q: 'Meriç ve Ergene nehirleri çevresinde pirinç (çeltik) üretiminde 1. olan ilimiz hangisidir?', options: ['Edirne', 'Konya', 'Şanlıurfa', 'Antalya'], answer: 0 },
+  ],
+  aycicegi: [
+    { q: 'Türkiye’de yağlık ayçiçeği ve kanola üretiminde 1. sırada yer alan ilimiz hangisidir?', options: ['Tekirdağ', 'Trabzon', 'Muğla', 'Erzurum'], answer: 0 },
+  ],
+  'gul-lavanta': [
+    { q: 'Türkiye’de gül ve lavanta üretiminde 1. sırada yer alan ilimiz hangisidir?', options: ['Isparta', 'Antalya', 'Konya', 'Aydın'], answer: 0 },
+  ],
+  'kucukbas-hayvancilik': [
+    { q: 'Türkiye’de koyun varlığında 1. sırada yer alan ilimiz hangisidir?', options: ['Van', 'Rize', 'Bartın', 'Yalova'], answer: 0 },
+    { q: 'Toroslar’da engebeli araziye uyum sağlayan ve Mersin-Antalya’da yoğunlaşan hayvancılık türü hangisidir?', options: ['Kıl keçisi', 'Tiftik keçisi', 'İpek böcekçiliği', 'Manda'], answer: 0 },
+  ],
+  'ipek-aricilik': [
+    { q: 'Türkiye’de yaş ipek kozası üretiminde 1. sırada yer alan ilimiz hangisidir?', options: ['Diyarbakır', 'Konya', 'Sivas', 'Edirne'], answer: 0 },
+    { q: 'Türkiye’de çam balı üretimiyle ünlü ilimiz hangisidir?', options: ['Muğla', 'Kars', 'Şanlıurfa', 'Yozgat'], answer: 0 },
+  ],
+  'petrol-rafinerileri': [
+    { q: 'Hammaddeye yakınlık ilkesiyle kurulmuş tek petrol rafinerimiz hangi ildedir?', options: ['Batman', 'Kocaeli (İpraş)', 'İzmir (Aliağa)', 'Kırıkkale (Orta Anadolu)'], answer: 0 },
+  ],
+  'ferrokrom-aluminyum': [
+    { q: 'Türkiye’de boksit madenini işleyen tek entegre alüminyum tesisi nerededir?', options: ['Seydişehir (Konya)', 'İskenderun (Hatay)', 'Murgul (Artvin)', 'Ereğli (Zonguldak)'], answer: 0 },
+    { q: 'Türkiye’de ferrokrom tesisleri hangi iki ilimizde bulunur?', options: ['Elazığ ve Antalya', 'Samsun ve Artvin', 'Zonguldak ve Karabük', 'Bursa ve Kocaeli'], answer: 0 },
+  ],
+  'otomotiv-rayli': [
+    { q: 'Yerli otomobil (Togg) fabrikası ve otomotiv sanayisinin kalbi hangi ilimizdedir?', options: ['Bursa (Gemlik)', 'Samsun', 'Erzurum', 'Mardin'], answer: 0 },
+  ],
+  'seker-pamuklu-sanayi': [
+    { q: 'Yağış rejimi ve arazi yapısı nedeniyle aşağıdaki bölgelerden hangisinde şeker fabrikası yoktur?', options: ['Doğu Karadeniz ve Güneydoğu kıyıları', 'İç Anadolu', 'Marmara', 'Doğu Anadolu'], answer: 0 },
   ],
 };
 
@@ -738,7 +834,7 @@ export const ITEM_CAUSE: Record<string, McqQuestion[]> = {
     { q: 'Bafra-Çarşamba deltalarının oluşumunun nedeni nedir?', options: ['Akarsuların taşıdığı alüvyonların birikmesi', 'Tektonik çöküntü', 'Volkanik set', 'Buzul erimesi'], answer: 0, tag: 'Neden-sonuç' },
   ],
   'zonguldak-komur': [
-    { q: 'Taşkömürünün Zonguldak çevresinde bulunmasının nedeni nedir?', options: ['Tersiyer dönemindeki gür ormanların kömürleşmesi', 'Volkanik kül birikimi', 'Buzul taşıması', 'Deniz tuzu çökelmesi'], answer: 0, tag: 'Neden-sonuç' },
+    { q: 'Taşkömürünün Zonguldak çevresinde bulunmasının nedeni nedir?', options: ['1. Jeolojik Zaman (Paleozoik) gür ormanlarının kömürleşmesi', '3. Zaman (Tersiyer) göl bataklıkları', 'Volkanik kül birikimi', 'Buzul taşıması'], answer: 0, tag: 'Neden-sonuç' },
   ],
   'ege-jeotermal': [
     { q: 'Ege Bölgesi’nde jeotermal enerjinin bol olmasının nedeni nedir?', options: ['Faylı yapı ve genç volkanik ısı kaynakları', 'Kıvrım dağları', 'Buzullar', 'Delta ovaları'], answer: 0, tag: 'Neden-sonuç' },
@@ -771,21 +867,251 @@ export const ITEM_CAUSE: Record<string, McqQuestion[]> = {
     { q: 'Pomzanın Kapadokya çevresinde bol olmasının nedeni nedir?', options: ['Volkanik kül akıntılarının soğuyup hafifleşmesi', 'Kalker erimesi', 'Buzul taşıması', 'Deniz birikimi'], answer: 0, tag: 'Neden-sonuç' },
   ],
   'uludag': [
-    { q: 'Uludağ’ın horst (yükselen blok) olmasının nedeni nedir?', options: ['Batı Anadolu’daki gerilim kuvvetleriyle blok yükselmesi', 'Kıvrılma', 'Volkanik patlama', 'Buzul birikimi'], answer: 0, tag: 'Neden-sonuç' },
+    { q: 'Uludağ’ın iç püskürük (batolit) kütle olarak oluşmasının nedeni nedir?', options: ['Magmanın yer kabuğu içinde yavaşça soğuyup katılaşması', 'Kıvrılma', 'Volkanik patlama', 'Buzul birikimi'], answer: 0, tag: 'Neden-sonuç' },
   ],
   'menderes-graben': [
     { q: 'Büyük Menderes grabeninin oluşumunun nedeni nedir?', options: ['Kabuk incelmesi ve çekme kuvvetleri', 'Kıvrılma kuvvetleri', 'Buzul basıncı', 'Volkanik patlama'], answer: 0, tag: 'Neden-sonuç' },
   ],
   ergene: [
-    { q: 'Ergene Ovası’nın delta ovası olmasının nedeni nedir?', options: ['Ergene’nin taşıdığı alüvyonların birikmesi', 'Tektonik çöküntü', 'Volkanik set', 'Buzul erimesi'], answer: 0, tag: 'Neden-sonuç' },
+    { q: 'Ergene Ovası’nın oluşum kökeni nedir?', options: ['Tektonik çöküntü havzasının alüvyonlarla dolması', 'Deniz kıyısında delta birikimi', 'Volkanik set', 'Buzul erimesi'], answer: 0, tag: 'Neden-sonuç' },
   ],
   'koprulu': [
-    { q: 'Köprülü Kanyon’un derinleşmesinin nedeni nedir?', options: ['Manavgat’ın karstik aşındırması', 'Buzul aşındırması', 'Volkanik patlama', 'Heyelan'], answer: 0, tag: 'Neden-sonuç' },
+    { q: 'Köprülü Kanyon’un derinleşmesinin nedeni nedir?', options: ['Köprüçay’ın kalkerli (karstik) araziyi aşındırması', 'Buzul aşındırması', 'Volkanik patlama', 'Heyelan'], answer: 0, tag: 'Neden-sonuç' },
   ],
   munzur: [
     { q: 'Munzur Vadisi’nin Türkiye’nin en derin vadilerinden olmasının nedeni nedir?', options: ['Munzur Dağları’nın hızla yükselmesi ve akarsuların aşındırması', 'Buzul erimesi', 'Kıyı erozyonu', 'Rüzgâr aşındırması'], answer: 0, tag: 'Neden-sonuç' },
   ],
+  // Beşeri ve Ekonomik Coğrafya Neden-Sonuç & KPSS Soruları
+  'fon-ruzgari': [
+    { q: 'Rize’de turunçgil, Çoruh vadisinde (Yusufeli) zeytin yetişebilmesinin temel nedeni nedir?', options: ['Fön rüzgarlarının oluşturduğu kış ılıklığı (mikroklima)', 'Enlem etkisi', 'Karstik arazi yapısı', 'Yüksek nem oranı'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'igdir-mikroklima': [
+    { q: 'Doğu Anadolu’da yer alan Iğdır Ovası’nda pamuk tarımı yapılabilmesinin nedeni nedir?', options: ['Çevresine göre çukurda kalması ve fön etkisi (mikroklima)', 'Muson rüzgarları', 'Kıyıya yakın olması', 'Kireçli topraklar'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'erzurum-kars-yagis': [
+    { q: 'Erzurum-Kars Platosu’nda büyükbaş mera hayvancılığının gelişmesinin temel nedeni nedir?', options: ['Konveksiyonel yaz yağışlarıyla gür alpin çayırların yetişmesi', 'Kışların ılık geçmesi', 'Şeker fabrikalarının varlığı', 'Maki bitki örtüsü'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'mentese-seyrek': [
+    { q: 'Menteşe Yöresi’nde iklim elverişli olmasına rağmen nüfusun seyrek olmasının nedeni nedir?', options: ['Dağlık ve engebeli yer şekilleri', 'Yetersiz yağış ve kuraklık', 'Şiddetli kış soğukları', 'Karstik obruklar'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'teke-taseli-seyrek': [
+    { q: 'Teke ve Taşeli platolarında nüfus yoğunluğunun az olmasında hangi faktör belirleyicidir?', options: ['Karstik (kalkerli) yapı ve engebeli arazi', 'Yüksek sanayileşme', 'Volkanik tüf örtüsü', 'Taban suyunun yüzeye yakın olması'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'tuz-golu-seyrek': [
+    { q: 'Tuz Gölü çevresinde yer şekilleri düz olmasına rağmen nüfusun seyrek olmasının temel nedeni nedir?', options: ['Şiddetli kuraklık ve yetersiz yağış', 'Engebeli topografya', 'Gür orman örtüsü', 'Heyelan riski'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'demir-celik': [
+    { q: 'Karabük ve Ereğli’de demir madeni çıkarılmamasına rağmen demir-çelik fabrikası kurulmasının nedeni nedir?', options: ['Enerji kaynağına (taşkömürüne) yakınlık', 'Hammaddeye yakınlık', 'Pazar büyüklüğü', 'Turizm potansiyeli'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'bakir-isleme': [
+    { q: 'Samsun’da bakır madeni çıkarılmamasına rağmen bakır işleme (izabe) tesisi bulunmasının nedeni nedir?', options: ['Liman ve ulaşım (hinterland) avantajı', 'Hammadde bolluğu', 'Enerji kaynağına yakınlık', 'Ucuz iş gücü'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'limanlar-ticaret': [
+    { q: 'Sinop’un Karadeniz’in tek doğal limanı olmasına rağmen gelişememesinin nedeni nedir?', options: ['Küre Dağları nedeniyle iç kesimlerle ulaşımın (hinterlandın) dar olması', 'Kıyı derinliğinin az olması', 'Sınır kapılarına uzak olması', 'Kurak iklim'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  pamuk: [
+    { q: 'GAP tamamlandıkça pamuk üretiminde 1. sıranın Ege’den Güneydoğu Anadolu’ya (Şanlıurfa) geçmesinin nedeni nedir?', options: ['Sulama olanaklarının artması ve yüksek yaz sıcaklığı', 'Kış yağışlarının azalması', 'Toprakların yıkanması', 'Makineli tarımın azalması'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  cay: [
+    { q: 'Çay fabrikalarının tamamının Doğu Karadeniz’de toplanmasının nedeni nedir?', options: ['Hammaddenin çabuk bozulması (hammaddeye yakınlık)', 'Ulaşım kolaylığı', 'Enerji bolluğu', 'Tüketici nüfusun fazlalığı'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'cittaslow-dogu-guneydogu': [
+    { q: 'Fırat Nehri üzerindeki Birecik Barajı suları altında kalan ve Cittaslow (Sakin Şehir) ağında yer alan yerleşim hangisidir?', options: ['Halfeti (Şanlıurfa)', 'Seferihisar (İzmir)', 'Gökçeada (Çanakkale)', 'Gerze (Sinop)'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'cittaslow-karadeniz-akdeniz': [
+    { q: 'Karadeniz Bölgesi’nde Cittaslow (Sakin Şehir) unvanına sahip yerleşimlerden hangisi Artvin ilinde yer alır?', options: ['Şavşat', 'Akyaka', 'Vize', 'Yenipazar'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'savunma-havacilik-sanayi': [
+    { q: 'Kırıkkale’de silah, mühimmat ve savunma sanayi tesislerinin kurulmasında temel belirleyici ilke nedir?', options: ['Stratejik güvenlik (ülkenin iç kesiminde korunaklı konum)', 'Liman bağlantısı', 'Deniz ticaretine yakınlık', 'Taşkömürü yataklarına yakınlık'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'tersane-gemi-sanayi': [
+    { q: 'Türkiye’de sivil ve askeri tersane (gemi inşa) sanayisinin en çok yoğunlaştığı körfez ve kıyı kuşağı hangisidir?', options: ['İstanbul (Tuzla) - Yalova (Altınova) - Kocaeli (Gölcük)', 'Sinop - Kastamonu - Bartın', 'Antalya - Muğla - Aydın', 'Rize - Artvin - Giresun'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'serbest-ticaret-bolgeleri': [
+    { q: 'Türkiye’de serbest ticaret bölgelerinin kurulmasındaki temel ekonomik amaç nedir?', options: ['İhracata dayalı yatırım, üretim ve dış ticareti teşvik etmek', 'İç göçü kırsal alanlara yönlendirmek', 'Yalnızca tarımsal sulamayı artırmak', 'Maden aramalarını kısıtlamak'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'organize-sanayi-ticaret': [
+    { q: 'Güneydoğu Anadolu Bölgesi’nde ulaşım kavşağında yer alarak bölgenin en büyük sanayi ve ticaret merkezi haline gelen il hangisidir?', options: ['Gaziantep', 'Hakkâri', 'Tunceli', 'Ardahan'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'ladin-agaci': [
+    { q: 'Türkiye’de Doğu Ladini (Picea orientalis) ağacının doğal olarak yetiştiği tek coğrafi bölüm hangisidir?', options: ['Doğu Karadeniz Bölümü (Ordu - Artvin arası)', 'Orta Kızılırmak Bölümü', 'Ergene Bölümü', 'Adana Bölümü'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'kizilcam-ormani': [
+    { q: 'Yaz kuraklığına en dayanıklı iğne yapraklı ağaç olan Kızılçam ormanlarının tahrip edildiği Akdeniz ve Ege kıyılarında hangi bitki örtüsü gelişir?', options: ['Maki', 'Alpin çayır', 'Tundra', 'Psödomaki'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'saricam-ormani': [
+    { q: 'Kars Sarıkamış çevresinde 2.700 metre yükseltiye kadar çıkabilen ve soğuğa en dayanıklı iğne yapraklı ağaç türü hangisidir?', options: ['Sarıçam', 'Kızılçam', 'Sığla', 'Zeytin'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'sedir-karacam': [
+    { q: 'Toros Dağları’nda 1.000-2.000 metre yükselti kuşağında Kızılçamın üst sınırında yaygınlaşan karakteristik iğne yapraklı ağaç hangisidir?', options: ['Toros Sediri ve Karaçam', 'Doğu Ladini', 'Sığla ağacı', 'Datça hurması'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'kayin-gurgen': [
+    { q: 'Karadeniz iklimine ait geniş yapraklı bir ağaç olan Kayın ağacının Hatay Amanos (Nur) Dağları’nda da görülmesi aşağıdakilerden hangisine örnektir?', options: ['Relikt (kalıntı) bitki', 'Antropojen bozkır', 'Garig (frigana)', 'Halomorfik bitki'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'mese-ormani': [
+    { q: 'İklim seçiciliği az olduğu için Türkiye’nin tüm bölgelerinde yetişebilen ve ormanlarımızda kapladığı alan bakımından 1. sırada olan ağaç türü hangisidir?', options: ['Meşe', 'Ladin', 'Sığla', 'Sedir'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'sigla-agaci': [
+    { q: 'Yağı ilaç ve parfümeri (kozmetik) sanayisinde kullanılan endemik Sığla (Günlük) ağacı Türkiye’de yalnızca hangi il ve çevresinde doğal yayılış gösterir?', options: ['Muğla (Köyceğiz - Fethiye - Marmaris)', 'Kars (Sarıkamış)', 'Edirne (Ergene)', 'Konya (Cihanbeyli)'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'karliova-dugumu': [
+    { q: 'Kuzey Anadolu Fay Hattı (KAF) ile Doğu Anadolu Fay Hattı’nın (DAF) kesiştiği tektonik düğüm noktası hangi ilimizdedir?', options: ['Bingöl (Karlıova)', 'Konya (Karapınar)', 'Kırklareli (Vize)', 'Sinop (Boyabat)'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'kil-kecisi': [
+    { q: 'Engebeli arazi yapısı ve maki bitki örtüsüne uyum sağlayan Kıl Keçisi yetiştiriciliğinin en yoğun olduğu bölge ve 1. il hangisidir?', options: ['Akdeniz Bölgesi (Toroslar) — Mersin', 'Marmara Bölgesi — Edirne', 'Karadeniz Bölgesi — Rize', 'İç Anadolu Bölgesi — Eskişehir'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'tiftik-kecisi': [
+    { q: 'Parlak yünü (mohair) dokuma sanayisinde kullanılan Tiftik (Angora) Keçisi yetiştiriciliğinde öne çıkan iki temel il hangisidir?', options: ['Ankara ve Siirt', 'Rize ve Trabzon', 'İzmir ve Aydın', 'Edirne ve Tekirdağ'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'manda-yetistiriciligi': [
+    { q: 'Sulak ve bataklık delta sahalarını seven Manda yetiştiriciliğinde Türkiye’de 1. sırada yer alan il hangisidir?', options: ['Samsun', 'Konya', 'Muğla', 'Hakkâri'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'buyukbas-besi': [
+    { q: 'Büyük tüketici nüfus ve yem/şeker fabrikalarının çevresinde gelişen büyükbaş besi ve ahır hayvancılığında sığır sayısında 1. il hangisidir?', options: ['Konya', 'Rize', 'Tunceli', 'Bartın'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'ipek-bocekciligi': [
+    { q: 'Dut ağacı yaprağına bağlı olarak yapılan İpek Böcekçiliğinde (yaş ipek kozası üretiminde) Türkiye’de 1. sırada yer alan il hangisidir?', options: ['Diyarbakır', 'Kars', 'Yozgat', 'Sinop'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'kumes-hayvanciligi': [
+    { q: 'Kümes hayvancılığının Marmara ve Ege bölgelerinde (Manisa, Balıkesir, Bolu, Sakarya) yoğunlaşmasının temel nedeni nedir?', options: ['Büyük tüketim merkezlerine (pazar) ve ulaşım hatlarına yakınlık', 'Yaz yağışlarının fazla olması', 'Karstik arazi yapısı', 'Alpin çayırların geniş yer kaplaması'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'balikcilik-su-urunleri': [
+    { q: 'Türkiye’de deniz balıkçılığında (avcılık) 1. bölge Karadeniz iken, kültür balıkçılığında (dalyan yetiştiriciliği) 1. sırada yer alan bölge ve il hangisidir?', options: ['Ege Bölgesi — Muğla', 'İç Anadolu Bölgesi — Ankara', 'Güneydoğu Anadolu — Mardin', 'Doğu Anadolu — Kars'], answer: 0, tag: 'Neden-sonuç' },
+  ],
+  'nemrut-ramsar': [
+    { q: '2013 yılında Türkiye’nin 14. Ramsar sulak alanı olarak tescillenen volkanik kaldera gölü hangi ilimizdedir?', options: ['Bitlis (Nemrut Kalderası)', 'Adıyaman (Nemrut Dağı)', 'Ağrı (Tendürek)', 'Manisa (Kula)'], answer: 0, tag: 'Ramsar' },
+  ],
+  kuyucak: [
+    { q: 'Kuzeydoğu Anadolu’da (Kars - Arpaçay) yer alan ve Doğu Anadolu Bölgesi’nin ilk Ramsar sulak alanı olan göl hangisidir?', options: ['Kuyucuk Gölü', 'Çıldır Gölü', 'Hazar Gölü', 'Tortum Gölü'], answer: 0, tag: 'Ramsar' },
+  ],
+  'kizilirmak-ramsar': [
+    { q: 'Karadeniz Bölgesi’nde Ramsar Sözleşmesi kapsamında korunan tek sulak alan hangisidir?', options: ['Kızılırmak Deltası (Samsun)', 'Abant Gölü (Bolu)', 'Uzungöl (Trabzon)', 'Borabay Gölü (Amasya)'], answer: 0, tag: 'Ramsar' },
+  ],
+  'manyas-ramsar': [
+    { q: 'Balıkesir Bandırma’da yer alan, Türkiye’nin ilk Ramsar alanlarından (1994) biri olan ve “Kuşcenneti Milli Parkı”nı barındıran tektonik göl hangisidir?', options: ['Manyas (Kuş) Gölü', 'Sapanca Gölü', 'İznik Gölü', 'Terkos Gölü'], answer: 0, tag: 'Ramsar' },
+  ],
+  'uluabat-ramsar': [
+    { q: 'Bursa’da yer alan, nilüfer çiçekleri ve Gölyazı yarımadası ile tanınan Güney Marmara Ramsar sulak alanı hangisidir?', options: ['Uluabat (Apolyont) Gölü', 'İznik Gölü', 'Sapanca Gölü', 'Büyükçekmece Gölü'], answer: 0, tag: 'Ramsar' },
+  ],
+  'gediz-ramsar': [
+    { q: 'Ege Bölgesi’nin tek resmi Ramsar alanı olan ve içinde Çamaltı Tuzlası ile İzmir Kuş Cenneti’ni barındıran sulak alan hangisidir?', options: ['Gediz Deltası (İzmir)', 'Bafa Gölü (Muğla)', 'Marmara Gölü (Manisa)', 'Işıklı Gölü (Denizli)'], answer: 0, tag: 'Ramsar' },
+  ],
+  'burdur-ramsar': [
+    { q: 'Nesli tehlike altındaki Dikkuyruk ördeğinin önemli kışlama alanı olduğu için 1994’te Türkiye’nin ilk Ramsar alanları arasına alınan Göller Yöresi gölü hangisidir?', options: ['Burdur Gölü', 'Eğirdir Gölü', 'Salda Gölü', 'Beyşehir Gölü'], answer: 0, tag: 'Ramsar' },
+  ],
+  'sultan-sazligi': [
+    { q: 'Kayseri Develi Ovası’nda Erciyes Dağı’nın güneyinde yer alan, tatlı ve tuzlu su ekosistemlerini bir arada barındıran Ramsar alanı hangisidir?', options: ['Sultan Sazlığı', 'Eber Gölü', 'Akşehir Gölü', 'Tuz Gölü'], answer: 0, tag: 'Ramsar' },
+  ],
+  'meke-ramsar': [
+    { q: 'Konya Karapınar’da iç içe geçmiş volkanik maar ve koni yapısı nedeniyle “Dünyanın Nazar Boncuğu” olarak adlandırılan Ramsar alanı hangisidir?', options: ['Meke Maarı (Gölü)', 'Acıgöl Maarı', 'Narlıgöl', 'Nemrut Gölü'], answer: 0, tag: 'Ramsar' },
+  ],
+  'kizoren-obrugu': [
+    { q: 'Türkiye’nin 14 Ramsar sulak alanı içinde “karstik obruk gölü” oluşumuna sahip tek örnek hangisidir?', options: ['Kızören Obruğu (Konya)', 'Cennet-Cehennem Obruğu (Mersin)', 'Salda Gölü (Burdur)', 'Kovada Gölü (Isparta)'], answer: 0, tag: 'Ramsar' },
+  ],
+  'seyfe-ramsar': [
+    { q: 'İç Anadolu Bölgesi’nde Kırşehir (Mucur) sınırlarında yer alan ve flamingo kolonileriyle bilinen tektonik Ramsar alanı hangisidir?', options: ['Seyfe Gölü', 'Mogan Gölü', 'Eymir Gölü', 'Tuzla Gölü'], answer: 0, tag: 'Ramsar' },
+  ],
+  'goksu-ramsar': [
+    { q: 'Mersin Silifke’de Akgöl ve Paradeniz lagünlerini kapsayan, saz horozu ve deniz kaplumbağalarının yaşam alanı olan Ramsar alanı hangisidir?', options: ['Göksu Deltası', 'Asi Deltası', 'Köyceğiz Gölü', 'Dalaman Deltası'], answer: 0, tag: 'Ramsar' },
+  ],
+  'akyatan-ramsar': [
+    { q: 'Adana Karataş’ta Çukurova deltası kıyısında yer alan, Türkiye’nin en büyük lagün gölü ve Ramsar alanı hangisidir?', options: ['Akyatan Lagünü', 'Terkos Lagünü', 'Büyükçekmece Lagünü', 'Bafa Gölü'], answer: 0, tag: 'Ramsar' },
+  ],
+  'yumurtalik-ramsar': [
+    { q: 'Adana’da Akyatan Lagünü ile birlikte Ramsar Sözleşmesi kapsamında korunan ve nadir Halep çamı (Pinus halepensis) ormanı barındıran diğer kıyı sulak alanı hangisidir?', options: ['Yumurtalık Lagünleri', 'Göksu Deltası', 'Gediz Deltası', 'Kızılırmak Deltası'], answer: 0, tag: 'Ramsar' },
+  ],
+  'gobeklitepe-karahantepe': [
+    { q: 'MÖ 9600’lere uzanan T biçimli dikilitaşlarıyla “Tarihin Sıfır Noktası” kabul edilen UNESCO Dünya Mirası Göbeklitepe ve Karahantepe (Taş Tepeler) hangi ilimizdedir?', options: ['Şanlıurfa', 'Gaziantep', 'Mardin', 'Adıyaman'], answer: 0, tag: 'Antik Kent' },
+  ],
+  catalhoyuk: [
+    { q: 'Sokaksız, damdan girişli bitişik kerpiç evleriyle insanlığın ilk kentsel yerleşimlerinden biri kabul edilen UNESCO mirası Çatalhöyük Neolitik Kenti hangi ilimizdedir?', options: ['Konya (Çumra)', 'Çorum (Boğazkale)', 'Ankara (Polatlı)', 'Malatya (Battalgazi)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  arslantepe: [
+    { q: '2021 yılında UNESCO Dünya Mirası Listesi’ne kaydedilen, dünyanın en eski kerpiç sarayı, mühürleri ve kılıçlarının bulunduğu Arslantepe Höyüğü hangi ilimizdedir?', options: ['Malatya', 'Elazığ', 'Kayseri', 'Sivas'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'hattusa-alacahoyuk': [
+    { q: 'Hitit İmparatorluğu’nun başkenti olan ve UNESCO Dünya Mirası Listesi’nde yer alan Hattuşa (Boğazkale) ile Alacahöyük hangi ilimizdedir?', options: ['Çorum', 'Yozgat', 'Kırşehir', 'Amasya'], answer: 0, tag: 'Antik Kent' },
+  ],
+  gordion: [
+    { q: '2023 yılında UNESCO Dünya Mirası Listesi’ne giren, Frigya Krallığı’nın başkenti ve Kral Midas Tümülüsü’nün bulunduğu Gordion Antik Kenti hangi ilimizdedir?', options: ['Ankara (Polatlı)', 'Eskişehir (Seyitgazi)', 'Afyonkarahisar (İhsaniye)', 'Kütahya (Çavdarhisar)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  kultepe: [
+    { q: 'Asur Ticaret Kolonileri’nin merkezi olan ve Anadolu’da en eski çivi yazılı tabletlerin bulunmasıyla yazılı tarihin başlangıcı sayılan Kültepe (Kaniş-Karum) hangi ilimizdedir?', options: ['Kayseri', 'Konya', 'Nevşehir', 'Niğde'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'troya-assos': [
+    { q: 'Homeros’un İlyada destanına konu olan UNESCO mirası Troya (Truva) ve Athena Tapınağı ile bilinen Assos (Behramkale) antik kentleri hangi ilimizdedir?', options: ['Çanakkale', 'Balıkesir', 'Bursa', 'İzmir'], answer: 0, tag: 'Antik Kent' },
+  ],
+  efes: [
+    { q: 'Küçük Menderes Nehri’nin taşıdığı alüvyonlarla deltası dolduğu için liman özelliğini kaybederek denizden içeride kalan ve Celsus Kütüphanesi ile ünlü UNESCO mirası antik kent hangisidir?', options: ['Efes (İzmir - Selçuk)', 'Aspendos (Antalya - Serik)', 'Aizanoi (Kütahya)', 'Sagalassos (Burdur)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  bergama: [
+    { q: 'Parşömen kağıdının icat edildiği, antik dünyanın ünlü tıp merkezi Asklepion ve dik Akropol tiyatrosuna sahip UNESCO mirası Pergamon Antik Kenti hangi ilimizdedir?', options: ['İzmir (Bergama)', 'Manisa (Salihli)', 'Aydın (Karacasu)', 'Muğla (Milas)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'milet-didyma-priene': [
+    { q: 'Büyük Menderes Nehri’nin alüvyonlarıyla Balat Ovası’nın dolması sonucu deniz bağlantısını kaybedip karada kalan Milet ve Priene antik kentleri hangi ilimizdedir?', options: ['Aydın', 'İzmir', 'Muğla', 'Denizli'], answer: 0, tag: 'Antik Kent' },
+  ],
+  aphrodisias: [
+    { q: 'Mermer ocaklarına yakınlığıyla Roma dönemi heykelcilik okulu olarak ünlenen ve Ara Güler’in fotoğraflarıyla dünyaya tanıtılan UNESCO mirası Aphrodisias Antik Kenti hangi ilimizdedir?', options: ['Aydın (Karacasu)', 'Denizli (Pamukkale)', 'Muğla (Yatağan)', 'Burdur (Ağlasun)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'hierapolis-laodikeia': [
+    { q: 'Pamukkale travertenleriyle birlikte Türkiye’nin iki UNESCO Karma (Doğal + Kültürel) Mirası alanından birini oluşturan Hierapolis Antik Kenti hangi ilimizdedir?', options: ['Denizli', 'Aydın', 'Manisa', 'Afyonkarahisar'], answer: 0, tag: 'Antik Kent' },
+  ],
+  sardes: [
+    { q: 'Lidya Krallığı’nın başkenti olan, Kral Yolu’nun başlangıcında yer alan ve tarihte devlet güvenceli ilk madeni paranın basıldığı Sardes (Sart) Antik Kenti hangi ilimizdedir?', options: ['Manisa (Salihli)', 'İzmir (Selçuk)', 'Uşak (Ulubey)', 'Kütahya (Çavdarhisar)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  aizanoi: [
+    { q: 'Anadolu’nun en iyi korunmuş Zeus Tapınağı’na ve dünyanın ilk borsa (Macellum / fiyat fermanı) yapısına sahip Aizanoi Antik Kenti hangi ilimizdedir?', options: ['Kütahya (Çavdarhisar)', 'Eskişehir (Han)', 'Bursa (İznik)', 'Balıkesir (Erdek)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'knidos-stratonikeia': [
+    { q: 'Datça yarımadası ucundaki bilim kenti Knidos, Bodrum’daki Halikarnassos ve “Gladyatörler Kenti” Stratonikeia antik kentleri hangi ilimizdedir?', options: ['Muğla', 'Antalya', 'Aydın', 'İzmir'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'xanthos-letoon': [
+    { q: 'Likya Birliği’nin idari başkenti ve kutsal merkezi olarak 1988’de UNESCO Dünya Mirası Listesi’ne alınan Xanthos-Letoon antik kentleri hangi iki ilimizin sınırında yer alır?', options: ['Antalya ve Muğla', 'İzmir ve Aydın', 'Mersin ve Adana', 'Denizli ve Burdur'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'patara-myra-olympos': [
+    { q: 'Dünyanın ilk demokratik meclis (parlamento) binasına ve antik deniz fenerine ev sahipliği yapan Patara ile Noel Baba (Aziz Nikolaos) kilisesinin bulunduğu Myra antik kentleri hangi ilimizdedir?', options: ['Antalya', 'Muğla', 'Mersin', 'Hatay'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'perge-aspendos-side': [
+    { q: 'Kusursuz akustiğiyle günümüzde de konser ve gösterilerde kullanılan dünyanın en iyi korunmuş antik Roma tiyatrosuna sahip Aspendos ile Perge ve Side antik kentleri hangi ilimizdedir?', options: ['Antalya', 'Muğla', 'Burdur', 'Mersin'], answer: 0, tag: 'Antik Kent' },
+  ],
+  sagalassos: [
+    { q: 'Toroslar’da 1.700 metre rakımda kurulu olan ve 1.800 yıldır suyu akan görkemli Antoninler Çeşmesi ile tanınan Sagalassos Antik Kenti hangi ilimizdedir?', options: ['Burdur (Ağlasun)', 'Antalya (Serik)', 'Isparta (Yalvaç)', 'Denizli (Honaz)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  zeugma: [
+    { q: 'Fırat Nehri (Birecik Barajı) kıyısında yer alan ve dünyaca ünlü “Çingene Kızı” mozaiğinin çıkarıldığı Zeugma (Belkıs) Antik Kenti hangi ilimizdedir?', options: ['Gaziantep (Nizip)', 'Şanlıurfa (Halfeti)', 'Hatay (Antakya)', 'Kahramanmaraş (Afşin)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'dara-antik': [
+    { q: 'Kayaya oyulmuş devasa yer altı su sarnıçları (zindan), baraj ve nekropolü nedeniyle “Mezopotamya’nın Efes’i” olarak adlandırılan Dara Antik Kenti hangi ilimizdedir?', options: ['Mardin', 'Şanlıurfa', 'Diyarbakır', 'Batman'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'nemrut-kommagene': [
+    { q: '2.150 metre yükseklikte Kommagene Kralı I. Antiokhos tarafından yaptırılan dev tanrı heykelleri ve tümülüsü ile UNESCO Dünya Mirası Listesi’nde yer alan Nemrut Dağı hangi ilimizdedir?', options: ['Adıyaman (Kâhta)', 'Bitlis (Tatvan)', 'Malatya (Darende)', 'Elazığ (Harput)'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'ani-harabeleri': [
+    { q: 'Arpaçay sınırında İpek Yolu üzerinde kurulan, “1001 Kiliseli Şehir” olarak bilinen ve Anadolu’daki ilk Türk camisi Ebu’l Menuçehr Camii’ni barındıran UNESCO mirası Ani Harabeleri hangi ilimizdedir?', options: ['Kars', 'Ardahan', 'Erzurum', 'Ağrı'], answer: 0, tag: 'Antik Kent' },
+  ],
+  'tuspa-cavustepe': [
+    { q: 'Tarihi Şamran (Menua) sulama kanalı ve maden işçiliğiyle ünlü Urartu Krallığı’nın başkenti Tuşpa ile Çavuştepe Kalesi hangi ilimizdedir?', options: ['Van', 'Bitlis', 'Muş', 'Hakkâri'], answer: 0, tag: 'Antik Kent' },
+  ],
 };
+
+function balanceMcqOptions(mcq: McqQuestion, seedKey: string): McqQuestion {
+  const hash = [...`${seedKey}:${mcq.q}`].reduce(
+    (acc, ch, idx) => (acc * 31 + ch.charCodeAt(0) + idx) >>> 0,
+    7,
+  );
+  const targetAnswer = hash % 4;
+  if (targetAnswer === mcq.answer) return mcq;
+  const correctText = mcq.options[mcq.answer];
+  const distractors = mcq.options.filter((_, idx) => idx !== mcq.answer);
+  const rotatedDistractors = distractors.map(
+    (_, idx) => distractors[(idx + (hash >>> 2)) % distractors.length],
+  );
+  return {
+    ...mcq,
+    options: withAnswer(rotatedDistractors, targetAnswer, correctText),
+    answer: targetAnswer,
+  };
+}
 
 const PROVINCE_NAMES = PROVINCE_ROWS.map((row) => row.il_adi);
 
@@ -814,7 +1140,9 @@ function generatedProvinceMcq(item: Pick<MapItem, 'id' | 'name' | 'provinces'>):
 }
 
 export function itemMcqs(item: Pick<MapItem, 'id' | 'name' | 'provinces'>): McqQuestion[] {
-  const authored = [...(ITEM_MCQ[item.id] ?? []), ...(ITEM_CAUSE[item.id] ?? [])];
+  const authored = [...(ITEM_MCQ[item.id] ?? []), ...(ITEM_CAUSE[item.id] ?? [])].map((mcq) =>
+    balanceMcqOptions(mcq, item.id),
+  );
   if (authored.length > 0) return authored;
   const generated = generatedProvinceMcq(item);
   return generated ? [generated] : [];

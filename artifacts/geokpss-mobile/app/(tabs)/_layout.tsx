@@ -16,6 +16,8 @@ import { useStudy } from '@/context/StudyContext';
 // is a system-level appearance provided by iOS and cannot be overridden.
 // Custom brand colors are applied only on the ClassicTabLayout path (older iOS / Android / web).
 function NativeTabLayout() {
+  const { reviewItems } = useStudy();
+  const dueCount = reviewItems.filter((item) => item.dueAt <= Date.now()).length;
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
@@ -31,6 +33,7 @@ function NativeTabLayout() {
       <NativeTabs.Trigger name="topics">
         <NativeTabs.Trigger.Icon sf={{ default: 'checklist', selected: 'checklist' }} />
         <NativeTabs.Trigger.Label>Konular</NativeTabs.Trigger.Label>
+        {dueCount > 0 && <NativeTabs.Trigger.Badge>{String(dueCount)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="notes">
         <NativeTabs.Trigger.Icon sf={{ default: 'book.closed', selected: 'book.closed.fill' }} />

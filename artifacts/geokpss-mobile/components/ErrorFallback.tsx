@@ -69,11 +69,11 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
 
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.foreground }]}>
-          Something went wrong
+          Bir sorun oluştu
         </Text>
 
         <Text style={[styles.message, { color: colors.mutedForeground }]}>
-          Please reload the app to continue.
+          Devam etmek için uygulamayı yeniden yükleyin.
         </Text>
 
         <Pressable
@@ -82,6 +82,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             styles.button,
             {
               backgroundColor: colors.primary,
+              shadowColor: colors.foreground,
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
@@ -90,7 +91,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           <Text
             style={[styles.buttonText, { color: colors.primaryForeground }]}
           >
-            Try Again
+            Tekrar dene
           </Text>
         </Pressable>
       </View>
@@ -102,7 +103,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           transparent={true}
           onRequestClose={() => setIsModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
+          <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
             <View
               style={[
                 styles.modalContainer,
@@ -116,7 +117,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                 ]}
               >
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-                  Error Details
+                  Hata detayları
                 </Text>
                 <Pressable
                   onPress={() => setIsModalVisible(false)}
@@ -210,7 +211,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 24,
     minWidth: 200,
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -226,7 +226,6 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContainer: {

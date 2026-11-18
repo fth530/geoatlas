@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayerId, LAYERS, LAYER_SOURCES, MAP_ITEMS, MapItem, MAP_COLORS } from '@/data/geography';
+import { PROVINCE_NOTES } from '@/data/province-notes';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
 import { AppText as Text } from '@/components/AppText';
 import { GeographyLayerIcon } from '@/components/GeographyLayerIcon';
@@ -31,14 +32,6 @@ function itemMatchesFilter(item: MapItem, layer: LayerId, filter: string): boole
   return item.subtype === filter || item.tags?.includes(filter) === true;
 }
 
-const PROVINCE_NOTES: Record<string, string> = {
-  Ardahan: 'Çıldır Gölü, yüksek plato ve kışın donan göl yüzeyiyle öne çıkar.',
-  Samsun: 'Bafra ve Çarşamba deltaları, Kızılırmak ve Yeşilırmak ağızlarında gelişmiştir.',
-  Şanlıurfa: 'GAP, Harran Ovası ve Karacadağ’ın bazalt lavları bu il çevresinde çalışılır.',
-  Ağrı: 'Büyük Ağrı, Türkiye’nin en yüksek dağıdır; Tendürek de Ağrı-Van çevresinde uzanır.',
-  Zonguldak: 'Taşkömürü yatakları ve Filyos havzası önemli eşleştirmelerdir.',
-};
-
 export default function MapScreen() {
   const colors = useColors();
   const { isDark, toggleTheme } = useAppTheme();
@@ -49,6 +42,7 @@ export default function MapScreen() {
   const [selectedProvince, setSelectedProvince] = useState<string | null>('Ankara');
   const [selectedItem, setSelectedItem] = useState<MapItem | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
   const { notes } = useStudy();
 
@@ -121,6 +115,19 @@ export default function MapScreen() {
     setSelectedItem(null);
     void Haptics.selectionAsync();
   };
+  const chooseFilter = (nextFilterId: string) => {
+    setFilterId(nextFilterId);
+    if (nextFilterId === 'all') {
+      setSelectedItem(null);
+    } else {
+      const firstMatch = MAP_ITEMS.find((item) => itemMatchesFilter(item, layerId, nextFilterId)) ?? null;
+      setSelectedItem(firstMatch);
+      if (firstMatch?.provinces[0]) {
+        setSelectedProvince(firstMatch.provinces[0]);
+      }
+    }
+    void Haptics.selectionAsync();
+  };
   const chooseProvince = (name: string) => {
     setSelectedProvince(name);
     setSelectedItem(null);
@@ -183,6 +190,20 @@ export default function MapScreen() {
         <View style={styles.headlineBlock}>
           <Text style={[styles.headline, { color: colors.foreground }]}>Türkiye’yi haritada keşfet.</Text>
           <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>KPSS coğrafyasını yerinde öğren, bağlantıları aklında tut.</Text>
+          <View style={styles.heroPills}>
+            <View style={[styles.heroPill, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="layers" size={12} color={colors.primary} />
+              <Text style={[styles.heroPillText, { color: colors.foreground }]}>{LAYERS.length} Katman</Text>
+            </View>
+            <View style={[styles.heroPill, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="compass" size={12} color={colors.primary} />
+              <Text style={[styles.heroPillText, { color: colors.foreground }]}>{MAP_ITEMS.length} Coğrafi Özellik</Text>
+            </View>
+            <View style={[styles.heroPill, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="map-pin" size={12} color={colors.primary} />
+              <Text style={[styles.heroPillText, { color: colors.foreground }]}>81 İl Atlası</Text>
+            </View>
+          </View>
         </View>
 
         <View style={styles.sectionHeading}>
@@ -195,12 +216,8 @@ export default function MapScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layerRow}>
           {LAYERS.map((layer) => {
             const active = layer.id === layerId;
-            const illustratedLayer =
-              layer.id === 'mountains' || layer.id === 'lakes' || layer.id === 'rivers'
-                ? layer.id
-                : null;
             return (
-              <Pressable
+              <PressableScale
                 key={layer.id}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
@@ -208,21 +225,21 @@ export default function MapScreen() {
                 onPress={() => chooseLayer(layer.id)}
                 style={[styles.layerChip, { backgroundColor: active ? colors.primary : colors.card, borderColor: active ? colors.primary : colors.border }]}
               >
-                {illustratedLayer ? (
+                <View style={[styles.layerIconBadge, { backgroundColor: active ? `${colors.primaryForeground}22` : colors.accent }]}>
                   <GeographyLayerIcon
-                    type={illustratedLayer}
-                    size={19}
+                    type={layer.id}
+                    size={18}
                     color={active ? colors.primaryForeground : colors.primary}
                     accentColor={active ? colors.accent : colors.accentForeground}
                   />
-                ) : (
-                  <Feather name={layer.icon as keyof typeof Feather.glyphMap} size={15} color={active ? colors.primaryForeground : colors.mutedForeground} />
-                )}
+                </View>
                 <Text style={[styles.layerLabel, { color: active ? colors.primaryForeground : colors.foreground }]}>{layer.label}</Text>
-                <Text style={[styles.layerCount, { color: active ? colors.primaryForeground : colors.mutedForeground, opacity: active ? 0.75 : 0.6 }]}>
-                  {layerCounts.get(layer.id) ?? 0}
-                </Text>
-              </Pressable>
+                <View style={[styles.layerCountPill, { backgroundColor: active ? `${colors.primaryForeground}22` : colors.muted }]}>
+                  <Text style={[styles.layerCount, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>
+                    {layerCounts.get(layer.id) ?? 0}
+                  </Text>
+                </View>
+              </PressableScale>
             );
           })}
         </ScrollView>
@@ -235,11 +252,7 @@ export default function MapScreen() {
               return (
                 <PressableScale
                   key={filter.id}
-                  onPress={() => {
-                    setFilterId(filter.id);
-                    setSelectedItem(null);
-                    void Haptics.selectionAsync();
-                  }}
+                  onPress={() => chooseFilter(filter.id)}
                   style={[styles.filterChip, { backgroundColor: active ? colors.accent : 'transparent', borderColor: active ? colors.accent : colors.border }]}
                 >
                   <Text style={[styles.filterLabel, { color: active ? colors.primary : colors.mutedForeground }]}>{filter.label}</Text>
@@ -253,13 +266,26 @@ export default function MapScreen() {
         <View style={[styles.mapCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
           <View style={styles.mapCardHeader}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.mapTitle, { color: colors.foreground }]}>{activeLayer.label} haritası</Text>
+              <Text style={[styles.mapTitle, { color: colors.foreground }]}>
+                {activeLayer.label} haritası
+                {filterId !== 'all' ? ` · ${activeLayer.filters.find((f) => f.id === filterId)?.label ?? ''}` : ''}
+              </Text>
               <Text style={[styles.mapSubTitle, { color: colors.mutedForeground }]}>{activeLayer.description}</Text>
             </View>
             <View style={[styles.liveTag, { backgroundColor: colors.accent }]}>
               <View style={[styles.liveDot, { backgroundColor: colors.primary }]} />
               <Text style={[styles.liveText, { color: colors.primary }]}>{layerId === 'provinces' ? '81 İL' : `${visibleItems.length} ÖZELLİK`}</Text>
             </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Haritayı tam ekran aç"
+              onPress={() => setFullscreenOpen(true)}
+              style={[styles.fullscreenBtn, { backgroundColor: colors.primary }]}
+              testID="open-fullscreen-map"
+            >
+              <Feather name="maximize-2" size={13} color={colors.primaryForeground} />
+              <Text style={[styles.fullscreenBtnText, { color: colors.primaryForeground }]}>Tam ekran</Text>
+            </Pressable>
           </View>
           <TurkeyMap
             layer={layerId}
@@ -272,8 +298,39 @@ export default function MapScreen() {
               void Haptics.selectionAsync();
             }}
             highlightProvinces={selectedItem?.provinces}
+            onToggleFullscreen={() => setFullscreenOpen(true)}
           />
-          <Text style={[styles.mapFootnote, { color: colors.mutedForeground }]}>Haritaya dokun · iki parmağınla yakınlaştır</Text>
+          {layerId !== 'provinces' && filterId !== 'all' && visibleItems.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fullscreenItemChips}>
+              {visibleItems.map((item) => {
+                const active = selectedItem?.id === item.id;
+                const itemColor = MAP_COLORS[item.subtype] ?? colors.primary;
+                return (
+                  <PressableScale
+                    key={item.id}
+                    onPress={() => {
+                      setSelectedItem(item);
+                      setSelectedProvince(item.provinces[0] ?? null);
+                      void Haptics.selectionAsync();
+                    }}
+                    style={[
+                      styles.fullscreenItemChip,
+                      {
+                        backgroundColor: active ? itemColor : colors.muted,
+                        borderColor: active ? itemColor : colors.border,
+                      },
+                    ]}
+                  >
+                    <View style={[styles.liveDot, { backgroundColor: active ? colors.primaryForeground : itemColor }]} />
+                    <Text style={[styles.fullscreenItemChipText, { color: active ? colors.primaryForeground : colors.foreground }]}>
+                      {item.name}
+                    </Text>
+                  </PressableScale>
+                );
+              })}
+            </ScrollView>
+          )}
+          <Text style={[styles.mapFootnote, { color: colors.mutedForeground }]}>Haritaya dokun · iki parmağınla yakınlaştır · tam ekran incele</Text>
           <Text style={[styles.attribution, { color: colors.mutedForeground }]}>Sınır geometrileri: OpenStreetMap katkıcıları · ODbL</Text>
         </View>
 
@@ -365,7 +422,7 @@ export default function MapScreen() {
               <View style={styles.relatedList}>
                 <Text style={[styles.relatedHeading, { color: colors.mutedForeground }]}>BU İLDE ÖNE ÇIKANLAR</Text>
                 <View style={styles.relatedChips}>
-                  {provinceItems.slice(0, 4).map((item) => (
+                  {provinceItems.slice(0, 8).map((item) => (
                     <Pressable key={item.id} onPress={() => { setLayerId(item.layer); setFilterId('all'); setSelectedItem(item); }} style={[styles.relatedChip, { backgroundColor: colors.muted }]}>
                       <Text style={[styles.relatedText, { color: colors.foreground }]}>{item.name}</Text>
                     </Pressable>
@@ -410,6 +467,152 @@ export default function MapScreen() {
           <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
         </PressableScale>
       </ScrollView>
+
+      <Modal visible={fullscreenOpen} animationType="fade" onRequestClose={() => setFullscreenOpen(false)}>
+        <View style={[styles.fullscreenModal, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 14 : insets.top + 6, paddingBottom: insets.bottom + 12 }]}>
+          <View style={styles.fullscreenHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.fullscreenTitle, { color: colors.foreground }]}>
+                {activeLayer.label} haritası
+                {filterId !== 'all' ? ` · ${activeLayer.filters.find((f) => f.id === filterId)?.label ?? ''}` : ''}
+              </Text>
+              <Text style={[styles.fullscreenSubtitle, { color: colors.mutedForeground }]}>
+                {layerId === 'provinces' ? '81 il sınırları, bölgeler ve plaka kodları' : `${visibleItems.length} coğrafi özellik gösteriliyor`}
+              </Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tam ekranı kapat"
+              onPress={() => setFullscreenOpen(false)}
+              style={[styles.fullscreenCloseBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              testID="close-fullscreen-map"
+            >
+              <Feather name="minimize-2" size={15} color={colors.foreground} />
+              <Text style={[styles.fullscreenCloseText, { color: colors.foreground }]}>Küçült</Text>
+            </Pressable>
+          </View>
+
+          {activeLayer.filters.length > 1 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.fullscreenFilterRow}>
+              {activeLayer.filters.map((filter) => {
+                const active = filterId === filter.id;
+                const count = filterCounts.get(filter.id) ?? 0;
+                return (
+                  <Pressable
+                    key={filter.id}
+                    onPress={() => chooseFilter(filter.id)}
+                    style={[
+                      styles.filterChip,
+                      {
+                        backgroundColor: active ? colors.primary : colors.card,
+                        borderColor: active ? colors.primary : colors.border,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.filterLabel, { color: active ? colors.primaryForeground : colors.foreground }]}>{filter.label}</Text>
+                    <Text style={[styles.filterCount, { color: active ? colors.primaryForeground : colors.mutedForeground, opacity: active ? 0.85 : 0.65 }]}>
+                      {count}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          <ScrollView contentContainerStyle={styles.fullscreenScroll} showsVerticalScrollIndicator={false}>
+            <TurkeyMap
+              layer={layerId}
+              items={visibleItems}
+              selectedProvince={selectedProvince}
+              selectedItemId={selectedItem?.id}
+              onSelectProvince={chooseProvince}
+              onSelectItem={(item) => {
+                setSelectedItem(item);
+                void Haptics.selectionAsync();
+              }}
+              highlightProvinces={selectedItem?.provinces}
+              fullscreen
+              onToggleFullscreen={() => setFullscreenOpen(false)}
+            />
+
+            {layerId !== 'provinces' && visibleItems.length > 0 && (
+              <View style={styles.fullscreenItemsWrap}>
+                <Text style={[styles.relatedHeading, { color: colors.mutedForeground }]}>
+                  HARİTADAKİ ÖZELLİKLER ({visibleItems.length}) — SEÇMEK İÇİN DOKUN
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fullscreenItemChips}>
+                  {visibleItems.map((item) => {
+                    const active = selectedItem?.id === item.id;
+                    const itemColor = MAP_COLORS[item.subtype] ?? colors.primary;
+                    return (
+                      <Pressable
+                        key={item.id}
+                        onPress={() => {
+                          setSelectedItem(item);
+                          setSelectedProvince(item.provinces[0] ?? null);
+                          void Haptics.selectionAsync();
+                        }}
+                        style={[
+                          styles.fullscreenItemChip,
+                          {
+                            backgroundColor: active ? itemColor : colors.card,
+                            borderColor: active ? itemColor : colors.border,
+                          },
+                        ]}
+                      >
+                        <View style={[styles.liveDot, { backgroundColor: active ? colors.primaryForeground : itemColor }]} />
+                        <Text style={[styles.fullscreenItemChipText, { color: active ? colors.primaryForeground : colors.foreground }]}>
+                          {item.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
+            {selectedItem ? (
+              <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.detailTop}>
+                  <View style={[styles.detailIcon, { backgroundColor: `${MAP_COLORS[selectedItem.subtype] ?? colors.primary}22` }]}>
+                    <Feather name="map-pin" size={17} color={MAP_COLORS[selectedItem.subtype] ?? colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.detailTitle, { color: colors.foreground }]}>{selectedItem.name}</Text>
+                    <Text style={[styles.detailSub, { color: colors.mutedForeground }]}>
+                      {selectedItem.subtypeLabel} · {selectedItem.provinces.join(' / ')}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.detailBody, { color: colors.foreground }]}>{selectedItem.description}</Text>
+                {selectedItem.examTip && (
+                  <View style={[styles.examTip, { backgroundColor: colors.accent }]}>
+                    <Feather name="bookmark" size={15} color={colors.primary} />
+                    <Text style={[styles.examTipText, { color: colors.accentForeground }]}>{selectedItem.examTip}</Text>
+                  </View>
+                )}
+              </View>
+            ) : selectedProvince ? (
+              <View style={[styles.detailCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.detailTop}>
+                  <View style={[styles.detailIcon, { backgroundColor: colors.accent }]}>
+                    <Feather name="map-pin" size={17} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.detailTitle, { color: colors.foreground }]}>{selectedProvince}</Text>
+                    <Text style={[styles.detailSub, { color: colors.mutedForeground }]}>
+                      {provinceData ? `${String(provinceData.plate).padStart(2, '0')} plaka · ${provinceData.region}` : 'İl bilgisi'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.detailBody, { color: colors.foreground }]}>
+                  {PROVINCE_NOTES[selectedProvince] ?? `${selectedProvince} ilindeki coğrafi özellikleri incelemek için işaretlere dokunabilirsin.`}
+                </Text>
+              </View>
+            ) : null}
+          </ScrollView>
+        </View>
+      </Modal>
 
       <Modal visible={searchOpen} animationType="slide" onRequestClose={() => setSearchOpen(false)}>
           <KeyboardAvoidingViewCompat behavior="padding" style={[styles.modalScreen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
@@ -490,21 +693,26 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: 8, fontWeight: '700', letterSpacing: 1.25, marginTop: 3 },
   headerActions: { flexDirection: 'row', gap: 6 },
   iconButton: { height: 38, width: 38, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  headlineBlock: { gap: 5, paddingTop: 4 },
+  headlineBlock: { gap: 6, paddingTop: 4 },
   headline: { fontSize: 24, lineHeight: 30, fontWeight: '700', letterSpacing: -0.5 },
   subtitle: { fontSize: 13, lineHeight: 19, maxWidth: 325 },
+  heroPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 4 },
+  heroPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  heroPillText: { fontSize: 10.5, fontWeight: '700' },
   sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: -5 },
   sectionTitle: { fontSize: 16, fontWeight: '700' },
   sectionHint: { marginTop: 3, fontSize: 12 },
   countBadge: { fontSize: 9, fontWeight: '700', letterSpacing: 0.8, paddingHorizontal: 9, paddingVertical: 6, borderRadius: 10, overflow: 'hidden' },
   layerRow: { gap: 8, paddingVertical: 3, paddingRight: 16 },
-  layerChip: { flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderRadius: 15, paddingHorizontal: 12, paddingVertical: 9 },
-  layerLabel: { fontSize: 12, fontWeight: '600' },
+  layerChip: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 8 },
+  layerIconBadge: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  layerLabel: { fontSize: 12, fontWeight: '700' },
+  layerCountPill: { borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
   filterRow: { gap: 7, marginTop: -9, paddingVertical: 2, paddingRight: 15 },
   filterChip: { borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, paddingVertical: 7, flexDirection: 'row', alignItems: 'center', gap: 5 },
   filterLabel: { fontSize: 11, fontWeight: '600' },
   filterCount: { fontSize: 9, fontWeight: '700' },
-  layerCount: { fontSize: 9, fontWeight: '700', marginLeft: 2 },
+  layerCount: { fontSize: 9, fontWeight: '700' },
   mapCard: { borderRadius: 26, padding: 14, gap: 9, shadowOpacity: 0.045, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
   mapCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   mapTitle: { fontSize: 16, fontWeight: '700' },
@@ -512,6 +720,20 @@ const styles = StyleSheet.create({
   liveTag: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 10 },
   liveDot: { width: 6, height: 6, borderRadius: 3 },
   liveText: { fontSize: 8, fontWeight: '700', letterSpacing: 0.7 },
+  fullscreenBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 10 },
+  fullscreenBtnText: { fontSize: 10, fontWeight: '700' },
+  fullscreenModal: { flex: 1, paddingHorizontal: 14, gap: 10 },
+  fullscreenHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  fullscreenTitle: { fontSize: 18, fontWeight: '700' },
+  fullscreenSubtitle: { fontSize: 11, marginTop: 2 },
+  fullscreenCloseBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  fullscreenCloseText: { fontSize: 12, fontWeight: '700' },
+  fullscreenFilterRow: { gap: 7, paddingVertical: 2, paddingRight: 12 },
+  fullscreenScroll: { gap: 12, paddingBottom: 28 },
+  fullscreenItemsWrap: { gap: 7 },
+  fullscreenItemChips: { gap: 7, paddingRight: 12 },
+  fullscreenItemChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 8 },
+  fullscreenItemChipText: { fontSize: 11, fontWeight: '600' },
   mapFootnote: { fontSize: 10, textAlign: 'center', marginTop: -1 },
   attribution: { fontSize: 9, textAlign: 'center', marginTop: -8 },
   detailCard: { borderRadius: 22, borderWidth: 1, padding: 15, gap: 11 },

@@ -22,7 +22,7 @@ SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+    <Stack screenOptions={{ headerBackTitle: 'Geri' }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="pro" options={{ presentation: 'modal', headerShown: false }} />
     </Stack>

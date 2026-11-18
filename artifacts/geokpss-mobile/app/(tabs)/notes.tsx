@@ -1,12 +1,13 @@
 import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Keyboard,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
@@ -14,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { MAP_ITEMS, TOPIC_DETAILS } from '@/data/geography';
+import { KPSS_MNEMONICS, KpssMnemonic } from '@/data/mnemonics';
 import { AppText as Text } from '@/components/AppText';
 import { FONT_FAMILY } from '@/constants/typography';
 import { StudyNote, useStudy } from '@/context/StudyContext';
@@ -26,6 +28,10 @@ export default function NotesScreen() {
   const insets = useSafeAreaInsets();
   const { notes, saveNote, deleteNote } = useStudy();
   const { create: createParam, itemId: itemIdParam } = useLocalSearchParams<{ create?: string; itemId?: string }>();
+  const [activeTab, setActiveTab] = useState<'personal' | 'mnemonics'>('personal');
+  const [flippedIds, setFlippedIds] = useState<string[]>([]);
+  const [filterCategory, setFilterCategory] = useState('Tümü');
+  const [searchQuery, setSearchQuery] = useState('');
   const [editing, setEditing] = useState<StudyNote | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [title, setTitle] = useState('');
@@ -39,6 +45,7 @@ export default function NotesScreen() {
     if (createParam !== '1' || !itemIdParam) return;
     const item = MAP_ITEMS.find((mapItem) => mapItem.id === itemIdParam);
     if (!item) return;
+    setActiveTab('personal');
     setEditing(null);
     setTitle(item.name);
     setBody('');
@@ -50,7 +57,45 @@ export default function NotesScreen() {
     router.setParams({ create: '0', itemId: '' });
   }, [createParam, itemIdParam]);
 
+  const filteredNotes = useMemo(() => {
+    const q = searchQuery.trim().toLocaleLowerCase('tr');
+    return notes.filter((note) => {
+      if (filterCategory !== 'Tümü' && note.category !== filterCategory) return false;
+      if (!q) return true;
+      return `${note.title} ${note.body} ${note.category}`.toLocaleLowerCase('tr').includes(q);
+    });
+  }, [notes, filterCategory, searchQuery]);
+
+  const filteredMnemonics = useMemo(() => {
+    const q = searchQuery.trim().toLocaleLowerCase('tr');
+    return KPSS_MNEMONICS.filter((item) => {
+      if (filterCategory !== 'Tümü' && item.category !== filterCategory) return false;
+      if (!q) return true;
+      return `${item.title} ${item.code} ${item.expansion} ${item.tip}`.toLocaleLowerCase('tr').includes(q);
+    });
+  }, [filterCategory, searchQuery]);
+
+  const toggleFlip = (id: string) => {
+    void Haptics.selectionAsync();
+    setFlippedIds((prev) => (prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id]));
+  };
+
+  const copyMnemonicToNotes = (mnemonic: KpssMnemonic) => {
+    const note: StudyNote = {
+      id: `mn-copy-${mnemonic.id}`,
+      title: mnemonic.title,
+      body: `Kodlama: ${mnemonic.code}\nAçılım: ${mnemonic.expansion}\nİpucu: ${mnemonic.tip}`,
+      category: mnemonic.category,
+      updatedAt: Date.now(),
+      ...(mnemonic.relatedItemId ? { relatedItemId: mnemonic.relatedItemId, relatedItemName: MAP_ITEMS.find((i) => i.id === mnemonic.relatedItemId)?.name } : {}),
+    };
+    saveNote(note);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setActiveTab('personal');
+  };
+
   const startNew = () => {
+    setActiveTab('personal');
     setEditing(null);
     setTitle('');
     setBody('');
@@ -94,6 +139,12 @@ export default function NotesScreen() {
     cancelEdit();
   };
   const confirmDelete = (note: StudyNote) => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`"${note.title}" defterinden kaldırılsın mı?`)) {
+        deleteNote(note.id);
+      }
+      return;
+    }
     Alert.alert('Not silinsin mi?', `“${note.title}” defterinden kaldırılacak.`, [
       { text: 'Vazgeç', style: 'cancel' },
       { text: 'Sil', style: 'destructive', onPress: () => deleteNote(note.id) },
@@ -119,7 +170,74 @@ export default function NotesScreen() {
           </Pressable>
         )}
       </View>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Kendi hatırlatma kodlarını ve kısa notlarını burada sakla.</Text>
+      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+        Kendi hatırlatma notlarını sakla veya hazır KPSS hafıza kodlamalarıyla kart çevirerek çalış.
+      </Text>
+
+      <View style={[styles.tabSwitch, { backgroundColor: colors.muted }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected: activeTab === 'personal' }}
+          onPress={() => setActiveTab('personal')}
+          style={[styles.tabOption, activeTab === 'personal' && { backgroundColor: colors.card }]}
+          testID="tab-personal-notes"
+        >
+          <Feather name="book-open" size={14} color={activeTab === 'personal' ? colors.primary : colors.mutedForeground} />
+          <Text style={[styles.tabText, { color: activeTab === 'personal' ? colors.foreground : colors.mutedForeground }]}>
+            Notlarım ({notes.length})
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected: activeTab === 'mnemonics' }}
+          onPress={() => {
+            setIsCreating(false);
+            setActiveTab('mnemonics');
+          }}
+          style={[styles.tabOption, activeTab === 'mnemonics' && { backgroundColor: colors.card }]}
+          testID="tab-kpss-mnemonics"
+        >
+          <Feather name="zap" size={14} color={activeTab === 'mnemonics' ? colors.primary : colors.mutedForeground} />
+          <Text style={[styles.tabText, { color: activeTab === 'mnemonics' ? colors.foreground : colors.mutedForeground }]}>
+            Hazır Kodlamalar ({KPSS_MNEMONICS.length})
+          </Text>
+        </Pressable>
+      </View>
+
+      {!isCreating && (
+        <View style={styles.filterBlock}>
+          <View style={[styles.searchBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="search" size={16} color={colors.mutedForeground} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={activeTab === 'personal' ? 'Notlarında ara…' : 'Hazır kodlamalarda ara (örn. TAKKEM, Kayıp Sakal)…'}
+              placeholderTextColor={colors.mutedForeground}
+              style={[styles.searchInput, { color: colors.foreground, fontFamily: FONT_FAMILY.regular }]}
+              autoCapitalize="none"
+            />
+            {!!searchQuery && (
+              <Pressable accessibilityLabel="Aramayı temizle" onPress={() => setSearchQuery('')}>
+                <Feather name="x" size={16} color={colors.mutedForeground} />
+              </Pressable>
+            )}
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChipsRow}>
+            {['Tümü', ...NOTE_CATEGORIES].map((cat) => {
+              const active = filterCategory === cat;
+              return (
+                <Pressable
+                  key={cat}
+                  onPress={() => setFilterCategory(cat)}
+                  style={[styles.filterChip, { backgroundColor: active ? colors.accent : colors.card, borderColor: active ? colors.accent : colors.border }]}
+                >
+                  <Text style={[styles.filterChipText, { color: active ? colors.primary : colors.mutedForeground }]}>{cat}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
 
       {isCreating && (
         <View style={[styles.editor, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -193,22 +311,80 @@ export default function NotesScreen() {
         </View>
       )}
 
-      {!isCreating && notes.length === 0 && (
+      {!isCreating && activeTab === 'mnemonics' && (
+        <View style={styles.notesList}>
+          <View style={styles.listHeading}>
+            <Text style={[styles.listTitle, { color: colors.foreground }]}>KPSS hafıza kartları (dokun & çevir)</Text>
+            <Text style={[styles.noteCount, { color: colors.mutedForeground }]}>{filteredMnemonics.length} kart</Text>
+          </View>
+          {filteredMnemonics.map((item) => {
+            const flipped = flippedIds.includes(item.id);
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => toggleFlip(item.id)}
+                style={[styles.noteCard, { backgroundColor: colors.card, borderColor: flipped ? colors.primary : colors.border }]}
+                testID={`mnemonic-card-${item.id}`}
+              >
+                <View style={styles.noteTop}>
+                  <View style={[styles.noteTag, { backgroundColor: colors.accent }]}>
+                    <Text style={[styles.noteTagText, { color: colors.primary }]}>{item.category}</Text>
+                  </View>
+                  <Text style={[styles.flipHint, { color: colors.primary }]}>
+                    {flipped ? 'Açılımı gizle' : 'Açılımı gör ↻'}
+                  </Text>
+                </View>
+                <Text style={[styles.noteTitle, { color: colors.foreground }]}>{item.title}</Text>
+                <View style={[styles.codeBanner, { backgroundColor: colors.accent }]}>
+                  <Feather name="zap" size={14} color={colors.primary} />
+                  <Text style={[styles.codeBannerText, { color: colors.primary }]}>{item.code}</Text>
+                </View>
+                {flipped && (
+                  <View style={styles.mnemonicDetails}>
+                    <Text style={[styles.noteBody, { color: colors.foreground, fontWeight: '600' }]}>{item.expansion}</Text>
+                    <Text style={[styles.noteBody, { color: colors.mutedForeground }]}>{item.tip}</Text>
+                  </View>
+                )}
+                <View style={[styles.noteActions, { borderTopColor: colors.border }]}>
+                  <Pressable onPress={() => copyMnemonicToNotes(item)} style={styles.noteAction}>
+                    <Feather name="plus-circle" size={13} color={colors.primary} />
+                    <Text style={[styles.noteActionText, { color: colors.primary }]}>Defterime kopyala</Text>
+                  </Pressable>
+                  {item.relatedItemId && (
+                    <Pressable
+                      onPress={() => {
+                        const target = MAP_ITEMS.find((mapItem) => mapItem.id === item.relatedItemId);
+                        if (target) router.push({ pathname: '/', params: { layer: target.layer, itemId: target.id } });
+                      }}
+                      style={styles.noteAction}
+                    >
+                      <Feather name="map-pin" size={13} color={colors.primary} />
+                      <Text style={[styles.noteActionText, { color: colors.primary }]}>Haritada gör</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+
+      {!isCreating && activeTab === 'personal' && notes.length === 0 && (
         <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.emptyIcon, { backgroundColor: colors.accent }]}><Feather name="book-open" size={22} color={colors.primary} /></View>
           <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Defterin henüz boş</Text>
-          <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>Örneğin “Tendürek 3.533 m — Ağrı/Van” gibi bir kodlama ekleyebilirsin.</Text>
+          <Text style={[styles.emptyCopy, { color: colors.mutedForeground }]}>Örneğin “Tendürek 3.533 m — Ağrı/Van” gibi bir kodlama ekleyebilir veya Hazır Kodlamalar sekmesinden kart kopyalayabilirsin.</Text>
           <Pressable onPress={startNew} style={[styles.emptyButton, { backgroundColor: colors.accent }]}><Text style={[styles.emptyButtonText, { color: colors.primary }]}>İlk notunu oluştur</Text></Pressable>
         </View>
       )}
 
-      {!isCreating && notes.length > 0 && (
+      {!isCreating && activeTab === 'personal' && notes.length > 0 && (
         <View style={styles.notesList}>
           <View style={styles.listHeading}>
             <Text style={[styles.listTitle, { color: colors.foreground }]}>Kaydedilen notlar</Text>
-            <Text style={[styles.noteCount, { color: colors.mutedForeground }]}>{notes.length} not</Text>
+            <Text style={[styles.noteCount, { color: colors.mutedForeground }]}>{filteredNotes.length} not</Text>
           </View>
-          {notes.map((note) => (
+          {filteredNotes.map((note) => (
             <View key={note.id} style={[styles.noteCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.noteTop}>
                 <View style={[styles.noteTag, { backgroundColor: colors.accent }]}>
@@ -265,6 +441,15 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 0.9 },
   title: { fontSize: 25, fontWeight: '700', marginTop: 4, letterSpacing: -0.4 },
   subtitle: { fontSize: 12, lineHeight: 18, marginTop: -7 },
+  tabSwitch: { borderRadius: 15, padding: 4, flexDirection: 'row', gap: 4 },
+  tabOption: { flex: 1, minHeight: 38, borderRadius: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  tabText: { fontSize: 11, fontWeight: '700' },
+  filterBlock: { gap: 8 },
+  searchBox: { height: 42, borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  searchInput: { flex: 1, height: '100%', fontSize: 12 },
+  filterChipsRow: { gap: 6, paddingRight: 10 },
+  filterChip: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
+  filterChipText: { fontSize: 10, fontWeight: '600' },
   addButton: { borderRadius: 13, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
   addText: { fontSize: 11, fontWeight: '700' },
   editor: { borderRadius: 21, borderWidth: 1, padding: 15, gap: 10 },
@@ -297,7 +482,11 @@ const styles = StyleSheet.create({
   noteTag: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 5 },
   noteTagText: { fontSize: 9, fontWeight: '700' },
   noteDate: { fontSize: 9 },
+  flipHint: { fontSize: 10, fontWeight: '700' },
   noteTitle: { fontSize: 14, fontWeight: '700' },
+  codeBanner: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 7 },
+  codeBannerText: { flex: 1, fontSize: 12, fontWeight: '700' },
+  mnemonicDetails: { gap: 5, paddingTop: 2 },
   noteBody: { fontSize: 11, lineHeight: 17 },
   noteMapLink: { minHeight: 34, borderRadius: 10, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 6 },
   noteMapLinkText: { flex: 1, fontSize: 9, fontWeight: '700' },

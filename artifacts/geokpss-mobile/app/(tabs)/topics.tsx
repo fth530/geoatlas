@@ -3,9 +3,10 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { STATUS_LABEL, STATUS_OPTIONS, TOPIC_DETAILS, TopicStatus } from '@/data/geography';
+import { LayerId, STATUS_LABEL, STATUS_OPTIONS, TOPIC_DETAILS, TopicStatus } from '@/data/geography';
 import { useStudy } from '@/context/StudyContext';
 import { AppText as Text } from '@/components/AppText';
+import { GeographyLayerIcon } from '@/components/GeographyLayerIcon';
 import { useColors } from '@/hooks/useColors';
 
 export default function TopicsScreen() {
@@ -111,7 +112,12 @@ export default function TopicsScreen() {
           return (
             <View key={topic.id} style={[styles.topicCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.topicIcon, { backgroundColor: colors.accent }]}>
-                <Feather name={topic.icon as keyof typeof Feather.glyphMap} size={17} color={colors.primary} />
+                <GeographyLayerIcon
+                  type={topic.id as LayerId}
+                  size={20}
+                  color={colors.primary}
+                  accentColor={colors.accentForeground}
+                />
               </View>
               <View style={styles.topicBody}>
                 <Text style={[styles.topicTitle, { color: colors.foreground }]}>{topic.title}</Text>

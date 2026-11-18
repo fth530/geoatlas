@@ -51,7 +51,7 @@ export function buildReviewItem(
 }
 
 const TOPIC_STATUSES: TopicStatus[] = ['new', 'studying', 'review', 'weak', 'done'];
-const LAYER_IDS: LayerId[] = [
+export const LAYER_IDS: LayerId[] = [
   'provinces',
   'mountains',
   'lakes',
@@ -62,7 +62,17 @@ const LAYER_IDS: LayerId[] = [
   'soil',
   'minerals',
   'projects',
+  'ramsar',
+  'ancient',
+  'transport',
+  'climate',
+  'population',
+  'agriculture',
+  'industry',
 ];
+const MAX_IMPORTED_NOTES = 500;
+const MAX_NOTE_TITLE_LENGTH = 120;
+const MAX_NOTE_BODY_LENGTH = 2000;
 
 export type PersistedStudyData = {
   notes: StudyNote[];
@@ -87,16 +97,16 @@ function asNumber(value: unknown, fallback = 0): number {
 
 function sanitizeNote(value: unknown): StudyNote | null {
   if (!isRecord(value)) return null;
-  const id = asString(value.id);
+  const id = asString(value.id).slice(0, 80);
   if (!id) return null;
   return {
     id,
-    title: asString(value.title),
-    body: asString(value.body),
-    category: asString(value.category, 'Genel'),
+    title: asString(value.title).slice(0, MAX_NOTE_TITLE_LENGTH),
+    body: asString(value.body).slice(0, MAX_NOTE_BODY_LENGTH),
+    category: asString(value.category, 'Genel').slice(0, 80),
     updatedAt: asNumber(value.updatedAt),
-    ...(typeof value.relatedItemId === 'string' ? { relatedItemId: value.relatedItemId } : {}),
-    ...(typeof value.relatedItemName === 'string' ? { relatedItemName: value.relatedItemName } : {}),
+    ...(typeof value.relatedItemId === 'string' ? { relatedItemId: value.relatedItemId.slice(0, 80) } : {}),
+    ...(typeof value.relatedItemName === 'string' ? { relatedItemName: value.relatedItemName.slice(0, 120) } : {}),
   };
 }
 
@@ -136,7 +146,7 @@ export function sanitizePersistedStudy(value: unknown): PersistedStudyData {
   }
   return {
     notes: Array.isArray(raw.notes)
-      ? raw.notes.map(sanitizeNote).filter((note): note is StudyNote => note !== null)
+      ? raw.notes.slice(0, MAX_IMPORTED_NOTES).map(sanitizeNote).filter((note): note is StudyNote => note !== null)
       : [],
     topicStatuses,
     reviewItems: Array.isArray(raw.reviewItems)

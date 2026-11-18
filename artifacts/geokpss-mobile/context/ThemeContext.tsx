@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Appearance } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 export type ColorMode = 'light' | 'dark';
@@ -14,7 +15,9 @@ const STORAGE_KEY = 'geokpss-color-mode-v1';
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [colorMode, setColorMode] = useState<ColorMode>('light');
+  const [colorMode, setColorMode] = useState<ColorMode>(
+    () => (Appearance.getColorScheme() === 'dark' ? 'dark' : 'light'),
+  );
   const changedBeforeHydration = useRef(false);
 
   useEffect(() => {
