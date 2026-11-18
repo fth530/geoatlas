@@ -36,23 +36,6 @@ const BANK_QUESTIONS: BankEntry[] = [
   ),
   ...PROVINCE_MCQ.map((entry) => ({ item: null, provinceName: entry.name, mcq: entry.mcq })),
 ];
-const MODE_GROUPS: { label: string; options: { id: QuizMode; label: string }[] }[] = [
-  {
-    label: 'HARİTA',
-    options: [
-      ...LAYERS.map((layer) => ({ id: layer.id as QuizMode, label: layer.label })),
-      { id: 'mixed', label: 'Karışık' },
-    ],
-  },
-  {
-    label: 'SINAV',
-    options: [
-      { id: 'bank', label: 'Soru bankası' },
-      { id: 'exam', label: 'Deneme' },
-    ],
-  },
-];
-
 const EXAM_LENGTH = 18;
 const EXAM_SECONDS = 15 * 60;
 const EXAM_RING_RADIUS = 36;
@@ -391,119 +374,126 @@ export default function QuizScreen() {
     router.setParams({ reviewIds: undefined });
   };
 
+  const modeOptions: { id: QuizMode; label: string }[] = [
+    ...LAYERS.map((layer) => ({ id: layer.id as QuizMode, label: layer.label })),
+    { id: 'mixed', label: 'Karışık' },
+    { id: 'bank', label: 'Soru bankası' },
+    { id: 'exam', label: 'Deneme' },
+  ];
+  const activeLayer = LAYERS.find((layer) => layer.id === mode);
+  const activeTopicLabel = reviewMode
+    ? 'ARALIKLI TEKRAR'
+    : isExam
+      ? 'DENEME SINAVI'
+      : isBank
+        ? 'SORU BANKASI'
+        : activeLayer
+          ? `${activeLayer.label.toLocaleUpperCase('tr')} · ${isMcq ? 'TEST' : 'HARİTA'}`
+          : 'KARMA';
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 110 }]} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.eyebrow, { color: colors.primary }]}>{reviewMode ? 'ARALIKLI TEKRAR' : 'HARİTA PRATİĞİ'}</Text>
-            <Text style={[styles.title, { color: colors.foreground }]}>{isExam ? 'Deneme sınavı' : isBank ? 'Soru bankası' : 'Haritada bul'}</Text>
-          </View>
-          <View style={[styles.scorePill, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="target" size={15} color={colors.primary} />
-            <Text style={[styles.scoreText, { color: colors.foreground }]}>{correct}/{answered}</Text>
-          </View>
-        </View>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          {reviewMode
-            ? 'Tekrar sırası gelen konuları dilsiz haritada yeniden hatırla.'
-            : isExam
-              ? `${EXAM_LENGTH} soruluk süreli deneme — ${examTimeLabel} kaldı.`
-              : isBank
-              ? 'Çoktan seçmeli sorularla bilgini pekiştir; her cevap ilgili konuya işlenir.'
-              : 'Doğru yeri dilsiz haritada seç. Yanlış cevap kırmızı, doğru yer yeşil görünür.'}
-        </Text>
-
-        <View style={styles.modeGroups}>
-          {MODE_GROUPS.map((group) => {
-            const isScrollableGroup = group.options.length > 3;
-            const buttons = group.options.map((option) => {
-              const active = mode === option.id;
-              return (
-                <Pressable
-                  key={option.id}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  onPress={() => changeMode(option.id)}
-                  style={[
-                    styles.modeOption,
-                    !isScrollableGroup && styles.modeOptionFlex,
-                    active && { backgroundColor: colors.card },
-                  ]}
-                  testID={`quiz-mode-${option.id}`}
-                >
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.modeText, { color: active ? colors.foreground : colors.mutedForeground }]}
-                  >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              );
-            });
-
-            return (
-              <View key={group.label} style={styles.modeGroup}>
-                <Text style={[styles.modeGroupLabel, { color: colors.mutedForeground }]}>{group.label}</Text>
-                {isScrollableGroup ? (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={[styles.modeSwitchScroll, { backgroundColor: colors.muted }]}
-                    contentContainerStyle={styles.modeSwitchScrollContent}
-                  >
-                    {buttons}
-                  </ScrollView>
-                ) : (
-                  <View style={[styles.modeSwitch, { backgroundColor: colors.muted }]}>
-                    {buttons}
-                  </View>
-                )}
-              </View>
-            );
-          })}
-          {isLayerMode && !reviewMode && (
-            <View style={styles.modeGroup}>
-              <Text style={[styles.modeGroupLabel, { color: colors.mutedForeground }]}>
-                {LAYERS.find((l) => l.id === mode)?.label.toLocaleUpperCase('tr') ?? 'KONU'} SORU TİPİ
+        <View style={styles.topBar}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Geri"
+            onPress={() => router.navigate('/')}
+            style={({ pressed }) => [styles.iconButton, { backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 }]}
+            hitSlop={8}
+          >
+            <Feather name="chevron-left" size={20} color={colors.foreground} />
+          </Pressable>
+          <View style={styles.progressWrap}>
+            <View style={styles.progressLabels}>
+              <Text style={[styles.progressCurrent, { color: colors.foreground }]}>
+                {reviewComplete ? 'BİTTİ' : `Soru ${Math.min(questionIndex + 1, Math.max(totalQuestions, 1))}`}
               </Text>
-              <View style={[styles.modeSwitch, { backgroundColor: colors.muted }]}>
-                {(
-                  [
-                    { id: 'map', label: 'Haritada Bul' },
-                    { id: 'mcq', label: 'Çoktan Seçmeli Test' },
-                  ] as const
-                ).map((fmt) => {
-                  const active = layerQuizFormat === fmt.id;
-                  return (
-                    <Pressable
-                      key={fmt.id}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: active }}
-                      onPress={() => {
-                        setLayerQuizFormat(fmt.id);
-                        setQuestionIndex(0);
-                        setAnswer(null);
-                        setSelectedProvince(null);
-                        setMcqPick(null);
-                      }}
-                      style={[
-                        styles.modeOption,
-                        styles.modeOptionFlex,
-                        active && { backgroundColor: colors.card },
-                      ]}
-                      testID={`quiz-format-${fmt.id}`}
-                    >
-                      <Text style={[styles.modeText, { color: active ? colors.primary : colors.mutedForeground }]}>
-                        {fmt.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+              <Text style={[styles.progressTotal, { color: colors.mutedForeground }]}>
+                {isExam ? `/ ${EXAM_LENGTH}` : totalQuestions > 0 ? `/ ${totalQuestions}` : ''}
+              </Text>
+            </View>
+            <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
+              <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${progress}%` }]} />
+            </View>
+          </View>
+          {isExam ? (
+            <View style={[styles.timerPill, { backgroundColor: colors.muted }]}>
+              <Feather name="clock" size={14} color={examSecondsLeft <= 60 ? colors.destructive : colors.primary} />
+              <Text style={[styles.timerText, { color: examSecondsLeft <= 60 ? colors.destructive : colors.primary }]}>{examTimeLabel}</Text>
+            </View>
+          ) : (
+            <View style={[styles.scorePill, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="target" size={14} color={colors.primary} />
+              <Text style={[styles.scoreText, { color: colors.foreground }]}>{correct}/{answered}</Text>
             </View>
           )}
         </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipRow}
+        >
+          {modeOptions.map((option) => {
+            const active = mode === option.id;
+            return (
+              <Pressable
+                key={option.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                onPress={() => changeMode(option.id)}
+                style={[
+                  styles.chip,
+                  active
+                    ? { backgroundColor: colors.primary }
+                    : { backgroundColor: colors.muted },
+                ]}
+                testID={`quiz-mode-${option.id}`}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={[styles.chipText, { color: active ? colors.primaryForeground : colors.mutedForeground }]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        {isLayerMode && !reviewMode && (
+          <View style={[styles.formatSwitch, { backgroundColor: colors.muted }]}>
+            {(
+              [
+                { id: 'map', label: 'Haritada Bul' },
+                { id: 'mcq', label: 'Çoktan Seçmeli Test' },
+              ] as const
+            ).map((fmt) => {
+              const active = layerQuizFormat === fmt.id;
+              return (
+                <Pressable
+                  key={fmt.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => {
+                    setLayerQuizFormat(fmt.id);
+                    setQuestionIndex(0);
+                    setAnswer(null);
+                    setSelectedProvince(null);
+                    setMcqPick(null);
+                  }}
+                  style={[styles.formatOption, active && { backgroundColor: colors.card }]}
+                  testID={`quiz-format-${fmt.id}`}
+                >
+                  <Text style={[styles.formatText, { color: active ? colors.primary : colors.mutedForeground }]}>
+                    {fmt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
         <Animated.View
           key={`${mode}-${questionIndex}-${reviewMode ? 'r' : 'n'}`}
@@ -511,15 +501,8 @@ export default function QuizScreen() {
           style={[styles.promptCard, promptStyle, { backgroundColor: colors.card, borderColor: colors.border }]}
         >
           <View style={styles.promptTop}>
-            <Text style={[styles.promptEyebrow, { color: colors.mutedForeground }]}>
-              {reviewComplete
-                ? 'TAMAMLANDI'
-                : isExam
-                  ? `DENEME · ${examTimeLabel}`
-                  : `SORU ${questionIndex + 1}${reviewMode && totalQuestions ? ` / ${totalQuestions}` : ''}`}
-            </Text>
-            <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
-              <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${progress}%` }]} />
+            <View style={[styles.topicPill, { backgroundColor: colors.accent }]}>
+              <Text style={[styles.topicPillText, { color: colors.primary }]}>{activeTopicLabel}</Text>
             </View>
           </View>
           <Text style={[styles.question, { color: colors.foreground }]}>
@@ -788,27 +771,29 @@ export default function QuizScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: 18, paddingTop: 16, gap: 15 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  eyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 1 },
-  title: { fontSize: 25, fontWeight: '700', marginTop: 4, letterSpacing: -0.4 },
-  subtitle: { fontSize: 12, lineHeight: 18, marginTop: -9 },
-  scorePill: { borderRadius: 14, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center' },
+  content: { paddingHorizontal: 20, paddingTop: 12, gap: 14 },
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  iconButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  progressWrap: { flex: 1, gap: 6 },
+  progressLabels: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  progressCurrent: { fontSize: 13, fontWeight: '700' },
+  progressTotal: { fontSize: 12, fontWeight: '600' },
+  progressTrack: { height: 5, borderRadius: 3, overflow: 'hidden' },
+  progressFill: { height: 5, borderRadius: 3 },
+  timerPill: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, flexDirection: 'row', gap: 6, alignItems: 'center' },
+  timerText: { fontSize: 12, fontWeight: '700' },
+  scorePill: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, flexDirection: 'row', gap: 6, alignItems: 'center' },
   scoreText: { fontSize: 12, fontWeight: '700' },
-  modeGroups: { flexDirection: 'column', gap: 8 },
-  modeGroup: { gap: 4 },
-  modeGroupLabel: { fontSize: 8, fontWeight: '700', letterSpacing: 1, paddingLeft: 4 },
-  modeSwitch: { borderRadius: 15, padding: 4, flexDirection: 'row', gap: 4 },
-  modeSwitchScroll: { borderRadius: 15, flexGrow: 0 },
-  modeSwitchScrollContent: { padding: 4, flexDirection: 'row', gap: 4 },
-  modeOption: { borderRadius: 11, minHeight: 44, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
-  modeOptionFlex: { flex: 1 },
-  modeText: { fontSize: 11, fontWeight: '600' },
-  promptCard: { borderWidth: 1, borderRadius: 21, padding: 15, gap: 8 },
-  promptTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  promptEyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 0.8 },
-  progressTrack: { height: 4, borderRadius: 3, flex: 1, overflow: 'hidden' },
-  progressFill: { height: 4, borderRadius: 3 },
+  chipRow: { gap: 8, paddingVertical: 2 },
+  chip: { borderRadius: 999, paddingHorizontal: 15, minHeight: 38, alignItems: 'center', justifyContent: 'center' },
+  chipText: { fontSize: 12, fontWeight: '600' },
+  formatSwitch: { borderRadius: 999, padding: 4, flexDirection: 'row', gap: 4 },
+  formatOption: { flex: 1, borderRadius: 999, minHeight: 38, alignItems: 'center', justifyContent: 'center' },
+  formatText: { fontSize: 12, fontWeight: '600' },
+  promptCard: { borderWidth: 1, borderRadius: 22, padding: 18, gap: 8 },
+  promptTop: { flexDirection: 'row', alignItems: 'center' },
+  topicPill: { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4 },
+  topicPillText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.6 },
   question: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
   instruction: { fontSize: 11 },
   mapWrap: { padding: 12, borderRadius: 24, gap: 9 },
@@ -821,12 +806,12 @@ const styles = StyleSheet.create({
   feedbackText: { fontSize: 10, lineHeight: 15, marginTop: 2 },
   tip: { borderRadius: 14, padding: 12, flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   tipText: { flex: 1, fontSize: 11, lineHeight: 17 },
-  primaryButton: { minHeight: 48, borderRadius: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
-  primaryButtonText: { fontSize: 13, fontWeight: '700' },
+  primaryButton: { minHeight: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  primaryButtonText: { fontSize: 14, fontWeight: '700' },
   hintRow: { borderWidth: 1, borderRadius: 15, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 9 },
   optionsCard: { borderWidth: 1, borderRadius: 21, padding: 12, gap: 9 },
   optionRow: { minHeight: 48, borderRadius: 14, borderWidth: 1, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  optionBadge: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  optionBadge: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   optionBadgeText: { fontSize: 11, fontWeight: '700' },
   optionText: { flex: 1, fontSize: 13, fontWeight: '600' },
   tagChip: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
