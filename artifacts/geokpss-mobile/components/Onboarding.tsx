@@ -5,7 +5,6 @@ import {
   Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,28 +13,51 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText as Text } from '@/components/AppText';
+import { PressableScale } from '@/components/PressableScale';
+import { OnboardingHero, ONBOARDING_TEAL } from '@/components/OnboardingVisuals';
 import { LAYERS, MAP_ITEMS } from '@/data/geography';
 import { itemMcqs, PROVINCE_MCQ } from '@/data/questions';
 import { useColors } from '@/hooks/useColors';
 
-const STORAGE_KEY = 'geokpss-onboarded-v1';
+const STORAGE_KEY = 'geokpss-onboarded-v2';
 const TOTAL_MCQS = PROVINCE_MCQ.length + MAP_ITEMS.reduce((acc, item) => acc + itemMcqs(item).length, 0);
 
 const SLIDES = [
   {
-    icon: 'map' as const,
-    title: 'Haritada keşfet',
-    body: `${LAYERS.length} coğrafya katmanında ${MAP_ITEMS.length} harita öğesini ve 81 ili interaktif Türkiye haritasında incele.`,
+    before: "Türkiye'yi ",
+    accent: 'Haritada',
+    after: ' Öğren',
+    body: `81 il, ${LAYERS.length} interaktif coğrafya katmanı ve ÖSYM formatında ${TOTAL_MCQS}+ soruyla KPSS konularını görsel hafızana kazı.`,
+    pills: [
+      { icon: 'map' as const, label: 'Dağlar, Ovalar & Platolar' },
+      { icon: 'droplet' as const, label: 'Akarsu & Göller' },
+      { icon: 'target' as const, label: 'ÖSYM Soru Tipleri', amber: true },
+    ],
+    cta: 'Başla',
   },
   {
-    icon: 'target' as const,
-    title: 'Quiz ve deneme çöz',
-    body: `Dilsiz harita soruları, ${TOTAL_MCQS} çoktan seçmeli soru ve 18 soruluk KPSS denemeleriyle kendini test et.`,
+    before: 'Kendini ',
+    accent: 'sınav gibi',
+    after: ' test et',
+    body: 'Dilsiz harita soruları, şıklı çoktan seçmeli sorular ve 15 dakikalık KPSS formatında denemelerle gerçek sınav temposunu yakala.',
+    pills: [
+      { icon: 'map-pin' as const, label: 'Dilsiz harita modu' },
+      { icon: 'clock' as const, label: '15 dk deneme' },
+      { icon: 'bar-chart-2' as const, label: 'Anlık geri bildirim', amber: true },
+    ],
+    cta: 'İleri',
   },
   {
-    icon: 'trending-up' as const,
-    title: 'Tekrarı şansa bırakma',
-    body: 'Yanlış bildiklerin otomatik tekrara düşer; hazır KPSS kodlamaları, not defteri ve günlük hatırlatıcıyla takip et.',
+    before: 'Tekrarı ',
+    accent: 'şansa bırakma',
+    after: '',
+    body: 'Yanlış bildiklerin otomatik tekrara düşer; hazır KPSS kodlamaları, il notları ve günlük hatırlatıcılarla unutma eğrisini yen.',
+    pills: [
+      { icon: 'repeat' as const, label: 'Spaced repetition' },
+      { icon: 'bookmark' as const, label: '15+ kodlama' },
+      { icon: 'bell' as const, label: 'Hatırlatıcı', amber: true },
+    ],
+    cta: 'Hemen Başla',
   },
 ];
 
@@ -84,28 +106,26 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
         <View
           style={[
             styles.screen,
-            { backgroundColor: colors.background, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20 },
+            { backgroundColor: colors.background, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16 },
           ]}
         >
           <View style={styles.topBar}>
             <View style={styles.brandRow}>
-              <View style={[styles.logo, { backgroundColor: colors.primary }]}>
-                <Feather name="map" size={20} color={colors.primaryForeground} />
+              <View style={[styles.logo, { backgroundColor: ONBOARDING_TEAL.primary }]}>
+                <Feather name="compass" size={19} color="#ffffff" />
               </View>
-              <Text style={[styles.brand, { color: colors.primary }]}>GeoKPSS</Text>
+              <Text style={[styles.brand, { color: colors.foreground }]}>GeoKPSS</Text>
             </View>
-            {!isLast && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Tanıtımı atla"
-                onPress={finish}
-                hitSlop={10}
-                style={({ pressed }) => [styles.skipButton, { opacity: pressed ? 0.6 : 1 }]}
-                testID="onboarding-skip"
-              >
-                <Text style={[styles.skipText, { color: colors.mutedForeground }]}>Atla</Text>
-              </Pressable>
-            )}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tanıtımı atla"
+              onPress={finish}
+              hitSlop={10}
+              style={({ pressed }) => [styles.skipButton, { backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 }]}
+              testID="onboarding-skip"
+            >
+              <Text style={[styles.skipText, { color: colors.mutedForeground }]}>Atla</Text>
+            </Pressable>
           </View>
 
           <ScrollView
@@ -118,14 +138,41 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
             style={styles.pager}
             contentContainerStyle={{ width: width * SLIDES.length }}
           >
-            {SLIDES.map((slide) => (
-              <View key={slide.title} style={[styles.slidePage, { width }]}>
-                <View style={[styles.slideArt, { backgroundColor: colors.accent }]}>
-                  <View style={[styles.slideRing, { borderColor: colors.primary }]} />
-                  <Feather name={slide.icon} size={30} color={colors.primary} />
-                </View>
-                <Text style={[styles.slideTitle, { color: colors.foreground }]}>{slide.title}</Text>
+            {SLIDES.map((slide, index) => (
+              <View key={slide.accent} style={[styles.slidePage, { width }]}>
+                <OnboardingHero index={index} />
+                <Text style={[styles.slideTitle, { color: colors.foreground }]}>
+                  {slide.before}
+                  <Text style={[styles.slideTitleAccent, { color: ONBOARDING_TEAL.deepPrimary }]}>{slide.accent}</Text>
+                  {slide.after}
+                </Text>
                 <Text style={[styles.slideBody, { color: colors.mutedForeground }]}>{slide.body}</Text>
+                <View style={styles.pillRow}>
+                  {slide.pills.map((pill) => (
+                    <View
+                      key={pill.label}
+                      style={[
+                        styles.pill,
+                        { backgroundColor: 'amber' in pill && pill.amber ? '#fef3e2' : colors.muted },
+                      ]}
+                    >
+                      <Feather
+                        name={pill.icon}
+                        size={11}
+                        color={'amber' in pill && pill.amber ? '#b45309' : colors.mutedForeground}
+                      />
+                      <Text
+                        style={[
+                          styles.pillText,
+                          { color: 'amber' in pill && pill.amber ? '#b45309' : colors.foreground },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {pill.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             ))}
           </ScrollView>
@@ -134,30 +181,24 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
             <View style={styles.dots}>
               {SLIDES.map((slide, index) => (
                 <View
-                  key={slide.title}
+                  key={slide.accent}
                   style={[
                     styles.dot,
-                    {
-                      backgroundColor: index === page ? colors.primary : colors.muted,
-                      width: index === page ? 20 : 7,
-                    },
+                    index === page
+                      ? { backgroundColor: ONBOARDING_TEAL.primary, width: 26, height: 8 }
+                      : { backgroundColor: colors.muted, width: 8, height: 8 },
                   ]}
                 />
               ))}
             </View>
-            <Pressable
+            <PressableScale
               onPress={() => (isLast ? finish() : goTo(page + 1))}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
-              ]}
+              style={styles.primaryButton}
               testID="onboarding-next"
             >
-              <Text style={[styles.primaryText, { color: colors.primaryForeground }]}>
-                {isLast ? 'Keşfetmeye başla' : 'İleri'}
-              </Text>
-              <Feather name={isLast ? 'arrow-right' : 'chevron-right'} size={18} color={colors.primaryForeground} />
-            </Pressable>
+              <Text style={styles.primaryText}>{SLIDES[page].cta}</Text>
+              <Feather name="arrow-right" size={17} color="#ffffff" />
+            </PressableScale>
             {isLast && (
               <Text style={[styles.footnote, { color: colors.mutedForeground }]}>
                 Tüm içerik çevrimdışı çalışır; verilerin bu cihazda saklanır.
@@ -172,45 +213,68 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22 },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logo: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  brand: { fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
-  skipButton: { paddingHorizontal: 10, paddingVertical: 8 },
-  skipText: { fontSize: 13, fontWeight: '600' },
-  pager: { flex: 1, marginTop: Platform.OS === 'web' ? 40 : 24 },
-  slidePage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 34, gap: 14 },
-  slideArt: {
-    width: 108,
-    height: 108,
-    borderRadius: 34,
+  topBar: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  logo: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  brand: { fontSize: 17, fontWeight: '800', letterSpacing: -0.3 },
+  skipButton: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999 },
+  skipText: { fontSize: 12, fontWeight: '700' },
+  pager: { flex: 1 },
+  slidePage: { flex: 1, paddingHorizontal: 20, paddingTop: 4 },
+  slideTitle: {
+    fontSize: 23,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  slideTitleAccent: {
+    borderBottomWidth: 3,
+    borderBottomColor: ONBOARDING_TEAL.amber,
+    paddingBottom: 1,
+  },
+  slideBody: { fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 8, paddingHorizontal: 14 },
+  pillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
-    marginBottom: 8,
+    gap: 6,
+    marginTop: 12,
   },
-  slideRing: {
-    position: 'absolute',
-    width: 132,
-    height: 132,
-    borderRadius: 44,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    opacity: 0.5,
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    maxWidth: '100%',
   },
-  slideTitle: { fontSize: 24, fontWeight: '700', letterSpacing: -0.5, textAlign: 'center' },
-  slideBody: { fontSize: 13, lineHeight: 20, textAlign: 'center', maxWidth: 300 },
-  footer: { paddingHorizontal: 24, gap: 16, alignItems: 'center' },
+  pillText: { fontSize: 10, fontWeight: '700' },
+  footer: { paddingHorizontal: 20, paddingTop: 10, gap: 12, alignItems: 'center' },
   dots: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dot: { height: 7, borderRadius: 4 },
+  dot: { borderRadius: 5 },
   primaryButton: {
     alignSelf: 'stretch',
-    minHeight: 52,
-    borderRadius: 16,
+    height: 52,
+    borderRadius: 999,
+    backgroundColor: ONBOARDING_TEAL.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    shadowColor: '#0A5A59',
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
-  primaryText: { fontSize: 15, fontWeight: '700' },
+  primaryText: { fontSize: 15, fontWeight: '800', color: '#ffffff' },
   footnote: { fontSize: 10, textAlign: 'center' },
 });
