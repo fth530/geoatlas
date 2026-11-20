@@ -20,6 +20,15 @@ type AnswerResult = { province: string; correct: boolean };
 type BankEntry = { item: MapItem | null; provinceName: string | null; mcq: McqQuestion };
 
 const PROVINCE_QUESTIONS = PROVINCES.map((province) => province.name);
+
+function shuffleList<T>(list: T[]): T[] {
+  const copy = [...list];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 const MIXED_QUESTIONS: QuizQuestion[] = (() => {
   const list: QuizQuestion[] = [];
   const length = Math.max(PROVINCE_QUESTIONS.length, MAP_ITEMS.length);
@@ -108,15 +117,15 @@ export default function QuizScreen() {
   const featureQuestions = useMemo<MapItem[]>(() => {
     const items = MAP_ITEMS.filter((item) => item.layer === mode);
     return [
-      ...items.filter((item) => isWeakKey(mode as LayerId, item.id)),
-      ...items.filter((item) => !isWeakKey(mode as LayerId, item.id)),
+      ...shuffleList(items.filter((item) => isWeakKey(mode as LayerId, item.id))),
+      ...shuffleList(items.filter((item) => !isWeakKey(mode as LayerId, item.id))),
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hydrated]);
   const provinceQuestions = useMemo(
     () => [
-      ...PROVINCE_QUESTIONS.filter((name) => isWeakKey('provinces', name)),
-      ...PROVINCE_QUESTIONS.filter((name) => !isWeakKey('provinces', name)),
+      ...shuffleList(PROVINCE_QUESTIONS.filter((name) => isWeakKey('provinces', name))),
+      ...shuffleList(PROVINCE_QUESTIONS.filter((name) => !isWeakKey('provinces', name))),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [mode, hydrated],
@@ -127,8 +136,8 @@ export default function QuizScreen() {
         ? isWeakKey('provinces', question.name)
         : isWeakKey(question.item.layer, question.item.id);
     return [
-      ...MIXED_QUESTIONS.filter(isWeakQuestion),
-      ...MIXED_QUESTIONS.filter((question) => !isWeakQuestion(question)),
+      ...shuffleList(MIXED_QUESTIONS.filter(isWeakQuestion)),
+      ...shuffleList(MIXED_QUESTIONS.filter((question) => !isWeakQuestion(question))),
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hydrated]);
@@ -150,7 +159,7 @@ export default function QuizScreen() {
       entry.item
         ? isWeakKey(entry.item.layer, entry.item.id)
         : isWeakKey('provinces', entry.provinceName ?? '');
-    return [...pool.filter(isWeak), ...pool.filter((entry) => !isWeak(entry))];
+    return [...shuffleList(pool.filter(isWeak)), ...shuffleList(pool.filter((entry) => !isWeak(entry)))];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hydrated]);
   const isMixed = mode === 'mixed';
