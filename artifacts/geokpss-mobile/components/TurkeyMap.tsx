@@ -1,8 +1,8 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle, G, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, G, Image as SvgImage, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Reanimated, {
   useAnimatedStyle,
@@ -647,6 +647,7 @@ const FeatureMarkers = React.memo(function FeatureMarkers({
   );
 });
 
+const RELIEF_IMAGE = require('../assets/images/relief-turkey.png');
 const EMPTY_PROVINCES: string[] = [];
 const EMPTY_ITEMS: MapItem[] = [];
 
@@ -666,6 +667,7 @@ export function TurkeyMap({
 }: TurkeyMapProps) {
   const colors = useColors();
   const [labelMode, setLabelMode] = useState<MapLabelMode>('clean');
+  const [reliefOn, setReliefOn] = useState(false);
   const canvasDomRef = useRef<HTMLElement | null>(null);
   const canvasSizeRef = useRef({ width: 360, height: 235 });
 
@@ -918,6 +920,16 @@ export function TurkeyMap({
             thematicProvinceColors={thematicProvinceColors}
             onSelect={focusProvince}
           />
+          {reliefOn && !quiz && (
+            <SvgImage
+              href={RELIEF_IMAGE}
+              x={0}
+              y={0}
+              width={VIEW_WIDTH}
+              height={VIEW_HEIGHT}
+              preserveAspectRatio="none"
+            />
+          )}
           {layer !== 'provinces' && (
             <FeatureMarkers
               items={items}
@@ -1008,6 +1020,23 @@ export function TurkeyMap({
               style={[styles.toolBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
             >
               <Feather name="minus" size={14} color={colors.foreground} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Kabartma haritayı aç veya kapat"
+              accessibilityState={{ selected: reliefOn }}
+              onPress={() => {
+                setReliefOn((value) => !value);
+                void Haptics.selectionAsync();
+              }}
+              style={[
+                styles.toolBtn,
+                reliefOn
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: colors.muted, borderColor: colors.border },
+              ]}
+              testID="toggle-relief-map"
+            >
+              <MaterialCommunityIcons name="terrain" size={14} color={reliefOn ? colors.primaryForeground : colors.foreground} />
             </Pressable>
             <Pressable
               accessibilityLabel="Haritayı yakınlaştır"
