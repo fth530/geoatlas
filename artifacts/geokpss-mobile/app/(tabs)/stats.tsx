@@ -435,12 +435,12 @@ export default function StatsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: 18, paddingTop: 16, gap: 14 },
+  content: { paddingHorizontal: 20, paddingTop: 16, gap: 14 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   eyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 0.9 },
   title: { fontSize: 25, fontWeight: '700', marginTop: 4, letterSpacing: -0.4 },
   subtitle: { fontSize: 12, lineHeight: 18, marginTop: -7 },
-  scorePill: { borderRadius: 14, paddingHorizontal: 11, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center' },
+  scorePill: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', gap: 6, alignItems: 'center' },
   scoreText: { fontSize: 12, fontWeight: '700' },
   card: { borderWidth: 1, borderRadius: 22, padding: 16, gap: 12 },
   cardTitle: { fontSize: 14, fontWeight: '700' },

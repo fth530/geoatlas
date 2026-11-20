@@ -228,6 +228,9 @@ export default function NotesScreen() {
               return (
                 <Pressable
                   key={cat}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`${cat} kategorisini filtrele`}
                   onPress={() => setFilterCategory(cat)}
                   style={[styles.filterChip, { backgroundColor: active ? colors.accent : colors.card, borderColor: active ? colors.accent : colors.border }]}
                 >
@@ -268,6 +271,9 @@ export default function NotesScreen() {
               return (
                 <Pressable
                   key={item}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`Not kategorisi: ${item}`}
                   onPress={() => {
                     setCategory(item);
                     const linkedItem = MAP_ITEMS.find((mapItem) => mapItem.id === relatedItemId);
@@ -436,7 +442,7 @@ export default function NotesScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: 18, gap: 14 },
+  content: { paddingHorizontal: 20, gap: 14 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   eyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 0.9 },
   title: { fontSize: 25, fontWeight: '700', marginTop: 4, letterSpacing: -0.4 },
@@ -445,12 +451,12 @@ const styles = StyleSheet.create({
   tabOption: { flex: 1, minHeight: 38, borderRadius: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   tabText: { fontSize: 11, fontWeight: '700' },
   filterBlock: { gap: 8 },
-  searchBox: { height: 42, borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  searchBox: { height: 44, borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 9 },
   searchInput: { flex: 1, height: '100%', fontSize: 12 },
   filterChipsRow: { gap: 6, paddingRight: 10 },
-  filterChip: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
+  filterChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
   filterChipText: { fontSize: 10, fontWeight: '600' },
-  addButton: { borderRadius: 13, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  addButton: { borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
   addText: { fontSize: 11, fontWeight: '700' },
   editor: { borderRadius: 21, borderWidth: 1, padding: 15, gap: 10 },
   editorHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 2 },
@@ -460,7 +466,7 @@ const styles = StyleSheet.create({
   input: { minHeight: 43, borderWidth: 1, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 10, fontSize: 12 },
   textArea: { minHeight: 116, lineHeight: 18 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  categoryChip: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 7 },
+  categoryChip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 7 },
   categoryText: { fontSize: 10, fontWeight: '600' },
   relatedFeature: { minHeight: 30, borderRadius: 10, paddingHorizontal: 9, flexDirection: 'row', alignItems: 'center', gap: 6 },
   relatedFeatureText: { flex: 1, fontSize: 10, fontWeight: '600' },
@@ -471,7 +477,7 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 48, height: 48, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { fontSize: 15, fontWeight: '700' },
   emptyCopy: { fontSize: 11, lineHeight: 17, textAlign: 'center', maxWidth: 260 },
-  emptyButton: { marginTop: 3, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 12 },
+  emptyButton: { marginTop: 3, paddingHorizontal: 15, paddingVertical: 10, borderRadius: 999 },
   emptyButtonText: { fontSize: 11, fontWeight: '700' },
   notesList: { gap: 10 },
   listHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

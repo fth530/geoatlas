@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   badgeDark: { backgroundColor: 'rgba(0,0,0,0.28)' },
   badgeGlass: { backgroundColor: 'rgba(255,255,255,0.14)' },
-  badgeCaps: { fontSize: 9, fontWeight: '800', letterSpacing: 0.8, color: ONBOARDING_TEAL.fixed },
+  badgeCaps: { fontSize: 9, fontWeight: '700', letterSpacing: 0.8, color: ONBOARDING_TEAL.fixed },
   badgeCapsLight: { fontSize: 9, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255,255,255,0.85)' },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: ONBOARDING_TEAL.amber },
   mapWrap: { flex: 1, minHeight: 150, alignItems: 'center', justifyContent: 'center' },
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  floatingPillText: { fontSize: 9, fontWeight: '800', color: '#191c1c', letterSpacing: 0.2 },
+  floatingPillText: { fontSize: 9, fontWeight: '700', color: '#191c1c', letterSpacing: 0.2 },
   quizCard: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 999,
   },
-  quizPillText: { fontSize: 8, fontWeight: '800', letterSpacing: 0.7, color: ONBOARDING_TEAL.deepPrimary },
-  quizQuestion: { fontSize: 13, fontWeight: '800', color: '#191c1c', lineHeight: 18 },
+  quizPillText: { fontSize: 8, fontWeight: '700', letterSpacing: 0.7, color: ONBOARDING_TEAL.deepPrimary },
+  quizQuestion: { fontSize: 13, fontWeight: '700', color: '#191c1c', lineHeight: 18 },
   quizOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   quizOptionKeyCorrect: { backgroundColor: '#ffffff' },
-  quizOptionKeyText: { fontSize: 10, fontWeight: '800', color: '#3e4948' },
+  quizOptionKeyText: { fontSize: 10, fontWeight: '700', color: '#3e4948' },
   quizOptionText: { flex: 1, fontSize: 11, fontWeight: '600', color: '#3e4948' },
   accuracyBadge: {
     position: 'absolute',
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  accuracyValue: { fontSize: 15, fontWeight: '800', color: ONBOARDING_TEAL.deepPrimary },
+  accuracyValue: { fontSize: 15, fontWeight: '700', color: ONBOARDING_TEAL.deepPrimary },
   accuracyLabel: { fontSize: 8, fontWeight: '700', color: '#3e4948' },
   weekStrip: {
     flexDirection: 'row',
@@ -372,8 +372,8 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 999,
   },
-  flashcardPillText: { fontSize: 8, fontWeight: '800', letterSpacing: 0.7, color: ONBOARDING_TEAL.deepPrimary },
-  flashcardQuestion: { fontSize: 13, fontWeight: '800', color: '#191c1c', lineHeight: 18 },
+  flashcardPillText: { fontSize: 8, fontWeight: '700', letterSpacing: 0.7, color: ONBOARDING_TEAL.deepPrimary },
+  flashcardQuestion: { fontSize: 13, fontWeight: '700', color: '#191c1c', lineHeight: 18 },
   flashcardAnswerRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  flashcardAnswer: { fontSize: 12, fontWeight: '800', color: ONBOARDING_TEAL.primary },
+  flashcardAnswer: { fontSize: 12, fontWeight: '700', color: ONBOARDING_TEAL.primary },
 });

@@ -268,7 +268,7 @@ export default function TopicsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: 18, paddingTop: 16, gap: 14 },
+  content: { paddingHorizontal: 20, paddingTop: 16, gap: 14 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   eyebrow: { fontSize: 9, fontWeight: '700', letterSpacing: 0.9 },
   title: { fontSize: 25, fontWeight: '700', marginTop: 4, letterSpacing: -0.4 },
