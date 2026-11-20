@@ -30,7 +30,7 @@ export function GeographyLayerIcon({ type, color, accentColor, size = 20 }: Prop
       {type === 'mountains' && (
         <>
           <Path
-            d="M2.4 19.2 9.1 6.5a1.1 1.1 0 0 1 1.9 0l6.6 12.7H2.4Z"
+            d="M1.8 19.6 8.6 6.2a1.1 1.1 0 0 1 1.9 0l6.7 13.4H1.8Z"
             fill={color}
             fillOpacity={0.16}
             stroke={color}
@@ -38,15 +38,22 @@ export function GeographyLayerIcon({ type, color, accentColor, size = 20 }: Prop
             strokeLinejoin="round"
           />
           <Path
-            d="m10.8 19.2 4.4-8.4a1 1 0 0 1 1.8 0l4.6 8.4H10.8Z"
+            d="m10.2 19.6 4.5-8.6a1 1 0 0 1 1.8 0l4.7 8.6H10.2Z"
             fill={accentColor}
             fillOpacity={0.22}
             stroke={color}
             strokeWidth={1.55}
             strokeLinejoin="round"
           />
-          <Path d="m7.2 10.6 1.6 1.3 1.3-1.4 1.5 1.2" stroke={accentColor} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
-          <Circle cx={18.2} cy={5.8} r={1.6} fill={accentColor} />
+          <Path
+            d="M7.6 9.4 9.4 11l1.3-1.4 1.2 1.2"
+            fill="none"
+            stroke="#FFFFFF"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Circle cx={18.6} cy={5.4} r={1.7} fill={accentColor} />
         </>
       )}
 
@@ -186,15 +193,21 @@ export function GeographyLayerIcon({ type, color, accentColor, size = 20 }: Prop
       {type === 'projects' && (
         <>
           <Path
-            d="M4 6.5h16l-2.2 12H6.2L4 6.5Z"
+            d="M4.2 20.2 7 8.6h10l2.8 11.6H4.2Z"
             fill={color}
-            fillOpacity={0.15}
+            fillOpacity={0.16}
             stroke={color}
             strokeWidth={1.65}
             strokeLinejoin="round"
           />
-          <Path d="M8.5 11.5c1.2 1.2 2.4 1.8 3.5 1.8s2.3-.6 3.5-1.8M9 15.2h6" stroke={accentColor} strokeWidth={1.55} strokeLinecap="round" />
-          <Circle cx={12} cy={4.2} r={1.3} fill={accentColor} />
+          <Path
+            d="M7 8.6c0-2.6 2.2-4.4 5-4.4s5 1.8 5 4.4"
+            fill="none"
+            stroke={accentColor}
+            strokeWidth={1.6}
+            strokeLinecap="round"
+          />
+          <Path d="M5.6 13.4h12.8M6.4 16.8h11.2" stroke={accentColor} strokeWidth={1.3} strokeLinecap="round" opacity={0.8} />
         </>
       )}
 
@@ -246,20 +259,24 @@ export function GeographyLayerIcon({ type, color, accentColor, size = 20 }: Prop
 
       {type === 'transport' && (
         <>
-          <Rect
-            x={6}
-            y={3.8}
-            width={12}
-            height={13.2}
-            rx={3.5}
+          <Path d="M12 20.4V4.6" stroke={color} strokeWidth={1.7} strokeLinecap="round" />
+          <Path
+            d="M12 5.4h7.4l1.8 3.4-1.8 3.4H12z"
             fill={color}
-            fillOpacity={0.15}
+            fillOpacity={0.18}
             stroke={color}
-            strokeWidth={1.65}
+            strokeWidth={1.55}
+            strokeLinejoin="round"
           />
-          <Path d="M6 11h12M8.5 17l-2.3 3.2M15.5 17l2.3 3.2" stroke={color} strokeWidth={1.6} strokeLinecap="round" />
-          <Circle cx={9.2} cy={14} r={1.15} fill={accentColor} />
-          <Circle cx={14.8} cy={14} r={1.15} fill={accentColor} />
+          <Path
+            d="M12 12.8H4.6L2.8 16.2l1.8 3.4H12z"
+            fill={accentColor}
+            fillOpacity={0.22}
+            stroke={accentColor}
+            strokeWidth={1.5}
+            strokeLinejoin="round"
+          />
+          <Circle cx={12} cy={20.4} r={1.5} fill={color} />
         </>
       )}
 
