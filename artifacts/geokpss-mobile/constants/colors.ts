@@ -15,8 +15,8 @@
 const colors = {
   light: {
     // Legacy aliases (kept for backward compatibility)
-    text: '#202539',
-    tint: '#5368D9',
+    text: '#191C1C',
+    tint: '#0E7C7B',
 
     // Core surfaces
     background: '#F8F9FC',
@@ -27,7 +27,7 @@ const colors = {
     cardForeground: '#202539',
 
     // Primary action color (buttons, links, active states)
-    primary: '#4F63D7',
+    primary: '#0E7C7B',
     primaryForeground: '#ffffff',
 
     // Secondary / less-emphasis interactive surfaces
@@ -39,8 +39,8 @@ const colors = {
     mutedForeground: '#7A8397',
 
     // Accent highlights (badges, selected items, focus rings)
-    accent: '#EDF0FF',
-    accentForeground: '#4455B8',
+    accent: '#E0F4F3',
+    accentForeground: '#0A5F5E',
 
     // Destructive actions (delete, error states)
     destructive: '#C85D52',
@@ -56,7 +56,7 @@ const colors = {
     premiumBackground: '#F3EADB',
     mapProvince: '#ECEFF6',
     mapRegion: '#F4F6FA',
-    mapSelected: '#4F63D7',
+    mapSelected: '#0E7C7B',
     mapCorrect: '#4E9472',
     mapWrong: '#D66A61',
     mapStroke: '#FFFFFF',
@@ -79,19 +79,19 @@ const colors = {
 
   dark: {
     text: '#F1F2F7',
-    tint: '#A7B3FF',
+    tint: '#7CD5D3',
     background: '#171A27',
     foreground: '#F1F2F7',
     card: '#222738',
     cardForeground: '#F1F2F7',
-    primary: '#9DAAFF',
-    primaryForeground: '#171C34',
+    primary: '#7CD5D3',
+    primaryForeground: '#0A2B2A',
     secondary: '#2C3244',
     secondaryForeground: '#E7EBF4',
     muted: '#292F40',
     mutedForeground: '#A2A9BB',
-    accent: '#2D3456',
-    accentForeground: '#D5DCFF',
+    accent: '#1F3D3C',
+    accentForeground: '#B9ECEA',
     destructive: '#D8786E',
     destructiveForeground: '#FFFFFF',
     success: '#86B99A',
@@ -105,7 +105,7 @@ const colors = {
     premiumBackground: '#40372A',
     mapProvince: '#293146',
     mapRegion: '#232A3C',
-    mapSelected: '#6D82EE',
+    mapSelected: '#5FCBC8',
     mapCorrect: '#4D8C6A',
     mapWrong: '#B9544D',
     mapStroke: '#48526A',

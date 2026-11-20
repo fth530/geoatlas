@@ -358,12 +358,22 @@ export default function MapScreen() {
               </View>
             )}
             <Text style={[styles.detailBody, { color: colors.foreground }]}>{selectedItem.description}</Text>
-            {selectedItem.elevation && (
-              <View style={[styles.factPill, { backgroundColor: colors.muted }]}>
-                <Feather name="trending-up" size={14} color={colors.primary} />
-                <Text style={[styles.factText, { color: colors.foreground }]}>{selectedItem.elevation}</Text>
+            <View style={styles.statChips}>
+              {selectedItem.elevation && (
+                <View style={[styles.statChip, { backgroundColor: colors.muted }]}>
+                  <Feather name="trending-up" size={12} color={colors.primary} />
+                  <Text style={[styles.statChipText, { color: colors.foreground }]}>{selectedItem.elevation}</Text>
+                </View>
+              )}
+              <View style={[styles.statChip, { backgroundColor: colors.muted }]}>
+                <Feather name="map-pin" size={12} color={colors.primary} />
+                <Text style={[styles.statChipText, { color: colors.foreground }]}>{selectedItem.provinces.length} il</Text>
               </View>
-            )}
+              <View style={[styles.statChip, { backgroundColor: colors.muted }]}>
+                <Feather name="layers" size={12} color={colors.primary} />
+                <Text style={[styles.statChipText, { color: colors.foreground }]} numberOfLines={1}>{selectedItem.subtypeLabel}</Text>
+              </View>
+            </View>
             {selectedItem.examTip && (
               <View style={[styles.examTip, { backgroundColor: colors.accent }]}>
                 <Feather name="bookmark" size={15} color={colors.primary} />
@@ -713,7 +723,7 @@ const styles = StyleSheet.create({
   filterLabel: { fontSize: 11, fontWeight: '600' },
   filterCount: { fontSize: 9, fontWeight: '700' },
   layerCount: { fontSize: 9, fontWeight: '700' },
-  mapCard: { borderRadius: 26, padding: 14, gap: 9, shadowOpacity: 0.045, shadowRadius: 14, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  mapCard: { borderRadius: 28, padding: 14, gap: 9, shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
   mapCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   mapTitle: { fontSize: 16, fontWeight: '700' },
   mapSubTitle: { fontSize: 11, marginTop: 3 },
@@ -736,7 +746,7 @@ const styles = StyleSheet.create({
   fullscreenItemChipText: { fontSize: 11, fontWeight: '600' },
   mapFootnote: { fontSize: 10, textAlign: 'center', marginTop: -1 },
   attribution: { fontSize: 9, textAlign: 'center', marginTop: -8 },
-  detailCard: { borderRadius: 22, borderWidth: 1, padding: 15, gap: 11 },
+  detailCard: { borderRadius: 24, borderWidth: 1, padding: 16, gap: 11 },
   provinceChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   provinceChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 4 },
   provinceChipText: { fontSize: 10.5, fontWeight: '700' },
@@ -745,8 +755,9 @@ const styles = StyleSheet.create({
   detailTitle: { fontSize: 15, fontWeight: '700' },
   detailSub: { fontSize: 11, marginTop: 3, lineHeight: 16 },
   detailBody: { fontSize: 13, lineHeight: 19 },
-  factPill: { flexDirection: 'row', alignSelf: 'flex-start', alignItems: 'center', gap: 7, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 12 },
-  factText: { fontSize: 12, fontWeight: '700' },
+  statChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  statChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 11, paddingVertical: 7 },
+  statChipText: { fontSize: 11, fontWeight: '700' },
   examTip: { flexDirection: 'row', gap: 8, borderRadius: 14, padding: 11, alignItems: 'flex-start' },
   examTipText: { flex: 1, fontSize: 12, lineHeight: 17, fontWeight: '500' },
   sourceText: { fontSize: 10, lineHeight: 14 },
