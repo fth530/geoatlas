@@ -70,7 +70,7 @@ export default function MapScreen() {
   const [flashcard, setFlashcard] = useState<{ kind: 'item'; item: MapItem } | { kind: 'province'; name: string } | null>(null);
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const { notes, recordQuizAnswer } = useStudy();
+  const { notes, recordQuizAnswer, discovered } = useStudy();
 
   useEffect(() => {
     if (layerParam && LAYERS.some((layer) => layer.id === layerParam)) {
@@ -305,6 +305,10 @@ export default function MapScreen() {
             <View style={[styles.heroPill, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="map-pin" size={12} color={colors.primary} />
               <Text style={[styles.heroPillText, { color: colors.foreground }]}>81 İl Atlası</Text>
+            </View>
+            <View style={[styles.heroPill, { backgroundColor: colors.accent, borderColor: colors.accent }]}>
+              <Feather name="target" size={12} color={colors.primary} />
+              <Text style={[styles.heroPillText, { color: colors.primary }]}>Keşif %{Math.round((discovered.length / Math.max(MAP_ITEMS.length + PROVINCES.length, 1)) * 100)}</Text>
             </View>
           </View>
         </View>

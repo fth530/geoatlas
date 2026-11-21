@@ -49,6 +49,8 @@ type StudyContextValue = PersistedStudyData & {
   toggleProgramTask: (taskId: string) => void;
   addProgramTask: (title: string) => void;
   removeProgramTask: (taskId: string) => void;
+  claimProgramBonus: () => void;
+  recordChallengeResult: (correct: number, total: number) => void;
   importStudyData: (data: unknown) => boolean;
   resetStudyData: () => void;
 };
@@ -64,6 +66,9 @@ const initialState: PersistedStudyData = {
   dailyActivity: {},
   dailyGoal: 10,
   program: {},
+  discovered: [],
+  xp: 0,
+  challengeBest: {},
 };
 
 const StudyContext = createContext<StudyContextValue | null>(null);
@@ -134,11 +139,18 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
         }
         const dayKey = localDayKey();
         const day = state.dailyActivity[dayKey] ?? { answered: 0, correct: 0 };
+        const discoverKey = `${answer.layer}:${answer.targetId}`;
+        const discovered =
+          answer.isCorrect && !state.discovered.includes(discoverKey)
+            ? [...state.discovered, discoverKey]
+            : state.discovered;
         commit({
           ...state,
           answered: state.answered + 1,
           correct: state.correct + (answer.isCorrect ? 1 : 0),
           topicStatuses,
+          xp: state.xp + (answer.isCorrect ? 10 : 3),
+          discovered,
           dailyActivity: {
             ...state.dailyActivity,
             [dayKey]: { answered: day.answered + 1, correct: day.correct + (answer.isCorrect ? 1 : 0) },
@@ -158,11 +170,16 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
       toggleProgramTask: (taskId) => {
         const dayKey = localDayKey();
         const day = state.program[dayKey] ?? { done: [], custom: [] };
-        const done = day.done.includes(taskId)
-          ? day.done.filter((id) => id !== taskId)
-          : [...day.done, taskId];
+        const markingDone = !day.done.includes(taskId);
+        const done = markingDone
+          ? [...day.done, taskId]
+          : day.done.filter((id) => id !== taskId);
         const program = { ...state.program, [dayKey]: { ...day, done } };
-        commit({ ...state, program });
+        commit({
+          ...state,
+          program,
+          xp: markingDone ? state.xp + 25 : Math.max(0, state.xp - 25),
+        });
       },
       addProgramTask: (title) => {
         const trimmed = title.trim().slice(0, 80);
@@ -186,6 +203,29 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
         commit({
           ...state,
           program: { ...state.program, [dayKey]: { ...day, done, custom } },
+        });
+      },
+      claimProgramBonus: () => {
+        const dayKey = localDayKey();
+        const day = state.program[dayKey];
+        if (!day || day.bonus) return;
+        commit({
+          ...state,
+          xp: state.xp + 50,
+          program: { ...state.program, [dayKey]: { ...day, bonus: true } },
+        });
+      },
+      recordChallengeResult: (correct, total) => {
+        const dayKey = localDayKey();
+        const bounded = Math.max(0, Math.min(total, Math.round(correct)));
+        const earned = bounded * 2 + (bounded === total && total > 0 ? 20 : 0);
+        commit({
+          ...state,
+          xp: state.xp + earned,
+          challengeBest: {
+            ...state.challengeBest,
+            [dayKey]: Math.max(state.challengeBest[dayKey] ?? 0, bounded),
+          },
         });
       },
       importStudyData: (data) => {

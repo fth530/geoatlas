@@ -77,7 +77,7 @@ const MAX_NOTE_BODY_LENGTH = 2000;
 export type DailyActivity = { answered: number; correct: number };
 
 export type ProgramCustomTask = { id: string; title: string };
-export type ProgramDay = { done: string[]; custom: ProgramCustomTask[] };
+export type ProgramDay = { done: string[]; custom: ProgramCustomTask[]; bonus?: boolean };
 
 export type PersistedStudyData = {
   notes: StudyNote[];
@@ -89,6 +89,9 @@ export type PersistedStudyData = {
   dailyActivity: Record<string, DailyActivity>;
   dailyGoal: number;
   program: Record<string, ProgramDay>;
+  discovered: string[];
+  xp: number;
+  challengeBest: Record<string, number>;
 };
 
 const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -191,6 +194,18 @@ export function sanitizePersistedStudy(value: unknown): PersistedStudyData {
             .map(([key, value]) => [key, sanitizeProgramDay(value)]),
         )
       : {},
+    discovered: Array.isArray(raw.discovered)
+      ? raw.discovered.filter((id): id is string => typeof id === 'string').slice(0, 2000)
+      : [],
+    xp: Math.max(0, asNumber(raw.xp)),
+    challengeBest: isRecord(raw.challengeBest)
+      ? Object.fromEntries(
+          Object.entries(raw.challengeBest)
+            .filter(([key, value]) => DAY_KEY_PATTERN.test(key) && typeof value === 'number' && Number.isFinite(value))
+            .slice(-MAX_PROGRAM_DAYS)
+            .map(([key, value]) => [key, Math.max(0, Math.min(10, Math.round(value as number)))]),
+        )
+      : {},
   };
 }
 
@@ -200,6 +215,7 @@ function sanitizeProgramDay(value: unknown): ProgramDay {
     done: Array.isArray(value.done)
       ? value.done.filter((id): id is string => typeof id === 'string').slice(0, 60)
       : [],
+    ...(value.bonus === true ? { bonus: true } : {}),
     custom: Array.isArray(value.custom)
       ? value.custom
           .slice(0, 30)
@@ -219,6 +235,30 @@ export function localDayKey(date: Date = new Date()): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+export const XP_LEVELS: { xp: number; title: string }[] = [
+  { xp: 0, title: 'Çaylak Coğrafyacı' },
+  { xp: 150, title: 'Haritacı' },
+  { xp: 400, title: 'Atlas Kürsüsü' },
+  { xp: 800, title: 'KPSS Fenomeni' },
+  { xp: 1400, title: 'Efsane Coğrafyacı' },
+  { xp: 2200, title: 'Efsane Atlas' },
+];
+
+export function xpLevel(xp: number): { level: number; title: string; intoLevel: number; span: number } {
+  let level = 0;
+  for (let index = 0; index < XP_LEVELS.length; index += 1) {
+    if (xp >= XP_LEVELS[index].xp) level = index;
+  }
+  const current = XP_LEVELS[level];
+  const next = XP_LEVELS[level + 1] ?? null;
+  return {
+    level,
+    title: current.title,
+    intoLevel: xp - current.xp,
+    span: next ? next.xp - current.xp : 1,
+  };
 }
 
 /** Consecutive days (ending today or yesterday) with at least one answered question. */

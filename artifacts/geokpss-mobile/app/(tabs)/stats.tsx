@@ -16,8 +16,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { STATUS_LABEL, STATUS_OPTIONS, TOPIC_DETAILS, TopicStatus } from '@/data/geography';
+import { MAP_ITEMS } from '@/data/geography';
+import { PROVINCES } from '@/components/TurkeyMap';
 import { useStudy } from '@/context/StudyContext';
-import { localDayKey } from '@/utils/study';
+import { localDayKey, xpLevel } from '@/utils/study';
 import { AppText as Text } from '@/components/AppText';
 import { FONT_FAMILY } from '@/constants/typography';
 import { PressableScale } from '@/components/PressableScale';
@@ -27,7 +29,7 @@ import { isReminderEnabled, REMINDER_HOUR, REMINDER_MINUTE, setReminderEnabled }
 export default function StatsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, dailyActivity, dailyGoal, program, hydrated, importStudyData, resetStudyData, setDailyGoal } = useStudy();
+  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, dailyActivity, dailyGoal, program, hydrated, importStudyData, resetStudyData, setDailyGoal, xp, discovered, challengeBest } = useStudy();
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -292,6 +294,58 @@ export default function StatsScreen() {
                     </Pressable>
                   );
                 })}
+              </View>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.goalHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cardTitle, { color: colors.foreground }]}>Seviye · {xpLevel(xp).title}</Text>
+                  <Text style={[styles.goalSub, { color: colors.mutedForeground }]}>
+                    {xp} XP{xpLevel(xp).span > 1 ? ` · sonraki seviyeye ${xpLevel(xp).span - xpLevel(xp).intoLevel} XP` : ' · en yüksek seviye'}
+                  </Text>
+                </View>
+                <View style={[styles.goalRingWrap, { backgroundColor: colors.accent }]}>
+                  <Text style={[styles.goalRingText, { color: colors.primary }]}>Sv.{xpLevel(xp).level + 1}</Text>
+                </View>
+              </View>
+              <View style={[styles.goalTrack, { backgroundColor: colors.muted }]}>
+                <View style={[styles.goalFill, { backgroundColor: colors.primary, width: `${Math.min(100, (xpLevel(xp).intoLevel / xpLevel(xp).span) * 100)}%` }]} />
+              </View>
+              <View style={styles.goalChips}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => router.push({ pathname: '/quiz', params: { mode: 'daily' } })}
+                  style={[styles.goalChip, { backgroundColor: colors.primary }]}
+                >
+                  <Text style={[styles.goalChipText, { color: colors.primaryForeground }]}>Günün Sorusu{challengeBest[localDayKey()] ? ` · rekor ${challengeBest[localDayKey()]}/10` : ''}</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.goalHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cardTitle, { color: colors.foreground }]}>Keşif</Text>
+                  <Text style={[styles.goalSub, { color: colors.mutedForeground }]}>
+                    Türkiye'nin %{Math.round((discovered.length / Math.max(MAP_ITEMS.length + PROVINCES.length, 1)) * 100)}'ini keşfettin
+                  </Text>
+                </View>
+                <View style={[styles.goalRingWrap, { backgroundColor: colors.accent }]}>
+                  <Text style={[styles.goalRingText, { color: colors.primary }]}>{discovered.length}</Text>
+                </View>
+              </View>
+              <View style={[styles.goalTrack, { backgroundColor: colors.muted }]}>
+                <View style={[styles.goalFill, { backgroundColor: colors.success, width: `${Math.min(100, (discovered.length / Math.max(MAP_ITEMS.length + PROVINCES.length, 1)) * 100)}%` }]} />
+              </View>
+              <View style={styles.goalChips}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => router.push('/(tabs)/quiz')}
+                  style={[styles.goalChip, { backgroundColor: colors.muted }]}
+                >
+                  <Text style={[styles.goalChipText, { color: colors.foreground }]}>Haritada keşfet →</Text>
+                </Pressable>
               </View>
             </View>
 

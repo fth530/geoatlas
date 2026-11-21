@@ -1,14 +1,14 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { AppText as Text } from '@/components/AppText';
 import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
-import { localDayKey, studyStreak } from '@/utils/study';
+import { localDayKey, studyStreak, xpLevel } from '@/utils/study';
 import { LAYERS } from '@/data/geography';
 import type { LayerId } from '@/data/geography';
 
@@ -30,7 +30,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 export default function ProgramScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { program, dailyActivity, dailyGoal, reviewItems, toggleProgramTask, addProgramTask, removeProgramTask } = useStudy();
+  const { program, dailyActivity, dailyGoal, reviewItems, xp, challengeBest, toggleProgramTask, addProgramTask, removeProgramTask, claimProgramBonus } = useStudy();
   const [customDraft, setCustomDraft] = useState('');
 
   const todayKey = localDayKey();
@@ -73,10 +73,16 @@ export default function ProgramScreen() {
     return best;
   }, [reviewItems]);
 
+  const goalRemaining = Math.max(0, dailyGoal - todayAnswered);
+  const weakestLabel = weakestLayer ? (LAYERS.find((layer) => layer.id === weakestLayer)?.label ?? 'Karma') : 'Karma';
+  const suggestion = weakestLayer
+    ? `Öneri: Önce ${weakestLabel} konusunda 10 soru çöz, sonra tekrarları bitir.`
+    : dueItems.length > 0
+      ? `Öneri: ${dueItems.length} bekleyen tekrar + hedefe ${goalRemaining} soru.`
+      : 'Öneri: Günün Meydan Okuması ile başla, serini koru.';
+
   const tasks = useMemo<ProgramTask[]>(() => {
-    const goalRemaining = Math.max(0, dailyGoal - todayAnswered);
     const reviewCount = Math.min(8, Math.max(dueItems.length, 1));
-    const weakestLabel = weakestLayer ? (LAYERS.find((layer) => layer.id === weakestLayer)?.label ?? 'Karma') : 'Karma';
     const list: ProgramTask[] = [
       {
         id: 'goal-questions',
@@ -158,6 +164,13 @@ export default function ProgramScreen() {
   const nextTask = tasks.find((task) => !isDone(task)) ?? null;
   const allDone = totalCount > 0 && doneCount === totalCount;
   const recommendedId = nextTask?.id ?? null;
+  const level = xpLevel(xp);
+  const levelPercent = Math.min(100, Math.round((level.intoLevel / level.span) * 100));
+  const todayBest = challengeBest[todayKey] ?? null;
+
+  useEffect(() => {
+    if (allDone) claimProgramBonus();
+  }, [allDone, claimProgramBonus]);
 
   const dateLabel = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
 
@@ -252,7 +265,44 @@ export default function ProgramScreen() {
               </Text>
             </View>
           </View>
+          <View style={styles.xpRow}>
+            <View style={styles.xpLeft}>
+              <MaterialCommunityIcons name="star-four-points" size={13} color={colors.premium} />
+              <Text style={[styles.xpTitle, { color: colors.foreground }]}>
+                Sv.{level.level + 1} {level.title}
+              </Text>
+            </View>
+            <Text style={[styles.xpValue, { color: colors.mutedForeground }]}>{xp} XP</Text>
+          </View>
+          <View style={[styles.barTrack, { backgroundColor: colors.muted }]}>
+            <View style={[styles.barFill, { backgroundColor: colors.premium, width: `${levelPercent}%` }]} />
+          </View>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Günün meydan okumasını başlat"
+          onPress={() => router.push({ pathname: '/quiz', params: { mode: 'daily' } })}
+          style={[styles.challengeCard, { backgroundColor: colors.primary }]}
+        >
+          <View style={[styles.challengeIcon, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
+            <MaterialCommunityIcons name="sword-cross" size={18} color={colors.primaryForeground} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.challengeTitle, { color: colors.primaryForeground }]}>Günün Meydan Okuması</Text>
+            <Text style={[styles.challengeSub, { color: 'rgba(255,255,255,0.75)' }]}>
+              {todayBest !== null ? `Bugünkü en iyi skorun: ${todayBest}/10` : 'Her gün aynı 10 soru — skoru geç!'}
+            </Text>
+          </View>
+          <Feather name="play" size={16} color={colors.primaryForeground} />
+        </Pressable>
+
+        {!allDone && (
+          <View style={[styles.suggestionCard, { backgroundColor: colors.accent }]}>
+            <Feather name="compass" size={14} color={colors.accentForeground} />
+            <Text style={[styles.suggestionText, { color: colors.accentForeground }]}>{suggestion}</Text>
+          </View>
+        )}
 
         <View style={styles.list}>
           {tasks.map((task) => {
@@ -408,6 +458,16 @@ const styles = StyleSheet.create({
   addHint: { fontSize: 10.5, textAlign: 'center', marginTop: -4 },
   streakCard: { flexDirection: 'row', alignItems: 'center', gap: 9, borderRadius: 14, padding: 12 },
   streakCardText: { flex: 1, fontSize: 12, fontWeight: '600', lineHeight: 17 },
+  xpRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  xpLeft: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  xpTitle: { fontSize: 12, fontWeight: '700' },
+  xpValue: { fontSize: 11, fontWeight: '700' },
+  challengeCard: { flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 16, padding: 13 },
+  challengeIcon: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  challengeTitle: { fontSize: 13.5, fontWeight: '700' },
+  challengeSub: { fontSize: 11, marginTop: 1 },
+  suggestionCard: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
+  suggestionText: { flex: 1, fontSize: 11.5, fontWeight: '600', lineHeight: 16 },
   cta: { borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
   ctaText: { fontSize: 14, fontWeight: '700' },
 });

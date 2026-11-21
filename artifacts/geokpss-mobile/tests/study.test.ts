@@ -139,3 +139,33 @@ test('all geography layers are preserved by sanitizePersistedStudy (including tr
     assert.equal(clean.reviewItems[0].layer, layer.id);
   }
 });
+
+test('xpLevel thresholds and progress', async () => {
+  const { xpLevel, XP_LEVELS } = await import('../utils/study');
+  assert.equal(xpLevel(0).level, 0);
+  assert.equal(xpLevel(0).title, XP_LEVELS[0].title);
+  assert.equal(xpLevel(149).level, 0);
+  assert.equal(xpLevel(150).level, 1);
+  assert.equal(xpLevel(99999).level, XP_LEVELS.length - 1);
+  const mid = xpLevel(275);
+  assert.equal(mid.intoLevel, 125);
+  assert.equal(mid.span, XP_LEVELS[2].xp - XP_LEVELS[1].xp);
+});
+
+test('sanitizePersistedStudy defaults and clamps new retention fields', () => {
+  const empty = sanitizePersistedStudy({});
+  assert.deepEqual(empty.discovered, []);
+  assert.equal(empty.xp, 0);
+  assert.deepEqual(empty.challengeBest, {});
+
+  const clean = sanitizePersistedStudy({
+    discovered: ['provinces:Adana', 42, 'lakes:van'],
+    xp: -50,
+    challengeBest: { '2025-01-01': 8, bad: 'x', '2025-01-02': 99 },
+    program: { '2025-01-01': { done: ['a'], custom: [], bonus: true } },
+  });
+  assert.deepEqual(clean.discovered, ['provinces:Adana', 'lakes:van']);
+  assert.equal(clean.xp, 0);
+  assert.deepEqual(clean.challengeBest, { '2025-01-01': 8, '2025-01-02': 10 });
+  assert.equal(clean.program['2025-01-01'].bonus, true);
+});

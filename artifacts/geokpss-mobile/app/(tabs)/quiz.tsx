@@ -14,8 +14,9 @@ import { PressableScale } from '@/components/PressableScale';
 import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
 import { speakTurkish } from '@/utils/speech';
+import { localDayKey } from '@/utils/study';
 
-type QuizMode = LayerId | 'mixed' | 'bank' | 'exam';
+type QuizMode = LayerId | 'mixed' | 'bank' | 'exam' | 'daily';
 type QuizQuestion = { kind: 'province'; name: string } | { kind: 'item'; item: MapItem };
 type AnswerResult = { province: string; correct: boolean };
 type BankEntry = { item: MapItem | null; provinceName: string | null; mcq: McqQuestion };
@@ -48,12 +49,31 @@ const BANK_QUESTIONS: BankEntry[] = [
 ];
 const EXAM_LENGTH = 18;
 const EXAM_SECONDS = 15 * 60;
+const DAILY_LENGTH = 10;
+const DAILY_SECONDS = 6 * 60;
 const EXAM_RING_RADIUS = 36;
 const EXAM_RING_CIRCUMFERENCE = 2 * Math.PI * EXAM_RING_RADIUS;
 const EMPTY_MAP_ITEMS: MapItem[] = [];
 
 function isQuizMode(value?: string): value is QuizMode {
-  return value === 'mixed' || value === 'bank' || value === 'exam' || LAYERS.some((layer) => layer.id === value);
+  return value === 'mixed' || value === 'bank' || value === 'exam' || value === 'daily' || LAYERS.some((layer) => layer.id === value);
+}
+
+/** Deterministic daily challenge: same 10 questions for everyone on a given day. */
+function seededDailyQuestions(): BankEntry[] {
+  const dayKey = localDayKey();
+  let seed = 7;
+  for (const ch of dayKey) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const pool = [...BANK_QUESTIONS];
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, DAILY_LENGTH);
 }
 
 function shuffle<T>(list: T[]): T[] {
@@ -68,7 +88,7 @@ function shuffle<T>(list: T[]): T[] {
 export default function QuizScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { answered, correct, hydrated, reviewItems, recordQuizAnswer } = useStudy();
+  const { answered, correct, hydrated, reviewItems, challengeBest, recordQuizAnswer, recordChallengeResult } = useStudy();
   const { mode: modeParam, reviewIds: reviewIdsParam } = useLocalSearchParams<{ mode?: string; reviewIds?: string }>();
   const routeReviewIds = useMemo(
     () => (typeof reviewIdsParam === 'string' ? reviewIdsParam.split(',').filter(Boolean) : []),
@@ -100,10 +120,11 @@ export default function QuizScreen() {
     setSelectedProvince(null);
     setMcqPick(null);
     setTfPick(null);
-    if (resolvedMode === 'exam') {
+    if (resolvedMode === 'exam' || resolvedMode === 'daily') {
       setExamSeed((seed) => seed + 1);
       setExamDone(false);
-      setExamSecondsLeft(EXAM_SECONDS);
+      dailyRecordedRef.current = false;
+      setExamSecondsLeft(resolvedMode === 'daily' ? DAILY_SECONDS : EXAM_SECONDS);
       setExamStats({ correct: 0, wrong: 0 });
       setExamLayers({});
       setExamLog([]);
@@ -170,17 +191,23 @@ export default function QuizScreen() {
   const isMixed = mode === 'mixed';
   const isBank = mode === 'bank';
   const isExam = mode === 'exam';
-  const isLayerMode = !isMixed && !isBank && !isExam;
-  const isMcq = isBank || isExam || (isLayerMode && !reviewMode && layerQuizFormat === 'mcq');
+  const isDaily = mode === 'daily';
+  const isExamFlow = isExam || isDaily;
+  const examLength = isDaily ? DAILY_LENGTH : EXAM_LENGTH;
+  const examSecondsTotal = isDaily ? DAILY_SECONDS : EXAM_SECONDS;
+  const isLayerMode = !isMixed && !isBank && !isExamFlow;
+  const isMcq = isBank || isExamFlow || (isLayerMode && !reviewMode && layerQuizFormat === 'mcq');
   const isTf = isLayerMode && !reviewMode && layerQuizFormat === 'tf';
   const examQuestions = useMemo(
     () => (isExam ? shuffle(BANK_QUESTIONS).slice(0, EXAM_LENGTH) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isExam, examSeed],
   );
+  const dailyQuestions = useMemo(() => (isDaily ? seededDailyQuestions() : []), [isDaily]);
+  const examPool = isDaily ? dailyQuestions : examQuestions;
   const bankEntry = isMcq && !reviewMode && !examDone
-    ? isExam
-      ? examQuestions[questionIndex]
+    ? isExamFlow
+      ? examPool[questionIndex]
       : orderedBankQuestions[questionIndex % Math.max(orderedBankQuestions.length, 1)]
     : undefined;
   const mixedQuestion =
@@ -247,11 +274,11 @@ export default function QuizScreen() {
   }, [answeredCorrect, promptScale]);
   const answerLayer: LayerId = isProvinceQuestion
     ? 'provinces'
-    : targetItem?.layer ?? (mode === 'mixed' || mode === 'bank' || mode === 'exam' ? 'provinces' : mode);
+    : targetItem?.layer ?? (mode === 'mixed' || mode === 'bank' || isExamFlow ? 'provinces' : mode);
   const totalQuestions = reviewMode
     ? reviewSession.length
-    : isExam
-      ? EXAM_LENGTH
+    : isExamFlow
+      ? examLength
       : isMcq
       ? orderedBankQuestions.length
       : isMixed
@@ -264,7 +291,7 @@ export default function QuizScreen() {
     : 0;
 
   useEffect(() => {
-    if (!isExam || examDone || reviewMode) return;
+    if (!isExamFlow || examDone || reviewMode) return;
     const timer = setInterval(() => {
       setExamSecondsLeft((seconds) => {
         if (seconds <= 1) {
@@ -275,13 +302,13 @@ export default function QuizScreen() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [isExam, examDone, reviewMode]);
+  }, [isExamFlow, examDone, reviewMode]);
 
   useEffect(() => {
-    if (!isExam || !examDone || examSecondsLeft > 0) return;
+    if (!isExamFlow || !examDone || examSecondsLeft > 0) return;
     const answeredCount = examStats.correct + examStats.wrong;
-    if (answeredCount >= EXAM_LENGTH) return;
-    const remainingEntries = examQuestions.slice(answeredCount, EXAM_LENGTH);
+    if (answeredCount >= examLength) return;
+    const remainingEntries = examPool.slice(answeredCount, examLength);
     for (const entry of remainingEntries) {
       recordQuizAnswer({
         layer: entry.item?.layer ?? 'provinces',
@@ -291,15 +318,24 @@ export default function QuizScreen() {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [examDone, examSecondsLeft, isExam]);
+  }, [examDone, examSecondsLeft, isExamFlow, examLength, examPool]);
+
+  const dailyRecordedRef = React.useRef(false);
+  useEffect(() => {
+    if (isDaily && examDone && !dailyRecordedRef.current) {
+      dailyRecordedRef.current = true;
+      recordChallengeResult(examStats.correct, DAILY_LENGTH);
+    }
+  }, [isDaily, examDone, examStats.correct, recordChallengeResult]);
 
   const examTimeLabel = `${Math.floor(examSecondsLeft / 60)}:${String(examSecondsLeft % 60).padStart(2, '0')}`;
   const examAnswered = examStats.correct + examStats.wrong;
   // Süre dolduğunda cevaplanmayan sorular yanlış sayılır.
-  const examUnanswered = examDone ? Math.max(0, EXAM_LENGTH - examAnswered) : 0;
-  const examAccuracy = examDone ? Math.round((examStats.correct / EXAM_LENGTH) * 100) : 0;
+  const examUnanswered = examDone ? Math.max(0, examLength - examAnswered) : 0;
+  const examAccuracy = examDone ? Math.round((examStats.correct / examLength) * 100) : 0;
   const examNet = examStats.correct - examStats.wrong * 0.25 - examUnanswered * 0.25;
-  const examUsedSeconds = EXAM_SECONDS - examSecondsLeft;
+  const examUsedSeconds = examSecondsTotal - examSecondsLeft;
+  const dailyBest = challengeBest[localDayKey()] ?? 0;
   const examWrongEntries = examLog.filter((entry) => !entry.correct);
   const examWeakLayer = Object.entries(examLayers)
     .map(([layerId, stats]) => ({ layerId, ...stats, total: stats.correct + stats.wrong }))
@@ -315,10 +351,11 @@ export default function QuizScreen() {
     setSelectedProvince(null);
     setMcqPick(null);
     setTfPick(null);
-    if (nextMode === 'exam') {
+    if (nextMode === 'exam' || nextMode === 'daily') {
       setExamSeed((seed) => seed + 1);
       setExamDone(false);
-      setExamSecondsLeft(EXAM_SECONDS);
+      dailyRecordedRef.current = false;
+      setExamSecondsLeft(nextMode === 'daily' ? DAILY_SECONDS : EXAM_SECONDS);
       setExamStats({ correct: 0, wrong: 0 });
       setExamLayers({});
       setExamLog([]);
@@ -331,7 +368,7 @@ export default function QuizScreen() {
     const isCorrect = index === bankEntry.mcq.answer;
     setMcqPick({ index, correct: isCorrect });
     const layerId = bankEntry.item?.layer ?? 'provinces';
-    if (isExam) {
+    if (isExamFlow) {
       setExamStats((stats) => (isCorrect
         ? { correct: stats.correct + 1, wrong: stats.wrong }
         : { correct: stats.correct, wrong: stats.wrong + 1 }));
@@ -390,7 +427,7 @@ export default function QuizScreen() {
   };
 
   const nextQuestion = () => {
-    if (isExam && questionIndex + 1 >= EXAM_LENGTH) {
+    if (isExamFlow && questionIndex + 1 >= examLength) {
       setMcqPick(null);
     setTfPick(null);
       setExamDone(true);
@@ -426,14 +463,17 @@ export default function QuizScreen() {
     ...LAYERS.map((layer) => ({ id: layer.id as QuizMode, label: layer.label })),
     { id: 'mixed', label: 'Karışık' },
     { id: 'bank', label: 'Soru bankası' },
+    { id: 'daily', label: 'Günün Sorusu' },
     { id: 'exam', label: 'Deneme' },
   ];
   const activeLayer = LAYERS.find((layer) => layer.id === mode);
   const activeTopicLabel = reviewMode
     ? 'ARALIKLI TEKRAR'
-    : isExam
-      ? 'DENEME SINAVI'
-      : isBank
+    : isDaily
+      ? 'GÜNÜN SORUSU'
+      : isExam
+        ? 'DENEME SINAVI'
+        : isBank
         ? 'SORU BANKASI'
         : activeLayer
           ? `${activeLayer.label.toLocaleUpperCase('tr')} · ${isMcq ? 'TEST' : 'HARİTA'}`
@@ -458,14 +498,14 @@ export default function QuizScreen() {
                 {reviewComplete ? 'BİTTİ' : `Soru ${Math.min(questionIndex + 1, Math.max(totalQuestions, 1))}`}
               </Text>
               <Text style={[styles.progressTotal, { color: colors.mutedForeground }]}>
-                {isExam ? `/ ${EXAM_LENGTH}` : totalQuestions > 0 ? `/ ${totalQuestions}` : ''}
+                {isExamFlow ? `/ ${examLength}` : totalQuestions > 0 ? `/ ${totalQuestions}` : ''}
               </Text>
             </View>
             <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
               <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${progress}%` }]} />
             </View>
           </View>
-          {isExam ? (
+          {isExamFlow ? (
             <View style={[styles.timerPill, { backgroundColor: colors.muted }]}>
               <Feather name="clock" size={14} color={examSecondsLeft <= 60 ? colors.destructive : colors.primary} />
               <Text style={[styles.timerText, { color: examSecondsLeft <= 60 ? colors.destructive : colors.primary }]}>{examTimeLabel}</Text>
@@ -569,8 +609,10 @@ export default function QuizScreen() {
           <Text style={[styles.question, { color: colors.foreground }]}>
             {reviewComplete
               ? 'Bugünkü tekrar turunu tamamladın.'
-              : isExam && examDone
-                ? 'Deneme bitti — sonucun aşağıda.'
+              : isExamFlow && examDone
+                ? isDaily
+                  ? 'Günün soruları bitti — sonucun aşağıda.'
+                  : 'Deneme bitti — sonucun aşağıda.'
                 : !hasTarget
                 ? reviewMode && !hydrated ? 'Tekrar öğeleri yükleniyor.' : 'Bu katmanda tekrar bekleyen öğe bulunamadı.'
                 : isMcq && bankEntry
@@ -584,8 +626,10 @@ export default function QuizScreen() {
           <Text style={[styles.instruction, { color: colors.mutedForeground }]}>
             {reviewComplete
               ? 'Tekrar listen güncellendi.'
-              : isExam && examDone
-                ? 'Yeni deneme için soruları karıştır.'
+              : isExamFlow && examDone
+                ? isDaily
+                  ? 'Skorun günün en iyisiyle karşılaştırılır.'
+                  : 'Yeni deneme için soruları karıştır.'
                 : hasTarget
                 ? isTf
                   ? 'İfadeyi dikkatlice oku ve karar ver.'
@@ -606,7 +650,7 @@ export default function QuizScreen() {
               <Text style={[styles.feedbackText, { color: colors.successMuted }]}>Bu sorular sonraki çalışma aralığına taşındı.</Text>
             </View>
           </View>
-        ) : isExam && examDone ? (
+        ) : isExamFlow && examDone ? (
           <View style={[styles.optionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.examResult}>
               <View style={styles.ringWrap}>
@@ -629,8 +673,13 @@ export default function QuizScreen() {
                   <Text style={[styles.ringPercent, { color: colors.foreground }]}>%{examAccuracy}</Text>
                 </View>
               </View>
-              <Text style={[styles.examScore, { color: colors.foreground }]}>{examStats.correct}/{EXAM_LENGTH} doğru</Text>
+              <Text style={[styles.examScore, { color: colors.foreground }]}>{examStats.correct}/{examLength} doğru</Text>
               <Text style={[styles.examNet, { color: colors.primary }]}>Net: {examNet.toFixed(2)}</Text>
+              {isDaily && dailyBest > 0 && (
+                <Text style={[styles.examAccuracy, { color: colors.primary }]}>
+                  Günün en iyi skoru: {dailyBest}/{DAILY_LENGTH}
+                </Text>
+              )}
               <Text style={[styles.examAccuracy, { color: colors.mutedForeground }]}>
                 {examStats.wrong} yanlış{examUnanswered > 0 ? ` · ${examUnanswered} boş` : ''} · {Math.floor(examUsedSeconds / 60)}:{String(examUsedSeconds % 60).padStart(2, '0')} kullanıldı
               </Text>
@@ -686,7 +735,8 @@ export default function QuizScreen() {
               onPress={() => {
                 setExamSeed((seed) => seed + 1);
                 setExamDone(false);
-                setExamSecondsLeft(EXAM_SECONDS);
+                dailyRecordedRef.current = false;
+                setExamSecondsLeft(examSecondsTotal);
                 setExamStats({ correct: 0, wrong: 0 });
                 setExamLayers({});
                 setExamLog([]);
@@ -888,8 +938,8 @@ export default function QuizScreen() {
             <Text style={[styles.primaryButtonText, { color: colors.primaryForeground }]}>
               {reviewMode && questionIndex + 1 >= reviewSession.length
                 ? 'Tekrarı tamamla'
-                : isExam && questionIndex + 1 >= EXAM_LENGTH
-                  ? 'Denemeyi bitir'
+                : isExamFlow && questionIndex + 1 >= examLength
+                  ? 'Bitir'
                   : 'Sonraki soru'}
             </Text>
             <Feather name="arrow-right" size={17} color={colors.primaryForeground} />
