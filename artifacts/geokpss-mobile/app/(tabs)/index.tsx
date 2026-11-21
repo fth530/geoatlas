@@ -169,6 +169,29 @@ export default function MapScreen() {
     setSelectedItem(null);
     void Haptics.selectionAsync();
   };
+  const renderFilterChip = (filter: { id: string; label: string }) => {
+    const active = filterId === filter.id;
+    const count = filterCounts.get(filter.id) ?? 0;
+    return (
+      <Pressable
+        key={filter.id}
+        onPress={() => chooseFilter(filter.id)}
+        style={[
+          styles.filterChip,
+          {
+            backgroundColor: active ? colors.primary : colors.card,
+            borderColor: active ? colors.primary : colors.border,
+          },
+        ]}
+      >
+        <Text style={[styles.filterLabel, { color: active ? colors.primaryForeground : colors.foreground }]}>{filter.label}</Text>
+        <Text style={[styles.filterCount, { color: active ? colors.primaryForeground : colors.mutedForeground, opacity: active ? 0.85 : 0.65 }]}>
+          {count}
+        </Text>
+      </Pressable>
+    );
+  };
+
   const chooseFilter = (nextFilterId: string) => {
     setFilterId(nextFilterId);
     if (nextFilterId === 'all') {
@@ -635,32 +658,16 @@ export default function MapScreen() {
             </Pressable>
           </View>
 
-          {activeLayer.filters.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.fullscreenFilterRow}>
-              {activeLayer.filters.map((filter) => {
-                const active = filterId === filter.id;
-                const count = filterCounts.get(filter.id) ?? 0;
-                return (
-                  <Pressable
-                    key={filter.id}
-                    onPress={() => chooseFilter(filter.id)}
-                    style={[
-                      styles.filterChip,
-                      {
-                        backgroundColor: active ? colors.primary : colors.card,
-                        borderColor: active ? colors.primary : colors.border,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.filterLabel, { color: active ? colors.primaryForeground : colors.foreground }]}>{filter.label}</Text>
-                    <Text style={[styles.filterCount, { color: active ? colors.primaryForeground : colors.mutedForeground, opacity: active ? 0.85 : 0.65 }]}>
-                      {count}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
+          {activeLayer.filters.length > 1 &&
+            (mapLandscape ? (
+              <ScrollView style={{ flexGrow: 0, maxHeight: 104 }} showsVerticalScrollIndicator={false}>
+                <View style={styles.fullscreenFilterWrap}>{activeLayer.filters.map(renderFilterChip)}</View>
+              </ScrollView>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.fullscreenFilterRow}>
+                {activeLayer.filters.map(renderFilterChip)}
+              </ScrollView>
+            ))}
 
           <ScrollView contentContainerStyle={styles.fullscreenScroll} showsVerticalScrollIndicator={false}>
             <TurkeyMap
@@ -989,6 +996,7 @@ const styles = StyleSheet.create({
   fullscreenCloseBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
   fullscreenCloseText: { fontSize: 12, fontWeight: '700' },
   fullscreenFilterRow: { gap: 7, paddingVertical: 2, paddingRight: 12 },
+  fullscreenFilterWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, paddingVertical: 2, paddingRight: 4 },
   fullscreenScroll: { gap: 12, paddingBottom: 28 },
   fullscreenItemsWrap: { gap: 7 },
   fullscreenItemChips: { gap: 7, paddingRight: 12 },
