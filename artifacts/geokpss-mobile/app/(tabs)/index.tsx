@@ -5,6 +5,7 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import React, { useEffect, useMemo, useState } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -26,6 +27,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
 import { speakTurkish } from '@/utils/speech';
+import { googleMapsSearchUrl } from '@/utils/maps';
 
 function itemMatchesFilter(item: MapItem, layer: LayerId, filter: string): boolean {
   if (item.layer !== layer) return false;
@@ -450,6 +452,14 @@ export default function MapScreen() {
               <Pressable accessibilityLabel="İsmi seslendir" onPress={() => void speakTurkish(`${selectedItem.name}. ${selectedItem.provinces.join(', ')}`)} hitSlop={8}>
                 <Feather name="volume-2" size={17} color={colors.mutedForeground} />
               </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Google Haritalar'da aç"
+                onPress={() => void Linking.openURL(googleMapsSearchUrl(`${selectedItem.name} ${selectedItem.provinces[0] ?? ''}`.trim()))}
+                hitSlop={8}
+              >
+                <Feather name="external-link" size={16} color={colors.mutedForeground} />
+              </Pressable>
               <Pressable accessibilityLabel="Seçimi temizle" onPress={() => setSelectedItem(null)} hitSlop={10}>
                 <Feather name="x" size={19} color={colors.mutedForeground} />
               </Pressable>
@@ -535,6 +545,14 @@ export default function MapScreen() {
               </View>
               <Pressable accessibilityLabel="İsmi seslendir" onPress={() => void speakTurkish(selectedProvince)} hitSlop={8}>
                 <Feather name="volume-2" size={17} color={colors.mutedForeground} />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Google Haritalar'da aç"
+                onPress={() => void Linking.openURL(googleMapsSearchUrl(selectedProvince))}
+                hitSlop={8}
+              >
+                <Feather name="external-link" size={16} color={colors.mutedForeground} />
               </Pressable>
               <Pressable accessibilityLabel="Seçimi temizle" onPress={() => setSelectedProvince(null)} hitSlop={10}>
                 <Feather name="x" size={19} color={colors.mutedForeground} />

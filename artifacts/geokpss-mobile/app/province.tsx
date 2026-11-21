@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import React, { useMemo } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYERS, MAP_COLORS, MAP_ITEMS } from '@/data/geography';
 import { PROVINCE_NOTES } from '@/data/province-notes';
@@ -11,6 +11,7 @@ import { AppText as Text } from '@/components/AppText';
 import { PressableScale } from '@/components/PressableScale';
 import { useColors } from '@/hooks/useColors';
 import { speakTurkish } from '@/utils/speech';
+import { googleMapsSearchUrl } from '@/utils/maps';
 
 export default function ProvinceScreen() {
   const colors = useColors();
@@ -59,6 +60,14 @@ export default function ProvinceScreen() {
           </View>
           <Pressable accessibilityLabel="İsmi seslendir" onPress={() => void speakTurkish(province.name)} hitSlop={8}>
             <Feather name="volume-2" size={18} color={colors.mutedForeground} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Google Haritalar'da aç"
+            onPress={() => void Linking.openURL(googleMapsSearchUrl(province.name))}
+            hitSlop={8}
+          >
+            <Feather name="external-link" size={17} color={colors.mutedForeground} />
           </Pressable>
         </View>
 
