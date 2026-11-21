@@ -309,8 +309,8 @@ export default function StatsScreen() {
                 <Text style={[styles.goalSub, { color: colors.mutedForeground }]}>
                   {(() => {
                     const day = program[localDayKey()] ?? { done: [], custom: [] };
-                    const done = day.done.length + (stats.todayAnswered >= 10 ? 1 : 0);
-                    const total = 6 + day.custom.length;
+                    const done = day.done.length + (stats.todayAnswered >= dailyGoal ? 1 : 0);
+                    const total = 7 + day.custom.length;
                     return `${Math.min(done, total)}/${total} görev tamamlandı`;
                   })()}
                 </Text>

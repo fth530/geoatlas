@@ -9,6 +9,7 @@ import { AppText as Text } from '@/components/AppText';
 import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
 import { localDayKey, studyStreak } from '@/utils/study';
+import { LAYERS } from '@/data/geography';
 import type { LayerId } from '@/data/geography';
 
 type TaskRoute = { pathname: string; params?: Record<string, string> };
@@ -29,7 +30,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 export default function ProgramScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { program, dailyActivity, reviewItems, toggleProgramTask, addProgramTask, removeProgramTask } = useStudy();
+  const { program, dailyActivity, dailyGoal, reviewItems, toggleProgramTask, addProgramTask, removeProgramTask } = useStudy();
   const [customDraft, setCustomDraft] = useState('');
 
   const todayKey = localDayKey();
@@ -55,22 +56,52 @@ export default function ProgramScreen() {
     return { pathname: '/quiz', params: { mode: layer, reviewIds: ids.join(',') } };
   }, [dueItems]);
 
+  const weakestLayer = useMemo<LayerId | null>(() => {
+    const wrongByLayer = new Map<LayerId, number>();
+    for (const item of reviewItems) {
+      if (item.lastCorrect) continue;
+      wrongByLayer.set(item.layer, (wrongByLayer.get(item.layer) ?? 0) + 1);
+    }
+    let best: LayerId | null = null;
+    let bestCount = 0;
+    for (const [layer, count] of wrongByLayer) {
+      if (count > bestCount) {
+        best = layer;
+        bestCount = count;
+      }
+    }
+    return best;
+  }, [reviewItems]);
+
   const tasks = useMemo<ProgramTask[]>(() => {
+    const goalRemaining = Math.max(0, dailyGoal - todayAnswered);
+    const reviewCount = Math.min(8, Math.max(dueItems.length, 1));
+    const weakestLabel = weakestLayer ? (LAYERS.find((layer) => layer.id === weakestLayer)?.label ?? 'Karma') : 'Karma';
     const list: ProgramTask[] = [
       {
-        id: 'quiz-10',
-        title: '10 karma coğrafya sorusu çöz',
-        detail: todayAnswered >= 10 ? 'Bugün tamamlandı' : `${Math.min(todayAnswered, 10)}/10 soru`,
-        icon: 'help-circle',
+        id: 'goal-questions',
+        title: goalRemaining > 0 ? `Günlük hedefe ${goalRemaining} soru kaldı` : 'Günlük hedef tamamlandı',
+        detail: `Hedef: ${dailyGoal} soru/gün · bugün ${todayAnswered}`,
+        icon: 'target',
         route: { pathname: '/quiz', params: { mode: 'mixed' } },
-        autoDone: todayAnswered >= 10,
+        autoDone: todayAnswered >= dailyGoal,
       },
       {
         id: 'review-due',
-        title: `Tekrar listesinden ${Math.min(5, Math.max(dueItems.length, 1))} öğe çalış`,
-        detail: dueItems.length > 0 ? `${dueItems.length} öğe bekliyor` : 'Bekleyen tekrar yok — aferin',
+        title: dueItems.length > 0 ? `Tekrar listesinden ${reviewCount} öğe çalış` : 'Tekrar listesi temizlendi',
+        detail: dueItems.length > 0 ? `${dueItems.length} öğe bekliyor` : 'Vadesi gelen öğe yok — aferin',
         icon: 'repeat',
         route: reviewRoute,
+        autoDone: false,
+      },
+      {
+        id: 'weak-topic',
+        title: weakestLayer ? `${weakestLabel} konusunda 10 soru` : 'Karma 10 soru ile ısın',
+        detail: weakestLayer ? 'En çok zorlandığın alan' : 'Zayıf alanın yok, genel pratik',
+        icon: 'trending-down',
+        route: weakestLayer
+          ? { pathname: '/quiz', params: { mode: weakestLayer } }
+          : { pathname: '/quiz', params: { mode: 'mixed' } },
         autoDone: false,
       },
       {
@@ -118,7 +149,7 @@ export default function ProgramScreen() {
       });
     }
     return list;
-  }, [day.custom, dueItems.length, reviewRoute, todayAnswered]);
+  }, [day.custom, dailyGoal, dueItems.length, reviewRoute, todayAnswered, weakestLayer]);
 
   const isDone = (task: ProgramTask) => task.autoDone || doneSet.has(task.id);
   const doneCount = tasks.filter(isDone).length;
