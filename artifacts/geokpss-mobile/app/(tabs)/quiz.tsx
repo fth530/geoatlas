@@ -86,6 +86,7 @@ export default function QuizScreen() {
   const [examSecondsLeft, setExamSecondsLeft] = useState(EXAM_SECONDS);
   const [examStats, setExamStats] = useState({ correct: 0, wrong: 0 });
   const [examLayers, setExamLayers] = useState<Record<string, { correct: number; wrong: number }>>({});
+  const [examLog, setExamLog] = useState<{ name: string; layerId: string; correct: boolean }[]>([]);
 
   useEffect(() => {
     const resolvedMode = isQuizMode(modeParam) ? modeParam : 'provinces';
@@ -102,6 +103,7 @@ export default function QuizScreen() {
       setExamSecondsLeft(EXAM_SECONDS);
       setExamStats({ correct: 0, wrong: 0 });
       setExamLayers({});
+      setExamLog([]);
     }
   }, [modeParam, reviewIdsParam]);
 
@@ -291,6 +293,13 @@ export default function QuizScreen() {
   // Süre dolduğunda cevaplanmayan sorular yanlış sayılır.
   const examUnanswered = examDone ? Math.max(0, EXAM_LENGTH - examAnswered) : 0;
   const examAccuracy = examDone ? Math.round((examStats.correct / EXAM_LENGTH) * 100) : 0;
+  const examNet = examStats.correct - examStats.wrong * 0.25 - examUnanswered * 0.25;
+  const examUsedSeconds = EXAM_SECONDS - examSecondsLeft;
+  const examWrongEntries = examLog.filter((entry) => !entry.correct);
+  const examWeakLayer = Object.entries(examLayers)
+    .map(([layerId, stats]) => ({ layerId, ...stats, total: stats.correct + stats.wrong }))
+    .filter((entry) => entry.total > 0)
+    .sort((a, b) => b.wrong - a.wrong || a.correct - b.correct)[0];
 
   const changeMode = (nextMode: QuizMode) => {
     setMode(nextMode);
@@ -306,6 +315,7 @@ export default function QuizScreen() {
       setExamSecondsLeft(EXAM_SECONDS);
       setExamStats({ correct: 0, wrong: 0 });
       setExamLayers({});
+      setExamLog([]);
     }
     router.setParams({ mode: nextMode, reviewIds: undefined });
   };
@@ -326,6 +336,11 @@ export default function QuizScreen() {
           wrong: (layers[layerId]?.wrong ?? 0) + (isCorrect ? 0 : 1),
         },
       }));
+      setExamLog((log) => [...log, {
+        name: bankEntry.item?.name ?? bankEntry.provinceName ?? 'Soru',
+        layerId,
+        correct: isCorrect,
+      }]);
     }
     recordQuizAnswer({
       layer: bankEntry.item?.layer ?? 'provinces',
@@ -574,9 +589,38 @@ export default function QuizScreen() {
                 </View>
               </View>
               <Text style={[styles.examScore, { color: colors.foreground }]}>{examStats.correct}/{EXAM_LENGTH} doğru</Text>
+              <Text style={[styles.examNet, { color: colors.primary }]}>Net: {examNet.toFixed(2)}</Text>
               <Text style={[styles.examAccuracy, { color: colors.mutedForeground }]}>
-                Kalan süre: {examTimeLabel}{examUnanswered > 0 ? ` · ${examUnanswered} soruya yetişilemedi` : ''}
+                {examStats.wrong} yanlış{examUnanswered > 0 ? ` · ${examUnanswered} boş` : ''} · {Math.floor(examUsedSeconds / 60)}:{String(examUsedSeconds % 60).padStart(2, '0')} kullanıldı
               </Text>
+              {examWrongEntries.length > 0 && (
+                <View style={[styles.wrongList, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.wrongListTitle, { color: colors.foreground }]}>Yanlışlar</Text>
+                  {examWrongEntries.slice(0, 6).map((entry, index) => (
+                    <View key={`${entry.name}-${index}`} style={styles.wrongRow}>
+                      <Feather name="x-circle" size={12} color={colors.destructive} />
+                      <Text style={[styles.wrongName, { color: colors.mutedForeground }]} numberOfLines={1}>{entry.name}</Text>
+                    </View>
+                  ))}
+                  {examWrongEntries.length > 6 && (
+                    <Text style={[styles.wrongMore, { color: colors.mutedForeground }]}>+{examWrongEntries.length - 6} yanlış daha</Text>
+                  )}
+                </View>
+              )}
+              {examWeakLayer && examWeakLayer.wrong > 0 && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => router.push({ pathname: '/quiz', params: { mode: examWeakLayer.layerId } })}
+                  style={[styles.weakSuggestion, { backgroundColor: colors.accent }]}
+                  testID="exam-weak-suggestion"
+                >
+                  <Feather name="target" size={13} color={colors.primary} />
+                  <Text style={[styles.weakSuggestionText, { color: colors.accentForeground }]} numberOfLines={1}>
+                    En zayıf konu: {LAYERS.find((layer) => layer.id === examWeakLayer.layerId)?.label ?? examWeakLayer.layerId} ({examWeakLayer.wrong} yanlış)
+                  </Text>
+                  <Feather name="arrow-right" size={13} color={colors.primary} />
+                </Pressable>
+              )}
               {Object.keys(examLayers).length > 0 && (
                 <View style={[styles.layerBreakdown, { borderTopColor: colors.border }]}>
                   {Object.entries(examLayers)
@@ -604,6 +648,7 @@ export default function QuizScreen() {
                 setExamSecondsLeft(EXAM_SECONDS);
                 setExamStats({ correct: 0, wrong: 0 });
                 setExamLayers({});
+                setExamLog([]);
                 setQuestionIndex(0);
                 setMcqPick(null);
               }}
@@ -830,7 +875,15 @@ const styles = StyleSheet.create({
   ringCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   ringPercent: { fontSize: 20, fontWeight: '700' },
   examScore: { fontSize: 16, fontWeight: '700' },
+  examNet: { fontSize: 15, fontWeight: '700' },
   examAccuracy: { fontSize: 12, fontWeight: '600' },
+  wrongList: { alignSelf: 'stretch', borderTopWidth: 1, marginTop: 6, paddingTop: 10, gap: 5 },
+  wrongListTitle: { fontSize: 11, fontWeight: '700', marginBottom: 2 },
+  wrongRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  wrongName: { flex: 1, fontSize: 11 },
+  wrongMore: { fontSize: 10, fontWeight: '600', marginTop: 2 },
+  weakSuggestion: { alignSelf: 'stretch', borderRadius: 12, paddingHorizontal: 11, paddingVertical: 9, flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
+  weakSuggestionText: { flex: 1, fontSize: 11, fontWeight: '600' },
   layerBreakdown: { borderTopWidth: 1, marginTop: 8, paddingTop: 10, alignSelf: 'stretch', gap: 7 },
   layerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   layerRowLabel: { width: 74, fontSize: 9, fontWeight: '700' },
