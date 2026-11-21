@@ -211,8 +211,6 @@ export const LAYERS: Layer[] = [
     icon: 'compass',
     filters: [
       { id: 'all', label: 'Tümü' },
-      { id: 'metal', label: 'Metalik maden' },
-      { id: 'industrial', label: 'Endüstriyel' },
       { id: 'bakir', label: 'Bakır' },
       { id: 'krom', label: 'Krom' },
       { id: 'civa', label: 'Civa' },
