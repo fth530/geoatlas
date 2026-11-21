@@ -159,6 +159,18 @@ export default function MapScreen() {
     [searchText, notes],
   );
   const provinceData = PROVINCES.find((province) => province.name === selectedProvince);
+  const discoveredProvinceNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const key of discovered) {
+      if (key.startsWith('provinces:')) {
+        names.add(key.slice('provinces:'.length));
+      } else {
+        const item = MAP_ITEMS.find((mapItem) => `${mapItem.layer}:${mapItem.id}` === key);
+        item?.provinces.forEach((province) => names.add(province));
+      }
+    }
+    return [...names];
+  }, [discovered]);
   const provinceItems = MAP_ITEMS.filter((item) =>
     item.provinces.includes(selectedProvince ?? '') && (layerId === 'provinces' || item.layer === layerId),
   );
@@ -405,6 +417,7 @@ export default function MapScreen() {
               void Haptics.selectionAsync();
             }}
             highlightProvinces={selectedItem?.provinces}
+            discoveredProvinces={discoveredProvinceNames}
             onToggleFullscreen={() => setFullscreenOpen(true)}
           />
           {layerId !== 'provinces' && filterId !== 'all' && visibleItems.length > 0 && (
@@ -685,6 +698,7 @@ export default function MapScreen() {
                 void Haptics.selectionAsync();
               }}
               highlightProvinces={selectedItem?.provinces}
+              discoveredProvinces={discoveredProvinceNames}
               fullscreen
               onToggleFullscreen={closeFullscreen}
             />

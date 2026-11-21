@@ -124,6 +124,7 @@ export type TurkeyMapProps = {
   correctProvinces?: string[];
   wrongProvince?: string | null;
   highlightProvinces?: string[];
+  discoveredProvinces?: string[];
   fullscreen?: boolean;
   onToggleFullscreen?: () => void;
 };
@@ -136,6 +137,7 @@ type ProvinceLayerProps = {
   wrongProvince: string | null;
   labelMode: MapLabelMode;
   highlightProvinces: string[];
+  discoveredProvinces: string[];
   activeHighlightColor: string;
   thematicProvinceColors: Map<string, string>;
   onSelect: (name: string) => void;
@@ -149,6 +151,7 @@ const ProvinceLayer = React.memo(function ProvinceLayer({
   wrongProvince,
   labelMode,
   highlightProvinces,
+  discoveredProvinces,
   activeHighlightColor,
   thematicProvinceColors,
   onSelect,
@@ -207,16 +210,30 @@ const ProvinceLayer = React.memo(function ProvinceLayer({
                 ? colors.primary
                 : colors.mapStroke;
 
+        const isDiscovered = !quiz && layer === 'provinces' && discoveredProvinces.includes(shape.name);
+
         return (
-          <Path
-            key={shape.name}
-            d={shape.path}
-            fill={fill}
-            fillRule="evenodd"
-            stroke={strokeColor}
-            strokeWidth={isSelected || isWrong || isHighlight ? 1.15 : thematicColor ? 0.72 : 0.55}
-            {...(Platform.OS === 'web' ? { onClick: selectProvince } : { onPress: selectProvince })}
-          />
+          <React.Fragment key={shape.name}>
+            <Path
+              d={shape.path}
+              fill={fill}
+              fillRule="evenodd"
+              stroke={strokeColor}
+              strokeWidth={isSelected || isWrong || isHighlight ? 1.15 : thematicColor ? 0.72 : 0.55}
+              {...(Platform.OS === 'web' ? { onClick: selectProvince } : { onPress: selectProvince })}
+            />
+            {isDiscovered && (
+              <Circle
+                cx={shape.center.x}
+                cy={shape.center.y}
+                r={2.3}
+                fill={colors.primary}
+                stroke={colors.card}
+                strokeWidth={0.8}
+                opacity={0.95}
+              />
+            )}
+          </React.Fragment>
         );
       })}
 
@@ -665,6 +682,7 @@ export function TurkeyMap({
   correctProvinces = EMPTY_PROVINCES,
   wrongProvince,
   highlightProvinces = EMPTY_PROVINCES,
+  discoveredProvinces = EMPTY_PROVINCES,
   fullscreen = false,
   onToggleFullscreen,
 }: TurkeyMapProps) {
@@ -936,6 +954,7 @@ export function TurkeyMap({
             wrongProvince={wrongProvince ?? null}
             labelMode={labelMode}
             highlightProvinces={highlightProvinces}
+            discoveredProvinces={discoveredProvinces}
             activeHighlightColor={activeHighlightColor}
             thematicProvinceColors={thematicProvinceColors}
             onSelect={focusProvince}
