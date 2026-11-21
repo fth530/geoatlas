@@ -84,6 +84,7 @@ export type PersistedStudyData = {
   correct: number;
   proCandidates: string[];
   dailyActivity: Record<string, DailyActivity>;
+  dailyGoal: number;
 };
 
 const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -176,6 +177,7 @@ export function sanitizePersistedStudy(value: unknown): PersistedStudyData {
             ]),
         )
       : {},
+    dailyGoal: Math.min(200, Math.max(1, asNumber(raw.dailyGoal, 10))),
   };
 }
 

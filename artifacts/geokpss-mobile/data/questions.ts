@@ -1147,3 +1147,33 @@ export function itemMcqs(item: Pick<MapItem, 'id' | 'name' | 'provinces'>): McqQ
   const generated = generatedProvinceMcq(item);
   return generated ? [generated] : [];
 }
+
+export type TfQuestion = {
+  statement: string;
+  answer: boolean;
+};
+
+/**
+ * Deterministik doğru/yanlış sorusu: öğenin il bağlantısı üzerinden üretilir.
+ * `seed` değiştikçe doğru/yanlış dengesi ve kullanılan il değişir.
+ */
+export function itemTfQuestion(item: Pick<MapItem, 'id' | 'name' | 'provinces'>, seed = 0): TfQuestion | null {
+  if (!item.provinces?.length) return null;
+  const hash = [...item.id].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const useWrong = (hash + seed) % 2 === 0;
+  const excluded = new Set(item.provinces);
+  const correct = item.provinces[seed % item.provinces.length];
+  let wrong = '';
+  for (let step = 0; step < PROVINCE_NAMES.length; step += 1) {
+    const candidate = PROVINCE_NAMES[(hash + seed * 13 + step * 7) % PROVINCE_NAMES.length];
+    if (!excluded.has(candidate)) {
+      wrong = candidate;
+      break;
+    }
+  }
+  if (useWrong && !wrong) return null;
+  return {
+    statement: `${item.name} ${useWrong ? wrong : correct} ilindedir.`,
+    answer: !useWrong,
+  };
+}

@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LayerId, LAYERS, LAYER_SOURCES, MAP_ITEMS, MapItem, MAP_COLORS } from '@/data/geography';
+import { LayerId, LAYERS, LAYER_SOURCES, MAP_ITEMS, MapItem, MAP_COLORS, TOPIC_DETAILS } from '@/data/geography';
 import { PROVINCE_NOTES } from '@/data/province-notes';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
 import { AppText as Text } from '@/components/AppText';
@@ -24,6 +24,7 @@ import { FONT_FAMILY } from '@/constants/typography';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
+import { speakTurkish } from '@/utils/speech';
 
 function itemMatchesFilter(item: MapItem, layer: LayerId, filter: string): boolean {
   if (item.layer !== layer) return false;
@@ -36,7 +37,7 @@ export default function MapScreen() {
   const colors = useColors();
   const { isDark, toggleTheme } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const { layer: layerParam, itemId: itemIdParam } = useLocalSearchParams<{ layer?: string; itemId?: string }>();
+  const { layer: layerParam, itemId: itemIdParam, province: provinceParam } = useLocalSearchParams<{ layer?: string; itemId?: string; province?: string }>();
   const [layerId, setLayerId] = useState<LayerId>('provinces');
   const [filterId, setFilterId] = useState('all');
   const [selectedProvince, setSelectedProvince] = useState<string | null>('Ankara');
@@ -64,6 +65,14 @@ export default function MapScreen() {
     setSelectedProvince(item.provinces[0] ?? null);
     setSelectedItem(item);
   }, [itemIdParam]);
+
+  useEffect(() => {
+    if (!provinceParam || !PROVINCES.some((province) => province.name === provinceParam)) return;
+    setLayerId('provinces');
+    setFilterId('all');
+    setSelectedItem(null);
+    setSelectedProvince(provinceParam);
+  }, [provinceParam]);
 
   const activeLayer = LAYERS.find((layer) => layer.id === layerId) ?? LAYERS[0];
   const visibleItems = useMemo(
@@ -105,6 +114,26 @@ export default function MapScreen() {
       ).slice(0, 6);
     },
     [searchText],
+  );
+  const matchingTopics = useMemo(
+    () => {
+      const query = searchText.trim().toLocaleLowerCase('tr');
+      if (!query) return [];
+      return TOPIC_DETAILS.filter((topic) =>
+        `${topic.title} ${topic.subtitle}`.toLocaleLowerCase('tr').includes(query),
+      ).slice(0, 4);
+    },
+    [searchText],
+  );
+  const matchingNotes = useMemo(
+    () => {
+      const query = searchText.trim().toLocaleLowerCase('tr');
+      if (!query) return [];
+      return notes.filter((note) =>
+        `${note.title} ${note.body} ${note.category}`.toLocaleLowerCase('tr').includes(query),
+      ).slice(0, 4);
+    },
+    [searchText, notes],
   );
   const provinceData = PROVINCES.find((province) => province.name === selectedProvince);
   const provinceItems = MAP_ITEMS.filter((item) =>
@@ -372,6 +401,9 @@ export default function MapScreen() {
                 <Text style={[styles.detailTitle, { color: colors.foreground }]}>{selectedItem.name}</Text>
                 <Text style={[styles.detailSub, { color: colors.mutedForeground }]}>{selectedItem.subtypeLabel} · {selectedItem.provinces.join(' / ')}</Text>
               </View>
+              <Pressable accessibilityLabel="İsmi seslendir" onPress={() => void speakTurkish(`${selectedItem.name}. ${selectedItem.provinces.join(', ')}`)} hitSlop={8}>
+                <Feather name="volume-2" size={17} color={colors.mutedForeground} />
+              </Pressable>
               <Pressable accessibilityLabel="Seçimi temizle" onPress={() => setSelectedItem(null)} hitSlop={10}>
                 <Feather name="x" size={19} color={colors.mutedForeground} />
               </Pressable>
@@ -455,6 +487,9 @@ export default function MapScreen() {
                   {provinceData ? `${String(provinceData.plate).padStart(2, '0')} plaka · ${provinceData.region}` : 'İl bilgisi'}
                 </Text>
               </View>
+              <Pressable accessibilityLabel="İsmi seslendir" onPress={() => void speakTurkish(selectedProvince)} hitSlop={8}>
+                <Feather name="volume-2" size={17} color={colors.mutedForeground} />
+              </Pressable>
               <Pressable accessibilityLabel="Seçimi temizle" onPress={() => setSelectedProvince(null)} hitSlop={10}>
                 <Feather name="x" size={19} color={colors.mutedForeground} />
               </Pressable>
@@ -498,6 +533,15 @@ export default function MapScreen() {
                 <Feather name="arrow-right" size={14} color={colors.primaryForeground} />
               </PressableScale>
             </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/province', params: { name: selectedProvince } })}
+              style={styles.provinceDetailLink}
+              testID="open-province-detail"
+            >
+              <Text style={[styles.provinceDetailText, { color: colors.primary }]}>İl detay sayfası</Text>
+              <Feather name="chevron-right" size={14} color={colors.primary} />
+            </Pressable>
           </Animated.View>
         ) : (
           <Pressable onPress={() => chooseProvince('Ankara')} style={[styles.emptySelection, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -757,8 +801,8 @@ export default function MapScreen() {
           <KeyboardAvoidingViewCompat behavior="padding" style={[styles.modalScreen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
           <View style={styles.modalHeader}>
             <View>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Haritada ara</Text>
-              <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>İl, dağ, göl veya coğrafi terim yaz.</Text>
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Ara</Text>
+              <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>İl, özellik, konu veya notun içinde ara.</Text>
             </View>
             <Pressable accessibilityLabel="Aramayı kapat" onPress={() => setSearchOpen(false)} style={[styles.iconButton, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="x" size={19} color={colors.foreground} />
@@ -811,8 +855,44 @@ export default function MapScreen() {
                 <Feather name="arrow-up-right" size={16} color={colors.mutedForeground} />
               </Pressable>
             ))}
-            {!!searchText && matchingProvinces.length === 0 && matchingItems.length === 0 && (
-              <Text style={[styles.noResults, { color: colors.mutedForeground }]}>Bu aramayla eşleşen bir il veya coğrafi özellik bulunamadı.</Text>
+            {matchingTopics.map((topic) => (
+              <Pressable
+                key={topic.id}
+                onPress={() => {
+                  chooseLayer(topic.id as LayerId);
+                  setSearchOpen(false);
+                  setSearchText('');
+                }}
+                style={[styles.searchResult, { borderBottomColor: colors.border }]}
+              >
+                <View style={[styles.searchResultIcon, { backgroundColor: colors.accent }]}><Feather name="layers" size={16} color={colors.primary} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.searchResultTitle, { color: colors.foreground }]}>{topic.title}</Text>
+                  <Text style={[styles.searchResultCopy, { color: colors.mutedForeground }]}>{topic.subtitle}</Text>
+                </View>
+                <Feather name="arrow-up-right" size={16} color={colors.mutedForeground} />
+              </Pressable>
+            ))}
+            {matchingNotes.map((note) => (
+              <Pressable
+                key={note.id}
+                onPress={() => {
+                  setSearchOpen(false);
+                  setSearchText('');
+                  router.push('/notes');
+                }}
+                style={[styles.searchResult, { borderBottomColor: colors.border }]}
+              >
+                <View style={[styles.searchResultIcon, { backgroundColor: colors.accent }]}><Feather name="book-open" size={16} color={colors.primary} /></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.searchResultTitle, { color: colors.foreground }]} numberOfLines={1}>{note.title}</Text>
+                  <Text style={[styles.searchResultCopy, { color: colors.mutedForeground }]} numberOfLines={1}>{note.category} · defter notu</Text>
+                </View>
+                <Feather name="arrow-up-right" size={16} color={colors.mutedForeground} />
+              </Pressable>
+            ))}
+            {!!searchText && matchingProvinces.length === 0 && matchingItems.length === 0 && matchingTopics.length === 0 && matchingNotes.length === 0 && (
+              <Text style={[styles.noResults, { color: colors.mutedForeground }]}>Bu aramayla eşleşen bir sonuç bulunamadı.</Text>
             )}
           </ScrollView>
           </KeyboardAvoidingViewCompat>
@@ -912,6 +992,8 @@ const styles = StyleSheet.create({
   flashcardNoText: { fontSize: 12, fontWeight: '700' },
   flashcardYes: { flex: 1, minHeight: 46, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   flashcardYesText: { fontSize: 12, fontWeight: '700' },
+  provinceDetailLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8 },
+  provinceDetailText: { fontSize: 12, fontWeight: '700' },
   noteFromMap: { flex: 1, minHeight: 44, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   noteFromMapText: { fontSize: 12, fontWeight: '700' },
   relatedList: { gap: 8 },

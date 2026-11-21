@@ -27,7 +27,7 @@ import { isReminderEnabled, REMINDER_HOUR, REMINDER_MINUTE, setReminderEnabled }
 export default function StatsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, dailyActivity, hydrated, importStudyData, resetStudyData } = useStudy();
+  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, dailyActivity, dailyGoal, hydrated, importStudyData, resetStudyData, setDailyGoal } = useStudy();
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -87,15 +87,29 @@ export default function StatsScreen() {
     }
     const weekMax = Math.max(1, ...week.map((day) => day.answered));
     const weekTotal = week.reduce((sum, day) => sum + day.answered, 0);
-    return { accuracy, dueCount, mastered, weakCount, statusCounts, layerStats, topWeak, week, weekMax, weekTotal };
-  }, [answered, correct, notes, reviewItems, topicStatuses, dailyActivity]);
+    const todayKey = localDayKey();
+    const todayAnswered = dailyActivity[todayKey]?.answered ?? 0;
+    const todayCorrect = dailyActivity[todayKey]?.correct ?? 0;
+    const goalPercent = Math.min(100, Math.round((todayAnswered / dailyGoal) * 100));
+    let streak = 0;
+    const streakCursor = new Date();
+    if ((dailyActivity[localDayKey(streakCursor)]?.answered ?? 0) === 0) {
+      streakCursor.setDate(streakCursor.getDate() - 1);
+    }
+    while ((dailyActivity[localDayKey(streakCursor)]?.answered ?? 0) > 0) {
+      streak += 1;
+      streakCursor.setDate(streakCursor.getDate() - 1);
+      if (streak > 365) break;
+    }
+    return { accuracy, dueCount, mastered, weakCount, statusCounts, layerStats, topWeak, week, weekMax, weekTotal, todayAnswered, todayCorrect, goalPercent, streak };
+  }, [answered, correct, notes, reviewItems, topicStatuses, dailyActivity, dailyGoal]);
 
   const exportData = async () => {
     const payload = {
       app: 'geokpss',
       version: 2,
       exportedAt: new Date().toISOString(),
-      study: { notes, topicStatuses, reviewItems, answered, correct, proCandidates, dailyActivity },
+      study: { notes, topicStatuses, reviewItems, answered, correct, proCandidates, dailyActivity, dailyGoal },
     };
     try {
       await Share.share({
@@ -243,6 +257,66 @@ export default function StatsScreen() {
                     <Feather name={metric.icon} size={14} color={colors.primaryForeground} />
                     <Text style={[styles.heroMetricValue, { color: colors.primaryForeground }]}>{metric.value}</Text>
                     <Text style={[styles.heroMetricLabel, { color: colors.primaryForeground }]} numberOfLines={1}>{metric.label}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.goalHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cardTitle, { color: colors.foreground }]}>Günlük hedef</Text>
+                  <Text style={[styles.goalSub, { color: colors.mutedForeground }]}>
+                    Bugün {stats.todayAnswered}/{dailyGoal} soru · {stats.todayCorrect} doğru
+                  </Text>
+                </View>
+                <View style={[styles.goalRingWrap, { backgroundColor: colors.accent }]}>
+                  <Text style={[styles.goalRingText, { color: colors.primary }]}>{stats.goalPercent}%</Text>
+                </View>
+              </View>
+              <View style={[styles.goalTrack, { backgroundColor: colors.muted }]}>
+                <View style={[styles.goalFill, { backgroundColor: stats.goalPercent >= 100 ? colors.success : colors.primary, width: `${stats.goalPercent}%` }]} />
+              </View>
+              <View style={styles.goalChips}>
+                {[5, 10, 20, 30].map((goal) => {
+                  const active = dailyGoal === goal;
+                  return (
+                    <Pressable
+                      key={goal}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      onPress={() => setDailyGoal(goal)}
+                      style={[styles.goalChip, active ? { backgroundColor: colors.primary } : { backgroundColor: colors.muted }]}
+                    >
+                      <Text style={[styles.goalChipText, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>{goal}/gün</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.streakRow}>
+                <View style={[styles.streakIcon, { backgroundColor: colors.accent }]}>
+                  <Feather name="zap" size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.streakValue, { color: colors.foreground }]}>{stats.streak} günlük seri</Text>
+                  <Text style={[styles.streakSub, { color: colors.mutedForeground }]}>
+                    {stats.streak >= 30 ? 'Efsane! 30+ gün çalışıyorsun.' : stats.streak >= 7 ? 'Harika gidiyorsun, seriyi koru!' : 'Her gün birkaç soru seriyi başlatır.'}
+                  </Text>
+                </View>
+                {stats.streak > 0 && (
+                  <View style={[styles.streakBadge, { backgroundColor: colors.primary }]}>
+                    <Feather name="award" size={15} color={colors.primaryForeground} />
+                  </View>
+                )}
+              </View>
+              <View style={styles.streakDots}>
+                {[7, 14, 30].map((milestone) => (
+                  <View key={milestone} style={styles.streakMilestone}>
+                    <View style={[styles.streakMilestoneDot, { backgroundColor: stats.streak >= milestone ? colors.primary : colors.muted }]} />
+                    <Text style={[styles.streakMilestoneText, { color: stats.streak >= milestone ? colors.primary : colors.mutedForeground }]}>{milestone}g</Text>
                   </View>
                 ))}
               </View>
@@ -459,6 +533,24 @@ const styles = StyleSheet.create({
   heroMetricLabel: { fontSize: 9, fontWeight: '600', opacity: 0.8 },
   weekHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   weekTotal: { fontSize: 11, fontWeight: '700' },
+  goalHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  goalSub: { fontSize: 11, marginTop: 3 },
+  goalRingWrap: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
+  goalRingText: { fontSize: 12, fontWeight: '700' },
+  goalTrack: { height: 7, borderRadius: 4, overflow: 'hidden', marginTop: 11 },
+  goalFill: { height: 7, borderRadius: 4 },
+  goalChips: { flexDirection: 'row', gap: 7, marginTop: 11 },
+  goalChip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+  goalChipText: { fontSize: 11, fontWeight: '700' },
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  streakIcon: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  streakValue: { fontSize: 15, fontWeight: '700' },
+  streakSub: { fontSize: 11, marginTop: 2 },
+  streakBadge: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  streakDots: { flexDirection: 'row', gap: 14, marginTop: 12 },
+  streakMilestone: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  streakMilestoneDot: { width: 8, height: 8, borderRadius: 4 },
+  streakMilestoneText: { fontSize: 10, fontWeight: '700' },
   weekRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 96 },
   weekCol: { flex: 1, alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end' },
   weekBarTrack: { flex: 1, width: '100%', borderRadius: 8, justifyContent: 'flex-end', overflow: 'hidden' },

@@ -7,12 +7,13 @@ import Animated, { BounceIn, FadeInDown, useAnimatedStyle, useSharedValue, withS
 import Svg, { Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayerId, LAYERS, MapItem, MAP_ITEMS } from '@/data/geography';
-import { itemMcqs, McqQuestion, PROVINCE_MCQ } from '@/data/questions';
+import { itemMcqs, itemTfQuestion, McqQuestion, PROVINCE_MCQ } from '@/data/questions';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
 import { AppText as Text } from '@/components/AppText';
 import { PressableScale } from '@/components/PressableScale';
 import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
+import { speakTurkish } from '@/utils/speech';
 
 type QuizMode = LayerId | 'mixed' | 'bank' | 'exam';
 type QuizQuestion = { kind: 'province'; name: string } | { kind: 'item'; item: MapItem };
@@ -74,13 +75,14 @@ export default function QuizScreen() {
     [reviewIdsParam],
   );
   const [mode, setMode] = useState<QuizMode>('provinces');
-  const [layerQuizFormat, setLayerQuizFormat] = useState<'map' | 'mcq'>('map');
+  const [layerQuizFormat, setLayerQuizFormat] = useState<'map' | 'mcq' | 'tf'>('map');
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewComplete, setReviewComplete] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState<AnswerResult | null>(null);
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [mcqPick, setMcqPick] = useState<{ index: number; correct: boolean } | null>(null);
+  const [tfPick, setTfPick] = useState<boolean | null>(null);
   const [examSeed, setExamSeed] = useState(0);
   const [examDone, setExamDone] = useState(false);
   const [examSecondsLeft, setExamSecondsLeft] = useState(EXAM_SECONDS);
@@ -97,6 +99,7 @@ export default function QuizScreen() {
     setAnswer(null);
     setSelectedProvince(null);
     setMcqPick(null);
+    setTfPick(null);
     if (resolvedMode === 'exam') {
       setExamSeed((seed) => seed + 1);
       setExamDone(false);
@@ -169,6 +172,7 @@ export default function QuizScreen() {
   const isExam = mode === 'exam';
   const isLayerMode = !isMixed && !isBank && !isExam;
   const isMcq = isBank || isExam || (isLayerMode && !reviewMode && layerQuizFormat === 'mcq');
+  const isTf = isLayerMode && !reviewMode && layerQuizFormat === 'tf';
   const examQuestions = useMemo(
     () => (isExam ? shuffle(BANK_QUESTIONS).slice(0, EXAM_LENGTH) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -195,6 +199,7 @@ export default function QuizScreen() {
       : reviewMode
         ? MAP_ITEMS.find((item) => item.id === reviewTarget?.targetId) ?? null
         : featureQuestions[questionIndex % Math.max(featureQuestions.length, 1)];
+  const tfQuestion = isTf && targetItem ? itemTfQuestion(targetItem, questionIndex) : null;
   const isProvinceQuestion = isMcq
     ? false
     : isMixed
@@ -227,7 +232,7 @@ export default function QuizScreen() {
     [answer, isProvinceQuestion, targetProvince, targetItem],
   );
   const wrongProvince = answer && !answer.correct ? answer.province : null;
-  const answeredCorrect = Boolean(answer?.correct || mcqPick?.correct);
+  const answeredCorrect = Boolean(answer?.correct || mcqPick?.correct || (tfPick !== null && tfQuestion !== null && tfPick === tfQuestion.answer));
   const promptScale = useSharedValue(1);
   const promptStyle = useAnimatedStyle(() => ({ transform: [{ scale: promptScale.value }] }));
   useEffect(() => {
@@ -309,6 +314,7 @@ export default function QuizScreen() {
     setAnswer(null);
     setSelectedProvince(null);
     setMcqPick(null);
+    setTfPick(null);
     if (nextMode === 'exam') {
       setExamSeed((seed) => seed + 1);
       setExamDone(false);
@@ -352,6 +358,20 @@ export default function QuizScreen() {
     else void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   };
 
+  const chooseTf = (pick: boolean) => {
+    if (tfPick !== null || !tfQuestion || !targetItem) return;
+    const isCorrect = pick === tfQuestion.answer;
+    setTfPick(pick);
+    recordQuizAnswer({
+      layer: targetItem.layer,
+      targetId: targetItem.id,
+      targetName: targetItem.name,
+      isCorrect,
+    });
+    if (isCorrect) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    else void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  };
+
   const chooseProvince = (province: string) => {
     if (answer) return;
     const isCorrect = isProvinceQuestion
@@ -372,6 +392,7 @@ export default function QuizScreen() {
   const nextQuestion = () => {
     if (isExam && questionIndex + 1 >= EXAM_LENGTH) {
       setMcqPick(null);
+    setTfPick(null);
       setExamDone(true);
       return;
     }
@@ -379,6 +400,7 @@ export default function QuizScreen() {
       setAnswer(null);
       setSelectedProvince(null);
       setMcqPick(null);
+    setTfPick(null);
       setReviewComplete(true);
       return;
     }
@@ -386,6 +408,7 @@ export default function QuizScreen() {
     setAnswer(null);
     setSelectedProvince(null);
     setMcqPick(null);
+    setTfPick(null);
   };
 
   const finishReview = () => {
@@ -395,6 +418,7 @@ export default function QuizScreen() {
     setAnswer(null);
     setSelectedProvince(null);
     setMcqPick(null);
+    setTfPick(null);
     router.setParams({ reviewIds: undefined });
   };
 
@@ -491,7 +515,8 @@ export default function QuizScreen() {
             {(
               [
                 { id: 'map', label: 'Haritada Bul' },
-                { id: 'mcq', label: 'Çoktan Seçmeli Test' },
+                { id: 'mcq', label: 'Çoktan Seçmeli' },
+                { id: 'tf', label: 'Doğru/Yanlış' },
               ] as const
             ).map((fmt) => {
               const active = layerQuizFormat === fmt.id;
@@ -506,6 +531,7 @@ export default function QuizScreen() {
                     setAnswer(null);
                     setSelectedProvince(null);
                     setMcqPick(null);
+    setTfPick(null);
                   }}
                   style={[styles.formatOption, active && { backgroundColor: colors.card }]}
                   testID={`quiz-format-${fmt.id}`}
@@ -528,6 +554,17 @@ export default function QuizScreen() {
             <View style={[styles.topicPill, { backgroundColor: colors.accent }]}>
               <Text style={[styles.topicPillText, { color: colors.primary }]}>{activeTopicLabel}</Text>
             </View>
+            {hasTarget && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Soruyu seslendir"
+                onPress={() => void speakTurkish(isMcq && bankEntry ? bankEntry.mcq.q : targetName)}
+                hitSlop={8}
+                style={styles.speakButton}
+              >
+                <Feather name="volume-2" size={15} color={colors.mutedForeground} />
+              </Pressable>
+            )}
           </View>
           <Text style={[styles.question, { color: colors.foreground }]}>
             {reviewComplete
@@ -538,7 +575,9 @@ export default function QuizScreen() {
                 ? reviewMode && !hydrated ? 'Tekrar öğeleri yükleniyor.' : 'Bu katmanda tekrar bekleyen öğe bulunamadı.'
                 : isMcq && bankEntry
                   ? bankEntry.mcq.q
-                  : isProvinceQuestion
+                  : isTf
+                    ? 'Bu ifade doğru mu, yanlış mı?'
+                    : isProvinceQuestion
                     ? `${targetName} ilini haritada bul.`
                     : `${targetName} hangi il veya illerde?`}
           </Text>
@@ -548,7 +587,9 @@ export default function QuizScreen() {
               : isExam && examDone
                 ? 'Yeni deneme için soruları karıştır.'
                 : hasTarget
-                ? isMcq
+                ? isTf
+                  ? 'İfadeyi dikkatlice oku ve karar ver.'
+                  : isMcq
                   ? 'Şıklardan doğru cevabı seç.'
                   : !isProvinceQuestion && (targetItem?.provinces.length ?? 0) > 1
                     ? `Bu özellik ${targetItem?.provinces.length} ili kapsar; haritada bu illerden birine dokun.`
@@ -651,6 +692,7 @@ export default function QuizScreen() {
                 setExamLog([]);
                 setQuestionIndex(0);
                 setMcqPick(null);
+    setTfPick(null);
               }}
               style={[styles.primaryButton, { backgroundColor: colors.primary }]}
               testID="restart-exam"
@@ -659,6 +701,57 @@ export default function QuizScreen() {
               <Feather name="rotate-cw" size={16} color={colors.primaryForeground} />
             </PressableScale>
           </View>
+        ) : isTf ? (
+          tfQuestion ? (
+            <View style={[styles.optionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.tfStatement, { color: colors.foreground }]}>{tfQuestion.statement}</Text>
+              <View style={styles.tfRow}>
+                {([true, false] as const).map((pick) => {
+                  const picked = tfPick === pick;
+                  const showResult = tfPick !== null;
+                  const isRight = pick === tfQuestion.answer;
+                  const borderColor = !showResult ? colors.border : isRight ? colors.success : picked ? colors.destructive : colors.border;
+                  const bg = !showResult ? 'transparent' : isRight ? colors.successBackground : picked ? colors.errorBackground : 'transparent';
+                  return (
+                    <Pressable
+                      key={String(pick)}
+                      accessibilityRole="button"
+                      disabled={tfPick !== null}
+                      onPress={() => chooseTf(pick)}
+                      style={[styles.tfOption, { borderColor, backgroundColor: bg }]}
+                      testID={`tf-option-${pick ? 'true' : 'false'}`}
+                    >
+                      <Text style={[styles.tfOptionText, { color: colors.foreground }]}>{pick ? 'Doğru' : 'Yanlış'}</Text>
+                      {showResult && isRight && <Feather name="check" size={15} color={colors.success} />}
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {tfPick !== null && (
+                <Animated.View
+                  entering={tfPick === tfQuestion.answer ? BounceIn.duration(480) : FadeInDown.duration(160)}
+                  style={[styles.feedback, { backgroundColor: tfPick === tfQuestion.answer ? colors.successBackground : colors.errorBackground }]}
+                >
+                  <Feather name={tfPick === tfQuestion.answer ? 'check-circle' : 'x-circle'} size={18} color={tfPick === tfQuestion.answer ? colors.success : colors.destructive} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.feedbackTitle, { color: tfPick === tfQuestion.answer ? colors.successForeground : colors.errorForeground }]}>
+                      {tfPick === tfQuestion.answer ? 'Doğru cevap' : 'Bu kez olmadı'}
+                    </Text>
+                    <Text style={[styles.feedbackText, { color: tfPick === tfQuestion.answer ? colors.successMuted : colors.errorMuted }]}>
+                      {tfPick === tfQuestion.answer
+                        ? `${targetItem?.name ?? 'Öğe'} için ifade doğru.`
+                        : `Doğru cevap: ${tfQuestion.answer ? 'Doğru' : 'Yanlış'} — ${(targetItem?.provinces ?? []).join(', ')}`}
+                    </Text>
+                  </View>
+                </Animated.View>
+              )}
+            </View>
+          ) : (
+            <View style={[styles.reviewNotice, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="help-circle" size={19} color={colors.primary} />
+              <Text style={[styles.hintText, { color: colors.mutedForeground }]}>Bu öğe için soru üretilemedi.</Text>
+            </View>
+          )
         ) : isMcq ? (
           bankEntry ? (
             <View style={[styles.optionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -775,7 +868,7 @@ export default function QuizScreen() {
           </View>
         )}
 
-        {(answer || mcqPick) && (targetItem?.examTip || targetItem?.description) && (
+        {(answer || mcqPick || tfPick !== null) && (targetItem?.examTip || targetItem?.description) && (
           <View style={[styles.tip, { backgroundColor: colors.accent }]}>
             <Feather name="bookmark" size={15} color={colors.primary} />
             <Text style={[styles.tipText, { color: colors.accentForeground }]}>
@@ -790,7 +883,7 @@ export default function QuizScreen() {
             <Text style={[styles.primaryButtonText, { color: colors.primaryForeground }]}>Quizlere dön</Text>
             <Feather name="arrow-right" size={17} color={colors.primaryForeground} />
           </PressableScale>
-        ) : answer || mcqPick ? (
+        ) : answer || mcqPick || tfPick !== null ? (
           <PressableScale onPress={nextQuestion} style={[styles.primaryButton, { backgroundColor: colors.primary }]} testID="next-question">
             <Text style={[styles.primaryButtonText, { color: colors.primaryForeground }]}>
               {reviewMode && questionIndex + 1 >= reviewSession.length
@@ -845,7 +938,8 @@ const styles = StyleSheet.create({
   formatOption: { flex: 1, borderRadius: 999, minHeight: 38, alignItems: 'center', justifyContent: 'center' },
   formatText: { fontSize: 12, fontWeight: '600' },
   promptCard: { borderWidth: 1, borderRadius: 22, padding: 18, gap: 8 },
-  promptTop: { flexDirection: 'row', alignItems: 'center' },
+  promptTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  speakButton: { padding: 4 },
   topicPill: { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4 },
   topicPillText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.6 },
   question: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
@@ -870,6 +964,10 @@ const styles = StyleSheet.create({
   optionText: { flex: 1, fontSize: 13, fontWeight: '600' },
   tagChip: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   tagChipText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
+  tfStatement: { fontSize: 15, fontWeight: '700', lineHeight: 21, textAlign: 'center', paddingVertical: 6 },
+  tfRow: { flexDirection: 'row', gap: 9 },
+  tfOption: { flex: 1, minHeight: 52, borderRadius: 14, borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  tfOptionText: { fontSize: 13, fontWeight: '700' },
   examResult: { alignItems: 'center', gap: 8, paddingVertical: 10 },
   ringWrap: { width: 88, height: 88, alignItems: 'center', justifyContent: 'center' },
   ringCenter: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },

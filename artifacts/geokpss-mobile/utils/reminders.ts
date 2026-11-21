@@ -40,7 +40,7 @@ async function scheduleDaily(notifications: NotificationsModule): Promise<void> 
   await notifications.scheduleNotificationAsync({
     content: {
       title: 'GeoKPSS tekrar zamanı',
-      body: 'Bugünkü tekrar listeni kontrol et ve birkaç soru çöz.',
+      body: 'Bugünkü çalışma hedefini tamamlamayı unutma — birkaç soru çöz.',
       sound: true,
     },
     trigger: {

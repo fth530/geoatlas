@@ -45,6 +45,7 @@ type StudyContextValue = PersistedStudyData & {
   deleteNote: (noteId: string) => void;
   recordQuizAnswer: (answer: QuizAnswerRecord) => void;
   toggleProCandidate: (candidateId: string) => void;
+  setDailyGoal: (goal: number) => void;
   importStudyData: (data: unknown) => boolean;
   resetStudyData: () => void;
 };
@@ -58,6 +59,7 @@ const initialState: PersistedStudyData = {
   correct: 0,
   proCandidates: [],
   dailyActivity: {},
+  dailyGoal: 10,
 };
 
 const StudyContext = createContext<StudyContextValue | null>(null);
@@ -147,6 +149,8 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
             ? state.proCandidates.filter((id) => id !== candidateId)
             : [...state.proCandidates, candidateId],
         }),
+      setDailyGoal: (goal) =>
+        commit({ ...state, dailyGoal: Math.min(200, Math.max(1, Math.round(goal))) }),
       importStudyData: (data) => {
         try {
           const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data;
