@@ -110,7 +110,7 @@ def main():
     dlon = 0.008
     dlat = 0.008
 
-    rgba = np.zeros((OUT_H, OUT_W, 4), dtype=np.uint8)
+    darkness_map = np.zeros((OUT_H, OUT_W), dtype=np.float32)
     lats = MAX_LAT - (np.arange(OUT_H) + 0.5) / OUT_H * VIEW_H / 29.1
 
     for py in range(OUT_H):
@@ -133,15 +133,25 @@ def main():
             hs = (math.cos(ALTITUDE) * math.cos(slope)
                   + math.sin(ALTITUDE) * math.sin(slope) * math.cos(AZIMUTH - aspect))
             # hs in [-1,1] roughly [0,1]; shadow where darker than ~0.72
-            darkness = max(0.0, min(1.0, (0.72 - hs) * 2.8))
-            alpha = int(darkness * 170)
-            if alpha > 0:
-                # cool slate shadow tint
-                rgba[py, px] = (22, 52, 66, alpha)
+            darkness_map[py, px] = max(0.0, min(1.0, (0.72 - hs) * 2.8))
 
     os.makedirs(OUT_DIR, exist_ok=True)
-    Image.fromarray(rgba, "RGBA").save(OUT_PATH)
-    print(f"wrote {OUT_PATH} ({OUT_W}x{OUT_H})")
+    # Two variants: dark slate strokes for light theme, pale strokes for dark theme.
+    variants = [
+        ("relief-turkey.png", (22, 52, 66), 170),
+        ("relief-turkey-dark.png", (178, 205, 224), 120),
+    ]
+    for filename, rgb, max_alpha in variants:
+        rgba = np.zeros((OUT_H, OUT_W, 4), dtype=np.uint8)
+        alpha = np.clip(darkness_map * max_alpha, 0, 255).astype(np.uint8)
+        mask = alpha > 0
+        rgba[mask, 0] = rgb[0]
+        rgba[mask, 1] = rgb[1]
+        rgba[mask, 2] = rgb[2]
+        rgba[mask, 3] = alpha[mask]
+        path = os.path.join(OUT_DIR, filename)
+        Image.fromarray(rgba, "RGBA").save(path)
+        print(f"wrote {path} ({OUT_W}x{OUT_H})")
 
 
 if __name__ == "__main__":

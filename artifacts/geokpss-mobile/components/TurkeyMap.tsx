@@ -10,6 +10,7 @@ import Reanimated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useAppTheme } from '@/context/ThemeContext';
 import { useColors } from '@/hooks/useColors';
 import { LayerId, MapItem, MAP_COLORS } from '@/data/geography';
 import { AppText } from '@/components/AppText';
@@ -648,6 +649,7 @@ const FeatureMarkers = React.memo(function FeatureMarkers({
 });
 
 const RELIEF_IMAGE = require('../assets/images/relief-turkey.png');
+const RELIEF_IMAGE_DARK = require('../assets/images/relief-turkey-dark.png');
 const EMPTY_PROVINCES: string[] = [];
 const EMPTY_ITEMS: MapItem[] = [];
 
@@ -666,6 +668,7 @@ export function TurkeyMap({
   onToggleFullscreen,
 }: TurkeyMapProps) {
   const colors = useColors();
+  const { isDark } = useAppTheme();
   const [labelMode, setLabelMode] = useState<MapLabelMode>('clean');
   const [reliefOn, setReliefOn] = useState(false);
   const canvasDomRef = useRef<HTMLElement | null>(null);
@@ -922,7 +925,7 @@ export function TurkeyMap({
           />
           {reliefOn && !quiz && (
             <SvgImage
-              href={RELIEF_IMAGE}
+              href={isDark ? RELIEF_IMAGE_DARK : RELIEF_IMAGE}
               x={0}
               y={0}
               width={VIEW_WIDTH}
