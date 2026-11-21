@@ -43,8 +43,10 @@ export default function MapScreen() {
   const [selectedItem, setSelectedItem] = useState<MapItem | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [flashcard, setFlashcard] = useState<{ kind: 'item'; item: MapItem } | { kind: 'province'; name: string } | null>(null);
+  const [flashcardFlipped, setFlashcardFlipped] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const { notes } = useStudy();
+  const { notes, recordQuizAnswer } = useStudy();
 
   useEffect(() => {
     if (layerParam && LAYERS.some((layer) => layer.id === layerParam)) {
@@ -146,6 +148,32 @@ export default function MapScreen() {
     setSelectedItem(item);
     setSearchOpen(false);
     setSearchText('');
+  };
+  const openFlashcard = (card: NonNullable<typeof flashcard>) => {
+    setFlashcard(card);
+    setFlashcardFlipped(false);
+    void Haptics.selectionAsync();
+  };
+  const answerFlashcard = (known: boolean) => {
+    if (!flashcard) return;
+    if (flashcard.kind === 'item') {
+      recordQuizAnswer({
+        layer: flashcard.item.layer,
+        targetId: flashcard.item.id,
+        targetName: flashcard.item.name,
+        isCorrect: known,
+      });
+    } else {
+      recordQuizAnswer({
+        layer: 'provinces',
+        targetId: flashcard.name,
+        targetName: flashcard.name,
+        isCorrect: known,
+      });
+    }
+    void Haptics.notificationAsync(known ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
+    setFlashcard(null);
+    setFlashcardFlipped(false);
   };
 
   return (
@@ -386,6 +414,15 @@ export default function MapScreen() {
             <View style={styles.detailActions}>
               <PressableScale
                 accessibilityRole="button"
+                onPress={() => openFlashcard({ kind: 'item', item: selectedItem })}
+                style={[styles.detailCard2, { backgroundColor: colors.accent }]}
+                testID="flashcard-from-item"
+              >
+                <Feather name="credit-card" size={15} color={colors.primary} />
+                <Text style={[styles.noteFromMapText, { color: colors.primary }]} numberOfLines={1}>Kart</Text>
+              </PressableScale>
+              <PressableScale
+                accessibilityRole="button"
                 onPress={() => router.push({ pathname: '/quiz', params: { mode: selectedItem.layer } })}
                 style={[styles.detailQuiz, { backgroundColor: colors.primary }]}
                 testID="quiz-from-item"
@@ -440,16 +477,27 @@ export default function MapScreen() {
                 </View>
               </View>
             )}
-            <PressableScale
-              accessibilityRole="button"
-              onPress={() => router.push({ pathname: '/quiz', params: { mode: 'provinces' } })}
-              style={[styles.detailQuiz, { backgroundColor: colors.primary }]}
-              testID="quiz-from-province"
-            >
-              <Feather name="target" size={15} color={colors.primaryForeground} />
-              <Text style={[styles.detailQuizText, { color: colors.primaryForeground }]}>İl quiz'ini başlat</Text>
-              <Feather name="arrow-right" size={14} color={colors.primaryForeground} />
-            </PressableScale>
+            <View style={styles.detailActions}>
+              <PressableScale
+                accessibilityRole="button"
+                onPress={() => openFlashcard({ kind: 'province', name: selectedProvince })}
+                style={[styles.detailCard2, { backgroundColor: colors.accent }]}
+                testID="flashcard-from-province"
+              >
+                <Feather name="credit-card" size={15} color={colors.primary} />
+                <Text style={[styles.noteFromMapText, { color: colors.primary }]} numberOfLines={1}>Kart</Text>
+              </PressableScale>
+              <PressableScale
+                accessibilityRole="button"
+                onPress={() => router.push({ pathname: '/quiz', params: { mode: 'provinces' } })}
+                style={[styles.detailQuiz, { backgroundColor: colors.primary }]}
+                testID="quiz-from-province"
+              >
+                <Feather name="target" size={15} color={colors.primaryForeground} />
+                <Text style={[styles.detailQuizText, { color: colors.primaryForeground }]}>İl quiz'ini başlat</Text>
+                <Feather name="arrow-right" size={14} color={colors.primaryForeground} />
+              </PressableScale>
+            </View>
           </Animated.View>
         ) : (
           <Pressable onPress={() => chooseProvince('Ankara')} style={[styles.emptySelection, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -624,6 +672,87 @@ export default function MapScreen() {
         </View>
       </Modal>
 
+      <Modal visible={!!flashcard} transparent animationType="fade" onRequestClose={() => setFlashcard(null)}>
+        <View style={[styles.backdrop, { backgroundColor: colors.overlay }]}>
+          <Pressable style={styles.flashcardBackdrop} onPress={() => setFlashcard(null)} accessibilityLabel="Kartı kapat" />
+          <View style={[styles.flashcardCard, { backgroundColor: colors.card }]}>
+            {flashcard && (
+              <>
+                <View style={styles.flashcardTop}>
+                  <View style={[styles.flashcardTag, { backgroundColor: colors.accent }]}>
+                    <Text style={[styles.flashcardTagText, { color: colors.primary }]}>
+                      {flashcard.kind === 'item'
+                        ? LAYERS.find((layer) => layer.id === flashcard.item.layer)?.label.toLocaleUpperCase('tr') ?? 'COĞRAFYA'
+                        : 'İL'}
+                    </Text>
+                  </View>
+                  <Pressable accessibilityLabel="Kartı kapat" onPress={() => setFlashcard(null)} hitSlop={8}>
+                    <Feather name="x" size={18} color={colors.mutedForeground} />
+                  </Pressable>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={flashcardFlipped ? 'Kartı geri çevir' : 'Kartı çevir'}
+                  onPress={() => { setFlashcardFlipped((v) => !v); void Haptics.selectionAsync(); }}
+                  style={styles.flashcardFace}
+                >
+                  {!flashcardFlipped ? (
+                    <>
+                      <Text style={[styles.flashcardHint, { color: colors.mutedForeground }]}>CEVABI GÖRMEK İÇİN DOKUN</Text>
+                      <Text style={[styles.flashcardFront, { color: colors.foreground }]}>
+                        {flashcard.kind === 'item' ? flashcard.item.name : flashcard.name}
+                      </Text>
+                      <Text style={[styles.flashcardFrontSub, { color: colors.mutedForeground }]}>
+                        {flashcard.kind === 'item' ? flashcard.item.subtypeLabel : `${PROVINCES.find((p) => p.name === flashcard.name)?.plate ?? ''} plaka`}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={[styles.flashcardBackTitle, { color: colors.primary }]}>
+                        {flashcard.kind === 'item' ? flashcard.item.name : flashcard.name}
+                      </Text>
+                      <Text style={[styles.flashcardBackBody, { color: colors.foreground }]}>
+                        {flashcard.kind === 'item'
+                          ? flashcard.item.description
+                          : PROVINCE_NOTES[flashcard.name] ?? `${flashcard.name} il bilgisi.`}
+                      </Text>
+                      <Text style={[styles.flashcardBackMeta, { color: colors.mutedForeground }]}>
+                        {flashcard.kind === 'item'
+                          ? `Bulunduğu iller: ${flashcard.item.provinces.join(', ')}`
+                          : `${PROVINCES.find((p) => p.name === flashcard.name)?.region ?? ''} bölgesi`}
+                        {flashcard.kind === 'item' && flashcard.item.examTip ? `\n${flashcard.item.examTip}` : ''}
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+                {flashcardFlipped && (
+                  <View style={styles.flashcardActions}>
+                    <PressableScale
+                      accessibilityRole="button"
+                      onPress={() => answerFlashcard(false)}
+                      style={[styles.flashcardNo, { backgroundColor: colors.errorBackground }]}
+                      testID="flashcard-dont-know"
+                    >
+                      <Feather name="x" size={15} color={colors.errorForeground} />
+                      <Text style={[styles.flashcardNoText, { color: colors.errorForeground }]}>Bilmiyorum</Text>
+                    </PressableScale>
+                    <PressableScale
+                      accessibilityRole="button"
+                      onPress={() => answerFlashcard(true)}
+                      style={[styles.flashcardYes, { backgroundColor: colors.success }]}
+                      testID="flashcard-know"
+                    >
+                      <Feather name="check" size={15} color={colors.primaryForeground} />
+                      <Text style={[styles.flashcardYesText, { color: colors.primaryForeground }]}>Biliyorum</Text>
+                    </PressableScale>
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={searchOpen} animationType="slide" onRequestClose={() => setSearchOpen(false)}>
           <KeyboardAvoidingViewCompat behavior="padding" style={[styles.modalScreen, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 16 : insets.top }]}>
           <View style={styles.modalHeader}>
@@ -764,6 +893,25 @@ const styles = StyleSheet.create({
   detailActions: { flexDirection: 'row', gap: 8 },
   detailQuiz: { flex: 1, minHeight: 44, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   detailQuizText: { fontSize: 12, fontWeight: '700' },
+  detailCard2: { minHeight: 44, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  backdrop: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  flashcardBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  flashcardCard: { borderRadius: 24, padding: 18, gap: 12 },
+  flashcardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  flashcardTag: { borderRadius: 8, paddingHorizontal: 9, paddingVertical: 4 },
+  flashcardTagText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.6 },
+  flashcardFace: { minHeight: 180, borderRadius: 18, backgroundColor: 'rgba(127,127,127,0.06)', alignItems: 'center', justifyContent: 'center', padding: 18, gap: 8 },
+  flashcardHint: { fontSize: 9, fontWeight: '700', letterSpacing: 0.8 },
+  flashcardFront: { fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  flashcardFrontSub: { fontSize: 11, fontWeight: '600' },
+  flashcardBackTitle: { fontSize: 15, fontWeight: '700' },
+  flashcardBackBody: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  flashcardBackMeta: { fontSize: 10, lineHeight: 15, textAlign: 'center' },
+  flashcardActions: { flexDirection: 'row', gap: 9 },
+  flashcardNo: { flex: 1, minHeight: 46, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  flashcardNoText: { fontSize: 12, fontWeight: '700' },
+  flashcardYes: { flex: 1, minHeight: 46, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
+  flashcardYesText: { fontSize: 12, fontWeight: '700' },
   noteFromMap: { flex: 1, minHeight: 44, borderRadius: 999, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7 },
   noteFromMapText: { fontSize: 12, fontWeight: '700' },
   relatedList: { gap: 8 },
