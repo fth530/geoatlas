@@ -110,7 +110,7 @@ def main():
     dlon = 0.008
     dlat = 0.008
 
-    darkness_map = np.zeros((OUT_H, OUT_W), dtype=np.float32)
+    hs_map = np.zeros((OUT_H, OUT_W), dtype=np.float32)
     lats = MAX_LAT - (np.arange(OUT_H) + 0.5) / OUT_H * VIEW_H / 29.1
 
     for py in range(OUT_H):
@@ -132,26 +132,34 @@ def main():
             aspect = math.atan2(dzdy, dzdx)
             hs = (math.cos(ALTITUDE) * math.cos(slope)
                   + math.sin(ALTITUDE) * math.sin(slope) * math.cos(AZIMUTH - aspect))
-            # hs in [-1,1] roughly [0,1]; shadow where darker than ~0.72
-            darkness_map[py, px] = max(0.0, min(1.0, (0.72 - hs) * 2.8))
+            hs_map[py, px] = hs
 
     os.makedirs(OUT_DIR, exist_ok=True)
-    # Two variants: dark slate strokes for light theme, pale strokes for dark theme.
-    variants = [
-        ("relief-turkey.png", (22, 52, 66), 170),
-        ("relief-turkey-dark.png", (178, 205, 224), 120),
-    ]
-    for filename, rgb, max_alpha in variants:
+    # hillshade ~[0,1]: shadowed slopes below ~0.70, lit slopes above ~0.74.
+    # Both directions are rendered so relief reads as 3D, not just noise.
+    shadow = np.clip((0.72 - hs_map) * 2.6, 0.0, 1.0)
+    lit = np.clip((hs_map - 0.74) * 3.0, 0.0, 1.0)
+
+    def render(shadow_rgb, shadow_alpha, lit_rgb, lit_alpha, filename):
         rgba = np.zeros((OUT_H, OUT_W, 4), dtype=np.uint8)
-        alpha = np.clip(darkness_map * max_alpha, 0, 255).astype(np.uint8)
-        mask = alpha > 0
-        rgba[mask, 0] = rgb[0]
-        rgba[mask, 1] = rgb[1]
-        rgba[mask, 2] = rgb[2]
-        rgba[mask, 3] = alpha[mask]
+        s = np.clip(shadow * shadow_alpha, 0, 255).astype(np.uint8)
+        l = np.clip(lit * lit_alpha, 0, 255).astype(np.uint8)
+        smask = s > 0
+        lmask = (l > 0) & ~smask
+        rgba[smask, 0] = shadow_rgb[0]
+        rgba[smask, 1] = shadow_rgb[1]
+        rgba[smask, 2] = shadow_rgb[2]
+        rgba[smask, 3] = s[smask]
+        rgba[lmask, 0] = lit_rgb[0]
+        rgba[lmask, 1] = lit_rgb[1]
+        rgba[lmask, 2] = lit_rgb[2]
+        rgba[lmask, 3] = l[lmask]
         path = os.path.join(OUT_DIR, filename)
         Image.fromarray(rgba, "RGBA").save(path)
         print(f"wrote {path} ({OUT_W}x{OUT_H})")
+
+    render((30, 62, 84), 150, (255, 246, 224), 55, "relief-turkey.png")
+    render((8, 14, 24), 80, (196, 220, 240), 105, "relief-turkey-dark.png")
 
 
 if __name__ == "__main__":
