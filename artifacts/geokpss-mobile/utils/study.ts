@@ -89,9 +89,7 @@ export type PersistedStudyData = {
   dailyActivity: Record<string, DailyActivity>;
   dailyGoal: number;
   program: Record<string, ProgramDay>;
-  discovered: string[];
   xp: number;
-  challengeBest: Record<string, number>;
 };
 
 const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -194,18 +192,7 @@ export function sanitizePersistedStudy(value: unknown): PersistedStudyData {
             .map(([key, value]) => [key, sanitizeProgramDay(value)]),
         )
       : {},
-    discovered: Array.isArray(raw.discovered)
-      ? raw.discovered.filter((id): id is string => typeof id === 'string').slice(0, 2000)
-      : [],
     xp: Math.max(0, asNumber(raw.xp)),
-    challengeBest: isRecord(raw.challengeBest)
-      ? Object.fromEntries(
-          Object.entries(raw.challengeBest)
-            .filter(([key, value]) => DAY_KEY_PATTERN.test(key) && typeof value === 'number' && Number.isFinite(value))
-            .slice(-MAX_PROGRAM_DAYS)
-            .map(([key, value]) => [key, Math.max(0, Math.min(10, Math.round(value as number)))]),
-        )
-      : {},
   };
 }
 

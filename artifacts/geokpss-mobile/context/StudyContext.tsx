@@ -50,7 +50,6 @@ type StudyContextValue = PersistedStudyData & {
   addProgramTask: (title: string) => void;
   removeProgramTask: (taskId: string) => void;
   claimProgramBonus: () => void;
-  recordChallengeResult: (correct: number, total: number) => void;
   importStudyData: (data: unknown) => boolean;
   resetStudyData: () => void;
 };
@@ -66,9 +65,7 @@ const initialState: PersistedStudyData = {
   dailyActivity: {},
   dailyGoal: 10,
   program: {},
-  discovered: [],
   xp: 0,
-  challengeBest: {},
 };
 
 const StudyContext = createContext<StudyContextValue | null>(null);
@@ -139,18 +136,12 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
         }
         const dayKey = localDayKey();
         const day = state.dailyActivity[dayKey] ?? { answered: 0, correct: 0 };
-        const discoverKey = `${answer.layer}:${answer.targetId}`;
-        const discovered =
-          answer.isCorrect && !state.discovered.includes(discoverKey)
-            ? [...state.discovered, discoverKey]
-            : state.discovered;
         commit({
           ...state,
           answered: state.answered + 1,
           correct: state.correct + (answer.isCorrect ? 1 : 0),
           topicStatuses,
           xp: state.xp + (answer.isCorrect ? 10 : 3),
-          discovered,
           dailyActivity: {
             ...state.dailyActivity,
             [dayKey]: { answered: day.answered + 1, correct: day.correct + (answer.isCorrect ? 1 : 0) },
@@ -213,19 +204,6 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
           ...state,
           xp: state.xp + 50,
           program: { ...state.program, [dayKey]: { ...day, bonus: true } },
-        });
-      },
-      recordChallengeResult: (correct, total) => {
-        const dayKey = localDayKey();
-        const bounded = Math.max(0, Math.min(total, Math.round(correct)));
-        const earned = bounded * 2 + (bounded === total && total > 0 ? 20 : 0);
-        commit({
-          ...state,
-          xp: state.xp + earned,
-          challengeBest: {
-            ...state.challengeBest,
-            [dayKey]: Math.max(state.challengeBest[dayKey] ?? 0, bounded),
-          },
         });
       },
       importStudyData: (data) => {

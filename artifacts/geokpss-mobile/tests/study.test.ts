@@ -152,20 +152,14 @@ test('xpLevel thresholds and progress', async () => {
   assert.equal(mid.span, XP_LEVELS[2].xp - XP_LEVELS[1].xp);
 });
 
-test('sanitizePersistedStudy defaults and clamps new retention fields', () => {
+test('sanitizePersistedStudy defaults and clamps xp and program bonus', () => {
   const empty = sanitizePersistedStudy({});
-  assert.deepEqual(empty.discovered, []);
   assert.equal(empty.xp, 0);
-  assert.deepEqual(empty.challengeBest, {});
 
   const clean = sanitizePersistedStudy({
-    discovered: ['provinces:Adana', 42, 'lakes:van'],
     xp: -50,
-    challengeBest: { '2025-01-01': 8, bad: 'x', '2025-01-02': 99 },
     program: { '2025-01-01': { done: ['a'], custom: [], bonus: true } },
   });
-  assert.deepEqual(clean.discovered, ['provinces:Adana', 'lakes:van']);
   assert.equal(clean.xp, 0);
-  assert.deepEqual(clean.challengeBest, { '2025-01-01': 8, '2025-01-02': 10 });
   assert.equal(clean.program['2025-01-01'].bonus, true);
 });

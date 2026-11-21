@@ -30,7 +30,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 export default function ProgramScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { program, dailyActivity, dailyGoal, reviewItems, xp, challengeBest, toggleProgramTask, addProgramTask, removeProgramTask, claimProgramBonus } = useStudy();
+  const { program, dailyActivity, dailyGoal, reviewItems, xp, toggleProgramTask, addProgramTask, removeProgramTask, claimProgramBonus } = useStudy();
   const [customDraft, setCustomDraft] = useState('');
 
   const todayKey = localDayKey();
@@ -166,7 +166,6 @@ export default function ProgramScreen() {
   const recommendedId = nextTask?.id ?? null;
   const level = xpLevel(xp);
   const levelPercent = Math.min(100, Math.round((level.intoLevel / level.span) * 100));
-  const todayBest = challengeBest[todayKey] ?? null;
 
   useEffect(() => {
     if (allDone) claimProgramBonus();
@@ -278,24 +277,6 @@ export default function ProgramScreen() {
             <View style={[styles.barFill, { backgroundColor: colors.premium, width: `${levelPercent}%` }]} />
           </View>
         </View>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Günün meydan okumasını başlat"
-          onPress={() => router.push({ pathname: '/quiz', params: { mode: 'daily' } })}
-          style={[styles.challengeCard, { backgroundColor: colors.primary }]}
-        >
-          <View style={[styles.challengeIcon, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-            <MaterialCommunityIcons name="sword-cross" size={18} color={colors.primaryForeground} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.challengeTitle, { color: colors.primaryForeground }]}>Günün Meydan Okuması</Text>
-            <Text style={[styles.challengeSub, { color: 'rgba(255,255,255,0.75)' }]}>
-              {todayBest !== null ? `Bugünkü en iyi skorun: ${todayBest}/10` : 'Her gün aynı 10 soru — skoru geç!'}
-            </Text>
-          </View>
-          <Feather name="play" size={16} color={colors.primaryForeground} />
-        </Pressable>
 
         {!allDone && (
           <View style={[styles.suggestionCard, { backgroundColor: colors.accent }]}>
@@ -462,10 +443,6 @@ const styles = StyleSheet.create({
   xpLeft: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   xpTitle: { fontSize: 12, fontWeight: '700' },
   xpValue: { fontSize: 11, fontWeight: '700' },
-  challengeCard: { flexDirection: 'row', alignItems: 'center', gap: 11, borderRadius: 16, padding: 13 },
-  challengeIcon: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  challengeTitle: { fontSize: 13.5, fontWeight: '700' },
-  challengeSub: { fontSize: 11, marginTop: 1 },
   suggestionCard: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 },
   suggestionText: { flex: 1, fontSize: 11.5, fontWeight: '600', lineHeight: 16 },
   cta: { borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
