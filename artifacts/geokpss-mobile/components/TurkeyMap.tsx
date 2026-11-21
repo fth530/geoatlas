@@ -672,7 +672,6 @@ export function TurkeyMap({
   const { isDark } = useAppTheme();
   const [labelMode, setLabelMode] = useState<MapLabelMode>('clean');
   const [reliefOn, setReliefOn] = useState(false);
-  const [landscapeLocked, setLandscapeLocked] = useState(false);
   const canvasDomRef = useRef<HTMLElement | null>(null);
   const canvasSizeRef = useRef({ width: 360, height: 235 });
 
@@ -898,7 +897,6 @@ export function TurkeyMap({
 
   const lockPortrait = useCallback(async () => {
     if (Platform.OS === 'web') return;
-    setLandscapeLocked(false);
     try {
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     } catch {
@@ -906,30 +904,12 @@ export function TurkeyMap({
     }
   }, []);
 
-  const toggleOrientation = useCallback(async () => {
-    if (Platform.OS === 'web') return;
-    const next = !landscapeLocked;
-    setLandscapeLocked(next);
-    try {
-      await ScreenOrientation.lockAsync(
-        next ? ScreenOrientation.OrientationLock.LANDSCAPE : ScreenOrientation.OrientationLock.PORTRAIT_UP,
-      );
-    } catch {
-      setLandscapeLocked(!next);
-    }
-  }, [landscapeLocked]);
-
-  // Leaving fullscreen (via any close path) restores portrait.
+  // Leaving fullscreen (via any close path) or unmounting restores portrait.
   useEffect(() => {
     if (!fullscreen) void lockPortrait();
   }, [fullscreen, lockPortrait]);
 
-  useEffect(
-    () => () => {
-      if (Platform.OS !== 'web') void ScreenOrientation.unlockAsync().catch(() => {});
-    },
-    [],
-  );
+  useEffect(() => () => void lockPortrait(), [lockPortrait]);
 
   const mapContent = (
     <View
@@ -1092,26 +1072,6 @@ export function TurkeyMap({
             >
               <Feather name="rotate-ccw" size={13} color={colors.foreground} />
             </Pressable>
-            {fullscreen && onToggleFullscreen && Platform.OS !== 'web' && (
-              <Pressable
-                accessibilityLabel={landscapeLocked ? 'Portre görünüme dön' : 'Yatay tam ekran harita'}
-                accessibilityRole="button"
-                onPress={() => void toggleOrientation()}
-                style={[
-                  styles.toolBtn,
-                  landscapeLocked
-                    ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                    : { backgroundColor: colors.muted, borderColor: colors.border },
-                ]}
-                testID="toggle-map-orientation"
-              >
-                <MaterialCommunityIcons
-                  name={landscapeLocked ? 'screen-rotation-lock' : 'screen-rotation'}
-                  size={14}
-                  color={landscapeLocked ? colors.primaryForeground : colors.foreground}
-                />
-              </Pressable>
-            )}
             {onToggleFullscreen && (
               <Pressable
                 accessibilityLabel={fullscreen ? 'Tam ekrandan çık' : 'Haritayı tam ekran yap'}

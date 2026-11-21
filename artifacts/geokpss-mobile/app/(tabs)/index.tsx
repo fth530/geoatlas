@@ -1,6 +1,7 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import React, { useEffect, useMemo, useState } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
@@ -44,6 +45,28 @@ export default function MapScreen() {
   const [selectedItem, setSelectedItem] = useState<MapItem | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [mapLandscape, setMapLandscape] = useState(false);
+
+  const closeFullscreen = () => {
+    setFullscreenOpen(false);
+    setMapLandscape(false);
+    if (Platform.OS !== 'web') {
+      void ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+    }
+  };
+
+  const toggleMapOrientation = async () => {
+    if (Platform.OS === 'web') return;
+    const next = !mapLandscape;
+    setMapLandscape(next);
+    try {
+      await ScreenOrientation.lockAsync(
+        next ? ScreenOrientation.OrientationLock.LANDSCAPE : ScreenOrientation.OrientationLock.PORTRAIT_UP,
+      );
+    } catch {
+      setMapLandscape(!next);
+    }
+  };
   const [flashcard, setFlashcard] = useState<{ kind: 'item'; item: MapItem } | { kind: 'province'; name: string } | null>(null);
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -570,7 +593,7 @@ export default function MapScreen() {
         </PressableScale>
       </ScrollView>
 
-      <Modal visible={fullscreenOpen} animationType="fade" onRequestClose={() => setFullscreenOpen(false)}>
+      <Modal visible={fullscreenOpen} animationType="fade" onRequestClose={closeFullscreen}>
         <View style={[styles.fullscreenModal, { backgroundColor: colors.background, paddingTop: Platform.OS === 'web' ? 14 : insets.top + 6, paddingBottom: insets.bottom + 12 }]}>
           <View style={styles.fullscreenHeader}>
             <View style={{ flex: 1 }}>
@@ -582,10 +605,28 @@ export default function MapScreen() {
                 {layerId === 'provinces' ? '81 il sınırları, bölgeler ve plaka kodları' : `${visibleItems.length} coğrafi özellik gösteriliyor`}
               </Text>
             </View>
+            {Platform.OS !== 'web' && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={mapLandscape ? 'Portre görünüme dön' : 'Haritayı yan çevir'}
+                onPress={() => void toggleMapOrientation()}
+                style={[styles.fullscreenCloseBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                testID="toggle-map-orientation"
+              >
+                <MaterialCommunityIcons
+                  name={mapLandscape ? 'screen-rotation-lock' : 'screen-rotation'}
+                  size={15}
+                  color={colors.foreground}
+                />
+                <Text style={[styles.fullscreenCloseText, { color: colors.foreground }]}>
+                  {mapLandscape ? 'Dikey' : 'Yatay'}
+                </Text>
+              </Pressable>
+            )}
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Tam ekranı kapat"
-              onPress={() => setFullscreenOpen(false)}
+              onPress={closeFullscreen}
               style={[styles.fullscreenCloseBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
               testID="close-fullscreen-map"
             >
@@ -634,7 +675,7 @@ export default function MapScreen() {
               }}
               highlightProvinces={selectedItem?.provinces}
               fullscreen
-              onToggleFullscreen={() => setFullscreenOpen(false)}
+              onToggleFullscreen={closeFullscreen}
             />
 
             {layerId !== 'provinces' && visibleItems.length > 0 && (
