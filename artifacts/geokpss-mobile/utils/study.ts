@@ -76,6 +76,9 @@ const MAX_NOTE_BODY_LENGTH = 2000;
 
 export type DailyActivity = { answered: number; correct: number };
 
+export type ProgramCustomTask = { id: string; title: string };
+export type ProgramDay = { done: string[]; custom: ProgramCustomTask[] };
+
 export type PersistedStudyData = {
   notes: StudyNote[];
   topicStatuses: Record<string, TopicStatus>;
@@ -85,10 +88,12 @@ export type PersistedStudyData = {
   proCandidates: string[];
   dailyActivity: Record<string, DailyActivity>;
   dailyGoal: number;
+  program: Record<string, ProgramDay>;
 };
 
 const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_DAILY_ACTIVITY_DAYS = 120;
+const MAX_PROGRAM_DAYS = 120;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -178,6 +183,34 @@ export function sanitizePersistedStudy(value: unknown): PersistedStudyData {
         )
       : {},
     dailyGoal: Math.min(200, Math.max(1, asNumber(raw.dailyGoal, 10))),
+    program: isRecord(raw.program)
+      ? Object.fromEntries(
+          Object.entries(raw.program)
+            .filter(([key]) => DAY_KEY_PATTERN.test(key))
+            .slice(-MAX_PROGRAM_DAYS)
+            .map(([key, value]) => [key, sanitizeProgramDay(value)]),
+        )
+      : {},
+  };
+}
+
+function sanitizeProgramDay(value: unknown): ProgramDay {
+  if (!isRecord(value)) return { done: [], custom: [] };
+  return {
+    done: Array.isArray(value.done)
+      ? value.done.filter((id): id is string => typeof id === 'string').slice(0, 60)
+      : [],
+    custom: Array.isArray(value.custom)
+      ? value.custom
+          .slice(0, 30)
+          .map((task) => {
+            if (!isRecord(task)) return null;
+            const id = asString(task.id).slice(0, 80);
+            const title = asString(task.title).slice(0, 80);
+            return id && title ? { id, title } : null;
+          })
+          .filter((task): task is ProgramCustomTask => task !== null)
+      : [],
   };
 }
 
@@ -186,4 +219,19 @@ export function localDayKey(date: Date = new Date()): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/** Consecutive days (ending today or yesterday) with at least one answered question. */
+export function studyStreak(dailyActivity: Record<string, DailyActivity>): number {
+  let streak = 0;
+  const cursor = new Date();
+  if ((dailyActivity[localDayKey(cursor)]?.answered ?? 0) === 0) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  while ((dailyActivity[localDayKey(cursor)]?.answered ?? 0) > 0) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+    if (streak > 365) break;
+  }
+  return streak;
 }

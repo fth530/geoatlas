@@ -26,6 +26,8 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: 'Geri' }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="pro" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="program" options={{ headerShown: false }} />
+      <Stack.Screen name="province" options={{ headerShown: false }} />
     </Stack>
   );
 }

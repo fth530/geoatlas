@@ -46,6 +46,9 @@ type StudyContextValue = PersistedStudyData & {
   recordQuizAnswer: (answer: QuizAnswerRecord) => void;
   toggleProCandidate: (candidateId: string) => void;
   setDailyGoal: (goal: number) => void;
+  toggleProgramTask: (taskId: string) => void;
+  addProgramTask: (title: string) => void;
+  removeProgramTask: (taskId: string) => void;
   importStudyData: (data: unknown) => boolean;
   resetStudyData: () => void;
 };
@@ -60,6 +63,7 @@ const initialState: PersistedStudyData = {
   proCandidates: [],
   dailyActivity: {},
   dailyGoal: 10,
+  program: {},
 };
 
 const StudyContext = createContext<StudyContextValue | null>(null);
@@ -151,6 +155,39 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
         }),
       setDailyGoal: (goal) =>
         commit({ ...state, dailyGoal: Math.min(200, Math.max(1, Math.round(goal))) }),
+      toggleProgramTask: (taskId) => {
+        const dayKey = localDayKey();
+        const day = state.program[dayKey] ?? { done: [], custom: [] };
+        const done = day.done.includes(taskId)
+          ? day.done.filter((id) => id !== taskId)
+          : [...day.done, taskId];
+        const program = { ...state.program, [dayKey]: { ...day, done } };
+        commit({ ...state, program });
+      },
+      addProgramTask: (title) => {
+        const trimmed = title.trim().slice(0, 80);
+        if (!trimmed) return;
+        const dayKey = localDayKey();
+        const day = state.program[dayKey] ?? { done: [], custom: [] };
+        if (day.custom.length >= 30) return;
+        const task = { id: `c${Date.now().toString(36)}`, title: trimmed };
+        commit({
+          ...state,
+          program: { ...state.program, [dayKey]: { ...day, custom: [...day.custom, task] } },
+        });
+      },
+      removeProgramTask: (taskId) => {
+        const dayKey = localDayKey();
+        const day = state.program[dayKey];
+        if (!day) return;
+        const customId = taskId.startsWith('custom:') ? taskId.slice(7) : null;
+        const custom = customId ? day.custom.filter((task) => task.id !== customId) : day.custom;
+        const done = customId ? day.done.filter((id) => id !== taskId) : day.done;
+        commit({
+          ...state,
+          program: { ...state.program, [dayKey]: { ...day, done, custom } },
+        });
+      },
       importStudyData: (data) => {
         try {
           const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data;

@@ -27,7 +27,7 @@ import { isReminderEnabled, REMINDER_HOUR, REMINDER_MINUTE, setReminderEnabled }
 export default function StatsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, dailyActivity, dailyGoal, hydrated, importStudyData, resetStudyData, setDailyGoal } = useStudy();
+  const { answered, correct, notes, proCandidates, reviewItems, topicStatuses, dailyActivity, dailyGoal, program, hydrated, importStudyData, resetStudyData, setDailyGoal } = useStudy();
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -295,6 +295,29 @@ export default function StatsScreen() {
               </View>
             </View>
 
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Bugünün programını aç"
+              onPress={() => router.push('/program')}
+              style={[styles.card, styles.programEntry, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <View style={[styles.programIcon, { backgroundColor: colors.accent }]}>
+                <Feather name="check-square" size={17} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>Bugünün Programı</Text>
+                <Text style={[styles.goalSub, { color: colors.mutedForeground }]}>
+                  {(() => {
+                    const day = program[localDayKey()] ?? { done: [], custom: [] };
+                    const done = day.done.length + (stats.todayAnswered >= 10 ? 1 : 0);
+                    const total = 6 + day.custom.length;
+                    return `${Math.min(done, total)}/${total} görev tamamlandı`;
+                  })()}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+            </Pressable>
+
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.streakRow}>
                 <View style={[styles.streakIcon, { backgroundColor: colors.accent }]}>
@@ -535,6 +558,8 @@ const styles = StyleSheet.create({
   weekTotal: { fontSize: 11, fontWeight: '700' },
   goalHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   goalSub: { fontSize: 11, marginTop: 3 },
+  programEntry: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  programIcon: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   goalRingWrap: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   goalRingText: { fontSize: 12, fontWeight: '700' },
   goalTrack: { height: 7, borderRadius: 4, overflow: 'hidden', marginTop: 11 },
