@@ -1,5 +1,6 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, G, Image as SvgImage, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
@@ -671,6 +672,7 @@ export function TurkeyMap({
   const { isDark } = useAppTheme();
   const [labelMode, setLabelMode] = useState<MapLabelMode>('clean');
   const [reliefOn, setReliefOn] = useState(false);
+  const [landscapeLocked, setLandscapeLocked] = useState(false);
   const canvasDomRef = useRef<HTMLElement | null>(null);
   const canvasSizeRef = useRef({ width: 360, height: 235 });
 
@@ -894,12 +896,47 @@ export function TurkeyMap({
     void Haptics.selectionAsync();
   };
 
+  const lockPortrait = useCallback(async () => {
+    if (Platform.OS === 'web') return;
+    setLandscapeLocked(false);
+    try {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    } catch {
+      // Orientation lock is best-effort; the app still works unlocked.
+    }
+  }, []);
+
+  const toggleOrientation = useCallback(async () => {
+    if (Platform.OS === 'web') return;
+    const next = !landscapeLocked;
+    setLandscapeLocked(next);
+    try {
+      await ScreenOrientation.lockAsync(
+        next ? ScreenOrientation.OrientationLock.LANDSCAPE : ScreenOrientation.OrientationLock.PORTRAIT_UP,
+      );
+    } catch {
+      setLandscapeLocked(!next);
+    }
+  }, [landscapeLocked]);
+
+  // Leaving fullscreen (via any close path) restores portrait.
+  useEffect(() => {
+    if (!fullscreen) void lockPortrait();
+  }, [fullscreen, lockPortrait]);
+
+  useEffect(
+    () => () => {
+      if (Platform.OS !== 'web') void ScreenOrientation.unlockAsync().catch(() => {});
+    },
+    [],
+  );
+
   const mapContent = (
     <View
       ref={(node) => {
         canvasDomRef.current = node as unknown as HTMLElement | null;
       }}
-      style={[styles.canvas, fullscreen && styles.canvasFullscreen, { backgroundColor: colors.mapWater }]}
+      style={[fullscreen ? styles.canvasFullscreen : styles.canvas, { backgroundColor: colors.mapWater }]}
       onLayout={(event) => {
         canvasSizeRef.current = {
           width: Math.max(1, event.nativeEvent.layout.width),
@@ -1055,6 +1092,26 @@ export function TurkeyMap({
             >
               <Feather name="rotate-ccw" size={13} color={colors.foreground} />
             </Pressable>
+            {fullscreen && onToggleFullscreen && Platform.OS !== 'web' && (
+              <Pressable
+                accessibilityLabel={landscapeLocked ? 'Portre görünüme dön' : 'Yatay tam ekran harita'}
+                accessibilityRole="button"
+                onPress={() => void toggleOrientation()}
+                style={[
+                  styles.toolBtn,
+                  landscapeLocked
+                    ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                    : { backgroundColor: colors.muted, borderColor: colors.border },
+                ]}
+                testID="toggle-map-orientation"
+              >
+                <MaterialCommunityIcons
+                  name={landscapeLocked ? 'screen-rotation-lock' : 'screen-rotation'}
+                  size={14}
+                  color={landscapeLocked ? colors.primaryForeground : colors.foreground}
+                />
+              </Pressable>
+            )}
             {onToggleFullscreen && (
               <Pressable
                 accessibilityLabel={fullscreen ? 'Tam ekrandan çık' : 'Haritayı tam ekran yap'}
@@ -1176,7 +1233,7 @@ const styles = StyleSheet.create({
   toolBtn: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   quizZoomControls: { position: 'absolute', right: 14, top: 14, gap: 6 },
   canvas: { width: '100%', height: 238, borderRadius: 18, overflow: 'hidden' },
-  canvasFullscreen: { height: 420 },
+  canvasFullscreen: { width: '100%', aspectRatio: VIEW_WIDTH / VIEW_HEIGHT, borderRadius: 18, overflow: 'hidden' },
   svgStage: { width: '100%', height: '100%' },
   stepperBar: {
     flexDirection: 'row',
