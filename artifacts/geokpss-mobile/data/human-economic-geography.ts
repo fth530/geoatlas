@@ -335,7 +335,7 @@ export const HUMAN_ECONOMIC_ITEMS: MapItem[] = [
     layer: 'population',
     subtype: 'rural',
     subtypeLabel: 'Geçici köy altı',
-    provinces: ['Muğla', 'Aydın', 'Çanakkale', 'Isparta'],
+    provinces: ['Muğla', 'Aydın', 'Çanakkale', 'Isparta', 'Burdur'],
     description: 'Dalyan, Ege ve Akdeniz kıyılarında balıkçılık yapılan geçici yerleşmedir; Dam ise Gökçeada ve Göller Yöresi’nde hayvancılık yapılan geçici yerleşmedir.',
     examTip: 'Balıkçılıkla ilişkili tek köy altı yerleşmesi Dalyan’dır (Muğla-Aydın).',
   },
