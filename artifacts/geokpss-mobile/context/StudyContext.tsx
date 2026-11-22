@@ -2,6 +2,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { LayerId, TopicStatus } from '@/data/geography';
 import {
+  cancelSubscriptionForTesting,
+  DEFAULT_SUBSCRIPTION_STATE,
+  FREE_DAILY_QUIZ_LIMIT,
+  loadSubscriptionState,
+  purchaseSubscriptionPlan,
+  restoreSubscriptionPurchases,
+  SubscriptionActionResult,
+  SubscriptionPlanId,
+  SubscriptionState,
+} from '@/services/subscription-service';
+import {
   buildReviewItem,
   localDayKey,
   PersistedStudyData,
@@ -40,6 +51,15 @@ export type QuizAnswerRecord = {
 
 type StudyContextValue = PersistedStudyData & {
   hydrated: boolean;
+  isPro: boolean;
+  activePlanId: SubscriptionPlanId | null;
+  proExpiresAt: number | null;
+  todayAnsweredCount: number;
+  remainingFreeQuestions: number;
+  canAnswerFreeQuiz: boolean;
+  purchaseProPlan: (planId: SubscriptionPlanId) => Promise<SubscriptionActionResult>;
+  restoreProPurchases: () => Promise<SubscriptionActionResult>;
+  cancelProSubscription: () => Promise<void>;
   setTopicStatus: (topicId: string, status: TopicStatus) => void;
   saveNote: (note: StudyNote) => void;
   deleteNote: (noteId: string) => void;
@@ -72,13 +92,16 @@ const StudyContext = createContext<StudyContextValue | null>(null);
 
 export function StudyProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<PersistedStudyData>(initialState);
+  const [subscription, setSubscription] = useState<SubscriptionState>(DEFAULT_SUBSCRIPTION_STATE);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     let active = true;
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((saved) => {
-        if (!active || !saved) return;
+    Promise.all([AsyncStorage.getItem(STORAGE_KEY), loadSubscriptionState()])
+      .then(([saved, subState]) => {
+        if (!active) return;
+        setSubscription(subState);
+        if (!saved) return;
         try {
           setState({ ...initialState, ...sanitizePersistedStudy(JSON.parse(saved)) });
         } catch {
@@ -108,10 +131,36 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = useMemo<StudyContextValue>(
-    () => ({
-      ...state,
-      hydrated,
-      setTopicStatus: (topicId, status) =>
+    () => {
+      const todayKey = localDayKey();
+      const todayAnsweredCount = state.dailyActivity[todayKey]?.answered ?? 0;
+      const remainingFreeQuestions = Math.max(0, FREE_DAILY_QUIZ_LIMIT - todayAnsweredCount);
+      const canAnswerFreeQuiz = subscription.isPro || remainingFreeQuestions > 0;
+
+      return {
+        ...state,
+        hydrated,
+        isPro: subscription.isPro,
+        activePlanId: subscription.activePlanId,
+        proExpiresAt: subscription.expiresAt,
+        todayAnsweredCount,
+        remainingFreeQuestions,
+        canAnswerFreeQuiz,
+        purchaseProPlan: async (planId) => {
+          const res = await purchaseSubscriptionPlan(planId);
+          if (res.ok) setSubscription(res.state);
+          return res;
+        },
+        restoreProPurchases: async () => {
+          const res = await restoreSubscriptionPurchases();
+          if (res.ok) setSubscription(res.state);
+          return res;
+        },
+        cancelProSubscription: async () => {
+          const next = await cancelSubscriptionForTesting();
+          setSubscription(next);
+        },
+        setTopicStatus: (topicId, status) =>
         commit((prev) => ({ ...prev, topicStatuses: { ...prev.topicStatuses, [topicId]: status } })),
       saveNote: (note) =>
         commit((prev) => {
@@ -236,8 +285,9 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
       resetStudyData: () => {
         commit(() => initialState);
       },
-    }),
-    [state, hydrated],
+      };
+    },
+    [state, subscription, hydrated],
   );
 
   return <StudyContext.Provider value={value}>{children}</StudyContext.Provider>;

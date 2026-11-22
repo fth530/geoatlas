@@ -13,6 +13,7 @@ import { AppText as Text } from '@/components/AppText';
 import { PressableScale } from '@/components/PressableScale';
 import { useStudy } from '@/context/StudyContext';
 import { useColors } from '@/hooks/useColors';
+import { FREE_DAILY_QUIZ_LIMIT, isProLockedLayer } from '@/services/subscription-service';
 import { speakTurkish } from '@/utils/speech';
 
 type QuizMode = LayerId | 'mixed' | 'bank' | 'exam';
@@ -68,7 +69,16 @@ function shuffle<T>(list: T[]): T[] {
 export default function QuizScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { answered, correct, hydrated, reviewItems, recordQuizAnswer } = useStudy();
+  const {
+    answered,
+    correct,
+    hydrated,
+    reviewItems,
+    recordQuizAnswer,
+    isPro,
+    remainingFreeQuestions,
+    canAnswerFreeQuiz,
+  } = useStudy();
   const { mode: modeParam, reviewIds: reviewIdsParam } = useLocalSearchParams<{ mode?: string; reviewIds?: string }>();
   const routeReviewIds = useMemo(
     () => (typeof reviewIdsParam === 'string' ? reviewIdsParam.split(',').filter(Boolean) : []),
@@ -485,6 +495,10 @@ export default function QuizScreen() {
         >
           {modeOptions.map((option) => {
             const active = mode === option.id;
+            const lockedOpt =
+              !isPro &&
+              (option.id === 'exam' ||
+                (option.id !== 'mixed' && option.id !== 'bank' && isProLockedLayer(option.id as LayerId)));
             return (
               <Pressable
                 key={option.id}
@@ -503,12 +517,27 @@ export default function QuizScreen() {
                   numberOfLines={1}
                   style={[styles.chipText, { color: active ? colors.primaryForeground : colors.mutedForeground }]}
                 >
-                  {option.label}
+                  {option.label}{lockedOpt ? ' · PRO' : ''}
                 </Text>
               </Pressable>
             );
           })}
         </ScrollView>
+
+        {!isPro && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/pro')}
+            style={[styles.reviewNotice, { backgroundColor: colors.card, borderColor: colors.border, paddingVertical: 10 }]}
+            testID="quiz-free-quota-bar"
+          >
+            <Feather name="zap" size={15} color={colors.premium} />
+            <Text style={[styles.hintText, { color: colors.foreground }]}>
+              Günlük Ücretsiz Soru Hakkı: {remainingFreeQuestions} / {FREE_DAILY_QUIZ_LIMIT} kaldı
+            </Text>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>Sınırsız Aç →</Text>
+          </Pressable>
+        )}
 
         {isLayerMode && !reviewMode && (
           <View style={[styles.formatSwitch, { backgroundColor: colors.muted }]}>
@@ -598,7 +627,38 @@ export default function QuizScreen() {
           </Text>
         </Animated.View>
 
-        {reviewComplete ? (
+        {!isPro && (isExam || (isLayerMode && isProLockedLayer(mode as LayerId)) || !canAnswerFreeQuiz) ? (
+          <View style={[styles.optionsCard, { backgroundColor: colors.card, borderColor: colors.premium }]}>
+            <View style={{ alignItems: 'center', gap: 10, paddingVertical: 14 }}>
+              <View style={{ width: 52, height: 52, borderRadius: 18, backgroundColor: colors.premiumBackground, alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name="lock" size={24} color={colors.premium} />
+              </View>
+              <Text style={[styles.question, { color: colors.foreground, textAlign: 'center' }]}>
+                {isExam
+                  ? '18 Soruluk Süreli KPSS Deneme Sınavı Pro’ya Özeldir'
+                  : !canAnswerFreeQuiz
+                    ? 'Bugünkü 15 Ücretsiz Soru Hakkın Tamamlandı'
+                    : `${activeLayer?.label ?? 'Bu Katman'} Quizi GeoKPSS Pro’ya Özeldir`}
+              </Text>
+              <Text style={[styles.hintText, { color: colors.mutedForeground, textAlign: 'center' }]}>
+                {isExam
+                  ? 'Gerçek KPSS Coğrafya dağılımında 18 soruluk, 15 dakikalık süreli denemeleri ve konu analizini açmak için 7 gün ücretsiz dene.'
+                  : 'Tüm 17 harita katmanında sınırsız harita quizi, çoktan seçmeli test ve deneme sınavı çözmek için GeoKPSS Pro’ya geç.'}
+              </Text>
+              <PressableScale
+                accessibilityRole="button"
+                onPress={() => router.push('/pro')}
+                style={[styles.primaryButton, { backgroundColor: colors.primary, alignSelf: 'stretch', marginTop: 6 }]}
+                testID="open-pro-from-quiz-gate"
+              >
+                <Feather name="unlock" size={16} color={colors.primaryForeground} />
+                <Text style={[styles.primaryButtonText, { color: colors.primaryForeground }]}>
+                  7 Gün Ücretsiz Dene · Kilidi Aç
+                </Text>
+              </PressableScale>
+            </View>
+          </View>
+        ) : reviewComplete ? (
           <View style={[styles.reviewNotice, { backgroundColor: colors.successBackground }]}>
             <Feather name="check-circle" size={21} color={colors.success} />
             <View style={{ flex: 1 }}>
@@ -878,7 +938,7 @@ export default function QuizScreen() {
           </View>
         )}
 
-        {reviewComplete ? (
+        {!isPro && (isExam || (isLayerMode && isProLockedLayer(mode as LayerId)) || !canAnswerFreeQuiz) ? null : reviewComplete ? (
           <PressableScale onPress={finishReview} style={[styles.primaryButton, { backgroundColor: colors.primary }]} testID="finish-review">
             <Text style={[styles.primaryButtonText, { color: colors.primaryForeground }]}>Quizlere dön</Text>
             <Feather name="arrow-right" size={17} color={colors.primaryForeground} />

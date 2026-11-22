@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { test } from 'node:test';
 import { LAYERS, MAP_COLORS, MAP_ITEMS } from '../data/geography';
+import { ELEVATION_BAND_BY_ID, PROVINCE_ELEVATIONS, TOPOGRAPHIC_RELIEF_RIDGES } from '../data/province-elevation';
 import { PROVINCE_NOTES } from '../data/province-notes';
+import {
+  DEFAULT_SUBSCRIPTION_STATE,
+  FREE_DAILY_QUIZ_LIMIT,
+  isProLockedLayer,
+  sanitizeSubscriptionState,
+  SUBSCRIPTION_PLANS,
+} from '../services/subscription-service';
 import { KPSS_MNEMONICS } from '../data/mnemonics';
 import { itemMcqs, PROVINCE_MCQ } from '../data/questions';
 
@@ -119,4 +129,94 @@ test('every filter in every layer matches at least one MapItem', () => {
   assert.equal(ramsarItems.length, 14, 'Turkey has exactly 14 official Ramsar sites');
   const ancientItems = MAP_ITEMS.filter((item) => item.layer === 'ancient');
   assert.equal(ancientItems.length, 24, 'Ancient cities layer has 24 curated KPSS ancient city items');
+  assert.equal(Object.keys(PROVINCE_ELEVATIONS).length, 81, 'All 81 provinces have physical relief elevation data');
+  for (const [prov, info] of Object.entries(PROVINCE_ELEVATIONS)) {
+    assert.ok(ELEVATION_BAND_BY_ID[info.band], `${prov} has a valid elevation band`);
+    assert.ok(info.avgMeters > 0, `${prov} has a positive average elevation`);
+    assert.ok(info.reliefNote.length >= 20, `${prov} has a detailed relief note`);
+  }
+  assert.ok(TOPOGRAPHIC_RELIEF_RIDGES.length >= 6, 'Topographic relief ridges are defined');
+});
+
+test('subscription plans and entitlement sanitizer validate Pro state accurately', () => {
+  assert.equal(SUBSCRIPTION_PLANS.length, 3);
+  assert.equal(FREE_DAILY_QUIZ_LIMIT, 15);
+  assert.equal(isProLockedLayer('ramsar'), true);
+  assert.equal(isProLockedLayer('ancient'), true);
+  assert.equal(isProLockedLayer('mountains'), false);
+
+  const validYearly = sanitizeSubscriptionState({
+    isPro: true,
+    activePlanId: 'yearly',
+    purchasedAt: Date.now(),
+    expiresAt: Date.now() + 86400000,
+  });
+  assert.equal(validYearly.isPro, true);
+  assert.equal(validYearly.activePlanId, 'yearly');
+
+  const expiredYearly = sanitizeSubscriptionState({
+    isPro: true,
+    activePlanId: 'yearly',
+    purchasedAt: Date.now() - 86400000 * 2,
+    expiresAt: Date.now() - 1000,
+  });
+  assert.deepEqual(expiredYearly, DEFAULT_SUBSCRIPTION_STATE);
+});
+
+test('canonical ASO metadata passes all asc-aso-audit checks (0 waste, >=90% keyword usage, valid separators)', () => {
+  const baseDir = path.resolve(__dirname, '..', 'metadata');
+  const locales = ['tr', 'en-US'] as const;
+  const keywordsByLocale: Record<string, string> = {};
+
+  for (const locale of locales) {
+    const appInfo = JSON.parse(fs.readFileSync(path.join(baseDir, 'app-info', `${locale}.json`), 'utf8')) as {
+      name: string;
+      subtitle: string;
+    };
+    const versionInfo = JSON.parse(fs.readFileSync(path.join(baseDir, 'version', '1.0.0', `${locale}.json`), 'utf8')) as {
+      keywords: string;
+      promotionalText: string;
+      description: string;
+      whatsNew: string;
+    };
+
+    // 1. Character limits & utilization guidelines (Name <= 30, Subtitle 20-30, Keywords 90-100)
+    assert.ok(appInfo.name.length > 0 && appInfo.name.length <= 30, `${locale} name length ${appInfo.name.length} must be <= 30`);
+    assert.ok(appInfo.subtitle.length >= 20 && appInfo.subtitle.length <= 30, `${locale} subtitle length ${appInfo.subtitle.length} must be 20..30`);
+    assert.ok(versionInfo.keywords.length >= 90 && versionInfo.keywords.length <= 100, `${locale} keywords length ${versionInfo.keywords.length} must be 90..100`);
+    assert.ok(versionInfo.promotionalText.length <= 170, `${locale} promotionalText length must be <= 170`);
+    assert.ok(versionInfo.description.length >= 400 && versionInfo.description.length <= 4000, `${locale} description length valid`);
+    assert.ok(versionInfo.whatsNew.length > 0 && versionInfo.whatsNew.length <= 4000, `${locale} whatsNew length valid`);
+
+    // 2. Bad keyword separators check (no space after comma, no semicolons or pipes)
+    assert.equal(versionInfo.keywords.includes(', '), false, `${locale} keywords must not have spaces after commas`);
+    assert.equal(versionInfo.keywords.includes(';'), false, `${locale} keywords must not contain semicolons`);
+    assert.equal(versionInfo.keywords.includes('|'), false, `${locale} keywords must not contain pipes`);
+
+    // 3. Zero keyword waste check (no token in keywords duplicates any token in name or subtitle)
+    const titleSubtitleTokens = new Set(
+      `${appInfo.name} ${appInfo.subtitle}`
+        .toLocaleLowerCase('tr')
+        .replace(/[:.,&()-]/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    const keywordTokens = versionInfo.keywords
+      .toLocaleLowerCase('tr')
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean);
+
+    const duplicates = keywordTokens.filter((k) => titleSubtitleTokens.has(k));
+    assert.deepEqual(duplicates, [], `${locale} has duplicate keyword waste: ${duplicates.join(', ')}`);
+
+    // 4. Apple Guideline 3.1.2 description compliance (Terms of Use & Privacy Policy URLs present)
+    assert.ok(versionInfo.description.includes('Terms of Use'), `${locale} description includes Terms of Use link`);
+    assert.ok(versionInfo.description.includes('Privacy Policy'), `${locale} description includes Privacy Policy link`);
+
+    keywordsByLocale[locale] = versionInfo.keywords.toLowerCase();
+  }
+
+  // 5. Cross-locale keyword differentiation check
+  assert.notEqual(keywordsByLocale.tr, keywordsByLocale['en-US'], 'tr and en-US keywords must be distinct');
 });

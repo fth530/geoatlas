@@ -16,7 +16,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LayerId, LAYERS, LAYER_SOURCES, MAP_ITEMS, MapItem, MAP_COLORS, TOPIC_DETAILS } from '@/data/geography';
+import { ELEVATION_BAND_BY_ID, PROVINCE_ELEVATIONS } from '@/data/province-elevation';
 import { PROVINCE_NOTES } from '@/data/province-notes';
+import { isProLockedLayer } from '@/services/subscription-service';
 import { PROVINCES, TurkeyMap } from '@/components/TurkeyMap';
 import { AppText as Text } from '@/components/AppText';
 import { GeographyLayerIcon } from '@/components/GeographyLayerIcon';
@@ -72,7 +74,7 @@ export default function MapScreen() {
   const [flashcard, setFlashcard] = useState<{ kind: 'item'; item: MapItem } | { kind: 'province'; name: string } | null>(null);
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const { notes, recordQuizAnswer } = useStudy();
+  const { notes, recordQuizAnswer, isPro } = useStudy();
 
   useEffect(() => {
     if (layerParam && LAYERS.some((layer) => layer.id === layerParam)) {
@@ -321,6 +323,7 @@ export default function MapScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layerRow}>
           {LAYERS.map((layer) => {
             const active = layer.id === layerId;
+            const locked = !isPro && isProLockedLayer(layer.id);
             return (
               <PressableScale
                 key={layer.id}
@@ -339,11 +342,17 @@ export default function MapScreen() {
                   />
                 </View>
                 <Text style={[styles.layerLabel, { color: active ? colors.primaryForeground : colors.foreground }]}>{layer.label}</Text>
-                <View style={[styles.layerCountPill, { backgroundColor: active ? `${colors.primaryForeground}22` : colors.muted }]}>
-                  <Text style={[styles.layerCount, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>
-                    {layerCounts.get(layer.id) ?? 0}
-                  </Text>
-                </View>
+                {locked ? (
+                  <View style={[styles.layerCountPill, { backgroundColor: active ? `${colors.primaryForeground}28` : colors.premiumBackground }]}>
+                    <Text style={[styles.layerCount, { color: active ? colors.primaryForeground : colors.premium }]}>PRO</Text>
+                  </View>
+                ) : (
+                  <View style={[styles.layerCountPill, { backgroundColor: active ? `${colors.primaryForeground}22` : colors.muted }]}>
+                    <Text style={[styles.layerCount, { color: active ? colors.primaryForeground : colors.mutedForeground }]}>
+                      {layerCounts.get(layer.id) ?? 0}
+                    </Text>
+                  </View>
+                )}
               </PressableScale>
             );
           })}
@@ -392,6 +401,25 @@ export default function MapScreen() {
               <Text style={[styles.fullscreenBtnText, { color: colors.primaryForeground }]}>Tam ekran</Text>
             </Pressable>
           </View>
+          {!isPro && isProLockedLayer(layerId) && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/pro')}
+              style={[styles.examTip, { backgroundColor: colors.premiumBackground }]}
+              testID="unlock-pro-layer-banner"
+            >
+              <Feather name="lock" size={16} color={colors.premium} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={[styles.statChipText, { color: colors.foreground }]}>
+                  {activeLayer.label} Katmanı · GeoKPSS Pro
+                </Text>
+                <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>
+                  Bu özel KPSS katmanındaki tüm quizleri, detay kartlarını ve şifreleri açmak için 7 gün ücretsiz dene.
+                </Text>
+              </View>
+              <Feather name="arrow-right" size={16} color={colors.premium} />
+            </Pressable>
+          )}
           <TurkeyMap
             layer={layerId}
             items={visibleItems}
@@ -564,6 +592,24 @@ export default function MapScreen() {
                   ? `${selectedProvince}, ${provinceData.region} bölgesinde yer alır (${String(provinceData.plate).padStart(2, '0')} plaka). Haritadaki renkli işaretlere dokunarak bu ildeki coğrafi özellikleri inceleyebilirsin.`
                   : 'Haritadaki renkli işaretlere dokunarak bu ildeki coğrafi özellikleri inceleyebilirsin.')}
             </Text>
+            {PROVINCE_ELEVATIONS[selectedProvince] && (() => {
+              const elev = PROVINCE_ELEVATIONS[selectedProvince];
+              const band = ELEVATION_BAND_BY_ID[elev.band];
+              const swatchColor = isDark ? band.darkFill : band.lightFill;
+              return (
+                <View style={[styles.examTip, { backgroundColor: colors.muted }]}>
+                  <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: swatchColor, marginTop: 2 }} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={[styles.statChipText, { color: colors.foreground }]}>
+                      Fiziki Harita: {band.colorName} Basamak ({band.rangeLabel}) · Ort. ~{elev.avgMeters} m
+                    </Text>
+                    <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>
+                      {elev.reliefNote}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })()}
             {provinceItems.length > 0 && (
               <View style={styles.relatedList}>
                 <Text style={[styles.relatedHeading, { color: colors.mutedForeground }]}>BU İLDE ÖNE ÇIKANLAR</Text>
@@ -624,11 +670,19 @@ export default function MapScreen() {
             <Feather name="arrow-up-right" size={19} color={colors.primaryForeground} />
           </View>
         </PressableScale>
-        <PressableScale onPress={() => router.push('/pro')} style={[styles.proBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={[styles.proIcon, { backgroundColor: colors.premiumBackground }]}><Feather name="star" size={16} color={colors.premium} /></View>
+        <PressableScale onPress={() => router.push('/pro')} style={[styles.proBanner, { backgroundColor: colors.card, borderColor: isPro ? colors.success : colors.premium }]}>
+          <View style={[styles.proIcon, { backgroundColor: isPro ? colors.successBackground : colors.premiumBackground }]}>
+            <Feather name={isPro ? 'check-circle' : 'award'} size={16} color={isPro ? colors.success : colors.premium} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.proTitle, { color: colors.foreground }]}>Pro plan taslağı</Text>
-            <Text style={[styles.proCopy, { color: colors.mutedForeground }]}>Bu sürümde tüm içerikler açık.</Text>
+            <Text style={[styles.proTitle, { color: colors.foreground }]}>
+              {isPro ? 'GeoKPSS Pro Aktif' : 'GeoKPSS Pro · 7 Gün Ücretsiz Dene'}
+            </Text>
+            <Text style={[styles.proCopy, { color: colors.mutedForeground }]}>
+              {isPro
+                ? 'Tüm 17 harita katmanı, 18 soruluk deneme ve hafıza şifreleri açık.'
+                : 'Ramsar, Antik Kentler, Maden, Tarım, 18 soruluk KPSS Denemesi ve sınırsız quiz.'}
+            </Text>
           </View>
           <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
         </PressableScale>

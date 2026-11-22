@@ -26,7 +26,7 @@ const NOTE_CATEGORIES = ['Genel', ...TOPIC_DETAILS.map((topic) => topic.title)];
 export default function NotesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { notes, saveNote, deleteNote } = useStudy();
+  const { notes, saveNote, deleteNote, isPro } = useStudy();
   const { create: createParam, itemId: itemIdParam } = useLocalSearchParams<{ create?: string; itemId?: string }>();
   const [activeTab, setActiveTab] = useState<'personal' | 'mnemonics'>('personal');
   const [flippedIds, setFlippedIds] = useState<string[]>([]);
@@ -323,7 +323,7 @@ export default function NotesScreen() {
             <Text style={[styles.listTitle, { color: colors.foreground }]}>KPSS hafıza kartları (dokun & çevir)</Text>
             <Text style={[styles.noteCount, { color: colors.mutedForeground }]}>{filteredMnemonics.length} kart</Text>
           </View>
-          {filteredMnemonics.map((item) => {
+          {filteredMnemonics.slice(0, isPro ? filteredMnemonics.length : 3).map((item) => {
             const flipped = flippedIds.includes(item.id);
             return (
               <Pressable
@@ -372,6 +372,26 @@ export default function NotesScreen() {
               </Pressable>
             );
           })}
+          {!isPro && filteredMnemonics.length > 3 && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/pro')}
+              style={[styles.noteCard, { backgroundColor: colors.card, borderColor: colors.premium, alignItems: 'center', gap: 8 }]}
+              testID="unlock-mnemonics-pro"
+            >
+              <Feather name="lock" size={22} color={colors.premium} />
+              <Text style={[styles.noteTitle, { color: colors.foreground, textAlign: 'center' }]}>
+                +{filteredMnemonics.length - 3} KPSS Hafıza Şifresini Daha Aç
+              </Text>
+              <Text style={[styles.noteBody, { color: colors.mutedForeground, textAlign: 'center' }]}>
+                Tüm akrostiş coğrafya kodlamalarına erişmek ve tek dokunuşla defterine kopyalamak için GeoKPSS Pro’yu 7 gün ücretsiz dene.
+              </Text>
+              <View style={[styles.saveButton, { backgroundColor: colors.primary, alignSelf: 'stretch', marginTop: 4 }]}>
+                <Feather name="unlock" size={15} color={colors.primaryForeground} />
+                <Text style={[styles.saveText, { color: colors.primaryForeground }]}>GeoKPSS Pro ile Tümünü Aç</Text>
+              </View>
+            </Pressable>
+          )}
         </View>
       )}
 
