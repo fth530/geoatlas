@@ -165,8 +165,8 @@ export function sanitizePersistedStudy(value: unknown): PersistedStudyData {
     reviewItems: Array.isArray(raw.reviewItems)
       ? raw.reviewItems.map(sanitizeReviewItem).filter((item): item is StudyReviewItem => item !== null)
       : [],
-    answered: asNumber(raw.answered),
-    correct: asNumber(raw.correct),
+    answered: Math.max(0, asNumber(raw.answered)),
+    correct: Math.max(0, asNumber(raw.correct)),
     proCandidates: Array.isArray(raw.proCandidates)
       ? raw.proCandidates.filter((id): id is string => typeof id === 'string')
       : [],

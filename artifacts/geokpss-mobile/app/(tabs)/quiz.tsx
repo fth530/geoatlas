@@ -100,9 +100,9 @@ export default function QuizScreen() {
     setSelectedProvince(null);
     setMcqPick(null);
     setTfPick(null);
+    setExamDone(false);
     if (resolvedMode === 'exam') {
       setExamSeed((seed) => seed + 1);
-      setExamDone(false);
       setExamSecondsLeft(EXAM_SECONDS);
       setExamStats({ correct: 0, wrong: 0 });
       setExamLayers({});
@@ -315,9 +315,9 @@ export default function QuizScreen() {
     setSelectedProvince(null);
     setMcqPick(null);
     setTfPick(null);
+    setExamDone(false);
     if (nextMode === 'exam') {
       setExamSeed((seed) => seed + 1);
-      setExamDone(false);
       setExamSecondsLeft(EXAM_SECONDS);
       setExamStats({ correct: 0, wrong: 0 });
       setExamLayers({});

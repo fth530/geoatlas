@@ -79,7 +79,7 @@ export default function ProgramScreen() {
     ? `Öneri: Önce ${weakestLabel} konusunda 10 soru çöz, sonra tekrarları bitir.`
     : dueItems.length > 0
       ? `Öneri: ${dueItems.length} bekleyen tekrar + hedefe ${goalRemaining} soru.`
-      : 'Öneri: Günün Meydan Okuması ile başla, serini koru.';
+      : 'Öneri: Tekrarları bitir ve serini koru — yarın yine buradayız.';
 
   const tasks = useMemo<ProgramTask[]>(() => {
     const reviewCount = Math.min(8, Math.max(dueItems.length, 1));

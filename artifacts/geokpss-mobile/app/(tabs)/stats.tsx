@@ -109,7 +109,7 @@ export default function StatsScreen() {
       app: 'geokpss',
       version: 2,
       exportedAt: new Date().toISOString(),
-      study: { notes, topicStatuses, reviewItems, answered, correct, proCandidates, dailyActivity, dailyGoal },
+      study: { notes, topicStatuses, reviewItems, answered, correct, proCandidates, dailyActivity, dailyGoal, program, xp },
     };
     try {
       await Share.share({
