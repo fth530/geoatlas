@@ -43,6 +43,10 @@ function NativeTabLayout() {
         <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
         <NativeTabs.Trigger.Label>İstatistik</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="youtube">
+        <NativeTabs.Trigger.Icon sf={{ default: 'play.rectangle', selected: 'play.rectangle.fill' }} />
+        <NativeTabs.Trigger.Label>Video</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -142,6 +146,16 @@ function ClassicTabLayout() {
           tabBarIcon: ({ color, focused }) =>
             isIOS ? <SymbolView name="chart.bar" tintColor={color} size={24} /> : (
               <Feather name="bar-chart-2" size={21} color={focused ? colors.primary : colors.mutedForeground} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="youtube"
+        options={{
+          title: 'Video',
+          tabBarIcon: ({ color, focused }) =>
+            isIOS ? <SymbolView name="play.rectangle" tintColor={color} size={24} /> : (
+              <Feather name="youtube" size={21} color={focused ? colors.primary : colors.mutedForeground} />
             ),
         }}
       />
