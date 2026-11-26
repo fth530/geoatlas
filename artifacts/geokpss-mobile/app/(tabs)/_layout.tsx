@@ -1,5 +1,6 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useAppTheme } from '@/context/ThemeContext';
 import { Feather } from '@expo/vector-icons';
@@ -8,6 +9,7 @@ import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { SymbolView } from 'expo-symbols';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { FONT_FAMILY } from '@/constants/typography';
 import { useStudy } from '@/context/StudyContext';
 
@@ -61,15 +63,26 @@ function ClassicTabLayout() {
 
   return (
     <Tabs
+      screenListeners={{
+        tabPress: () => {
+          if (!isWeb) void Haptics.selectionAsync().catch(() => {});
+        },
+      }}
+      screenLayout={({ children }) => (
+        <Animated.View entering={FadeIn.duration(210)} style={screenFadeStyles.root}>
+          {children}
+        </Animated.View>
+      )}
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: false,
-        tabBarLabelStyle: { fontFamily: FONT_FAMILY.medium, fontSize: 10 },
+        animation: 'shift',
+        tabBarLabelStyle: { fontFamily: FONT_FAMILY.medium, fontSize: 10, letterSpacing: 0.1 },
         tabBarStyle: {
           position: 'absolute',
           backgroundColor: isIOS ? 'transparent' : colors.background,
-          borderTopWidth: isWeb ? 1 : 0,
+          borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
           elevation: 0,
           ...(isWeb ? { height: 84 } : {}),
@@ -77,8 +90,9 @@ function ClassicTabLayout() {
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={100}
+              intensity={90}
               tint={isDark ? 'dark' : 'light'}
+              experimentalBlurMethod="dimezisBlurView"
               style={StyleSheet.absoluteFill}
             />
           ) : isWeb ? (
@@ -169,3 +183,7 @@ export default function TabLayout() {
   }
   return <ClassicTabLayout />;
 }
+
+const screenFadeStyles = StyleSheet.create({
+  root: { flex: 1 },
+});

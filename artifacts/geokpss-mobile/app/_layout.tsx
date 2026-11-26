@@ -17,13 +17,23 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import * as SplashScreen from 'expo-splash-screen';
 import { StudyProvider } from '@/context/StudyContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { useColors } from '@/hooks/useColors';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
+  const colors = useColors();
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Geri' }}>
+    <Stack
+      screenOptions={{
+        headerBackTitle: 'Geri',
+        animation: 'slide_from_right',
+        animationDuration: 240,
+        gestureEnabled: true,
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="pro" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="program" options={{ headerShown: false }} />

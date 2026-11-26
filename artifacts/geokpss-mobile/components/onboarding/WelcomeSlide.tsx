@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText as Text } from '@/components/AppText';
@@ -31,12 +32,13 @@ export function WelcomeSlide({ onNext, onSkip }: WelcomeSlideProps) {
       <View style={[styles.body, { paddingTop: insets.top }]}>
         <BrandBar onSkip={onSkip} />
 
-        <View style={styles.copy}>
-          <Text style={styles.headline}>{WELCOME_COPY.headline}</Text>
-          <Text style={styles.lead}>{WELCOME_COPY.body}</Text>
-        </View>
+        <Animated.View entering={FadeInDown.duration(460).delay(40)} style={styles.contentArea}>
+          <View style={styles.copy}>
+            <Text style={styles.headline}>{WELCOME_COPY.headline}</Text>
+            <Text style={styles.lead}>{WELCOME_COPY.body}</Text>
+          </View>
 
-        <View style={styles.plate}>
+          <View style={styles.plate}>
           <View style={styles.plateMap}>
             <TurkeyPlate showLabels pin />
           </View>
@@ -57,6 +59,7 @@ export function WelcomeSlide({ onNext, onSkip }: WelcomeSlideProps) {
             </View>
           </View>
         </View>
+        </Animated.View>
 
         <SlideFooter
           page={0}
@@ -74,6 +77,7 @@ export function WelcomeSlide({ onNext, onSkip }: WelcomeSlideProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { flex: 1 },
+  contentArea: { flex: 1 },
   copy: { paddingHorizontal: SCREEN_PADDING, paddingTop: 12 },
   headline: {
     fontSize: 30,
