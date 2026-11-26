@@ -20,6 +20,13 @@ function tapFeedback() {
   void Haptics.selectionAsync().catch(() => {});
 }
 
+// Lets any screen re-open the onboarding flow (e.g. a "replay tour" button).
+const replayListeners = new Set<() => void>();
+
+export function replayOnboarding() {
+  replayListeners.forEach((listener) => listener());
+}
+
 /**
  * First-launch onboarding: a three-page pager that introduces the map, the map
  * quiz and the spaced-repetition schedule, then hands over to the map tab.
@@ -43,6 +50,22 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
       });
     return () => {
       active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const listener = () => {
+      // Behave like a first launch: clear the seen flag so finishing the
+      // replay re-marks it, and reopening the app mid-tour shows it again.
+      void AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+      pageRef.current = 0;
+      setPage(0);
+      pagerRef.current?.scrollTo({ x: 0, animated: false });
+      setVisible(true);
+    };
+    replayListeners.add(listener);
+    return () => {
+      replayListeners.delete(listener);
     };
   }, []);
 

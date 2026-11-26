@@ -21,6 +21,7 @@ import { localDayKey, xpLevel } from '@/utils/study';
 import { AppText as Text } from '@/components/AppText';
 import { FONT_FAMILY } from '@/constants/typography';
 import { PressableScale } from '@/components/PressableScale';
+import { replayOnboarding } from '@/components/Onboarding';
 import { useColors } from '@/hooks/useColors';
 import { isReminderEnabled, REMINDER_HOUR, REMINDER_MINUTE, setReminderEnabled } from '@/utils/reminders';
 
@@ -494,6 +495,14 @@ export default function StatsScreen() {
               <Text style={[styles.dataButtonText, { color: colors.primary }]}>Yedekten içe aktar</Text>
             </Pressable>
           </View>
+          <Pressable
+            onPress={() => replayOnboarding()}
+            style={[styles.dataButton, { backgroundColor: colors.accent }]}
+            testID="replay-onboarding"
+          >
+            <Feather name="play-circle" size={14} color={colors.primary} />
+            <Text style={[styles.dataButtonText, { color: colors.primary }]}>Tanıtım turunu tekrar göster</Text>
+          </Pressable>
           <Pressable
             onPress={confirmReset}
             style={[styles.dataButton, { backgroundColor: colors.errorBackground }]}
