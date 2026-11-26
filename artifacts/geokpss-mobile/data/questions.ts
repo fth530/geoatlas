@@ -294,7 +294,7 @@ export const ITEM_MCQ: Record<string, McqQuestion[]> = {
     { q: 'Büyük Menderes hangi denize ulaşır?', options: ['Ege', 'Akdeniz', 'Karadeniz', 'Marmara'], answer: 0 },
   ],
   'kucuk-menderes': [
-    { q: 'Küçük Menderes hangi ovayı sulayıp Ege’ye ulaşır?', options: ['Aydın Ovası', 'Menemen Ovası', 'Bafra Ovası', 'Ergene Ovası'], answer: 0 },
+    { q: 'Küçük Menderes hangi ovayı sulayıp Ege’ye ulaşır?', options: ['Selçuk Ovası', 'Aydın Ovası', 'Menemen Ovası', 'Ergene Ovası'], answer: 0 },
   ],
   'boyuna-karadeniz': [
     { q: 'Boyuna kıyılarda dağlar kıyıya göre nasıl uzanır?', options: ['Paralel', 'Dik', 'Rastgele', 'Dalgasız'], answer: 0 },

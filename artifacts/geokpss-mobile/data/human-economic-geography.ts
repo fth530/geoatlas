@@ -143,9 +143,9 @@ export const HUMAN_ECONOMIC_ITEMS: MapItem[] = [
     layer: 'climate',
     subtype: 'wind',
     subtypeLabel: 'Sıcak yerel rüzgar',
-    provinces: ['Rize', 'Trabzon', 'Konya', 'Antalya'],
+    provinces: ['Rize', 'Trabzon', 'Konya', 'Antalya', 'Iğdır'],
     description: 'Dağ yamacını aşarak alçalan ve her 100 metrede yaklaşık 1 °C ısınan kuru rüzgardır.',
-    examTip: 'Doğu Karadeniz’de turunçgil yetişmesini sağlarken İç Anadolu’da (Konya) ekinleri kuruttuğu için “Bakır Sattıran” denir.',
+    examTip: 'Doğu Karadeniz’de turunçgil yetişmesini sağlarken İç Anadolu’da (Konya) ekinleri kuruttuğu için “Bakır Sattıran” denir; Iğdır’da mikroklima oluşturarak pamuk yetişmesine imkân tanır.',
   },
   {
     id: 'igdir-mikroklima',
